@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { Client } from "pg";
 import { createClient } from "redis";
+import { createAuthRouter } from "./infrastructure/routes/authRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -55,14 +56,16 @@ const initializeDatabases = async () => {
 
 // Health Check Endpoint
 app.get("/health", (req, res) => {
-  res
-    .status(200)
-    .json({
-      status: "UP",
-      service: "auth-service",
-      timestamp: new Date().toISOString(),
-    });
+  res.status(200).json({
+    status: "UP",
+    service: "auth-service",
+    timestamp: new Date().toISOString(),
+  });
 });
+
+// --- HERE WE CONNECT HEXAGONAL ARCHITECTURE ---
+// Mount Auth Routes
+app.use("/api/auth", createAuthRouter(pgClient));
 
 // Start Server
 app.listen(port, async () => {
