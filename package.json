@@ -1,0 +1,12 @@
+{
+  "name": "uce-library-distributed-system",
+  "version": "1.0.0",
+  "description": "Library Book Loan Management System - Microservices Architecture",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "author": "Alejandro Chiliquinga",
+  "license": "ISC"
+}
