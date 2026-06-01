@@ -1,8 +1,8 @@
 # 1. Terraform Configuration and Remote State (S3)
 terraform {
   backend "s3" {
-    bucket = "uce-library-terraform-state-kachiliquingal"
-    key    = "qa/terraform.tfstate"
+    # The bucket and key are dynamically injected via CLI in GitHub Actions
+    # to support multiple AWS Academy accounts.
     region = "us-east-1"
   }
   required_providers {
@@ -15,7 +15,7 @@ terraform {
 
 # 2. AWS Provider Setup
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 # 3. Fetch the latest Amazon Linux 2023 AMI automatically
@@ -30,9 +30,9 @@ data "aws_ami" "amazon_linux" {
 }
 
 # 4. Security Group to allow traffic
-resource "aws_security_group" "qa_auth_sg" {
-  name        = "qa-auth-service-sg"
-  description = "Allow inbound traffic for Auth Service QA"
+resource "aws_security_group" "auth_sg" {
+  name        = "${var.environment}-auth-service-sg"
+  description = "Allow inbound traffic for Auth Service ${upper(var.environment)}"
 
   ingress {
     description = "Allow Auth Service API traffic"
@@ -58,17 +58,17 @@ resource "aws_security_group" "qa_auth_sg" {
   }
 
   tags = {
-    Name        = "qa-auth-service-sg"
-    Environment = "QA"
+    Name        = "${var.environment}-auth-service-sg"
+    Environment = upper(var.environment)
   }
 }
 
 # 5. EC2 Instance Provisioning with Docker Compose
-resource "aws_instance" "qa_auth_server" {
+resource "aws_instance" "auth_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
 
-  vpc_security_group_ids = [aws_security_group.qa_auth_sg.id]
+  vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
   # User Data Script: Install Docker, standalone docker-compose, and run the stack
   user_data = <<-EOF
@@ -104,7 +104,7 @@ resource "aws_instance" "qa_auth_server" {
                     - "6379:6379"
                 
                 auth-service:
-                  image: kachiliquingal/uce-auth-service:1.0.0
+                  image: kachiliquingal/uce-auth-service:${var.docker_image_tag}
                   ports:
                     - "3001:3001"
                   environment:
@@ -130,24 +130,24 @@ resource "aws_instance" "qa_auth_server" {
               EOF
 
   tags = {
-    Name        = "qa-auth-service-instance"
-    Environment = "QA"
+    Name        = "${var.environment}-auth-service-instance"
+    Environment = upper(var.environment)
   }
 }
 
 # 6. Elastic IP Assignment
-resource "aws_eip" "qa_auth_eip" {
-  instance = aws_instance.qa_auth_server.id
+resource "aws_eip" "auth_eip" {
+  instance = aws_instance.auth_server.id
   domain   = "vpc"
 
   tags = {
-    Name        = "qa-auth-service-eip"
-    Environment = "QA"
+    Name        = "${var.environment}-auth-service-eip"
+    Environment = upper(var.environment)
   }
 }
 
 # 7. Output the Elastic IP to easily access the service
 output "public_ip" {
-  description = "The Elastic Public IP address of the QA Auth Server"
-  value       = aws_eip.qa_auth_eip.public_ip
+  description = "The Elastic Public IP address of the Auth Server"
+  value       = aws_eip.auth_eip.public_ip
 }
