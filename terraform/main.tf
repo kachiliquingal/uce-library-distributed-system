@@ -29,7 +29,11 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# 4. Security Group to allow traffic
+# ==========================================
+# MICROSERVICE 1: AUTH SERVICE
+# ==========================================
+
+# 1.1. Security Group to allow traffic
 resource "aws_security_group" "auth_sg" {
   name        = "${var.environment}-auth-service-sg"
   description = "Allow inbound traffic for Auth Service ${upper(var.environment)}"
@@ -63,7 +67,7 @@ resource "aws_security_group" "auth_sg" {
   }
 }
 
-# 5. EC2 Instance Provisioning with Docker Compose
+# 1.2. EC2 Instance Provisioning with Docker Compose
 resource "aws_instance" "auth_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
@@ -135,7 +139,7 @@ resource "aws_instance" "auth_server" {
   }
 }
 
-# 6. Elastic IP Assignment
+# 1.3. Elastic IP Assignment
 resource "aws_eip" "auth_eip" {
   instance = aws_instance.auth_server.id
   domain   = "vpc"
@@ -146,8 +150,117 @@ resource "aws_eip" "auth_eip" {
   }
 }
 
-# 7. Output the Elastic IP to easily access the service
+# 1.4. Output the Elastic IP to easily access the service
 output "public_ip" {
   description = "The Elastic Public IP address of the Auth Server"
   value       = aws_eip.auth_eip.public_ip
+}
+
+
+# ==========================================
+# MICROSERVICE 2: CATALOG SERVICE
+# ==========================================
+
+# 2.1. Security Group for Catalog Service
+resource "aws_security_group" "catalog_sg" {
+  name        = "${var.environment}-catalog-service-sg"
+  description = "Allow inbound traffic for Catalog Service ${upper(var.environment)}"
+
+  ingress {
+    description = "Allow Catalog Service API traffic"
+    from_port   = 3002
+    to_port     = 3002
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow SSH administration"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-catalog-service-sg"
+    Environment = upper(var.environment)
+  }
+}
+
+# 2.2. EC2 Instance Provisioning for Catalog Service
+resource "aws_instance" "catalog_server" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+
+  vpc_security_group_ids = [aws_security_group.catalog_sg.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              
+              # Install Docker Compose standalone binary
+              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+              chmod +x /usr/local/bin/docker-compose
+
+              # Create Docker Compose file dynamically for Catalog
+              cat << 'COMPOSE' > /home/ec2-user/docker-compose.yml
+              version: '3.8'
+              
+              services:
+                catalog-mongo:
+                  image: mongo:latest
+                  environment:
+                    MONGO_INITDB_ROOT_USERNAME: admin
+                    MONGO_INITDB_ROOT_PASSWORD: adminpassword
+                  ports:
+                    - "27017:27017"
+                
+                catalog-service:
+                  image: kachiliquingal/uce-catalog-service:${var.docker_image_tag}-${var.environment}
+                  ports:
+                    - "3002:3002"
+                  environment:
+                    - PORT=3002
+                    - MONGO_URI=mongodb://admin:adminpassword@catalog-mongo:27017/catalog_db?authSource=admin
+                  depends_on:
+                    - catalog-mongo
+              COMPOSE
+
+              # Run the catalog stack
+              cd /home/ec2-user
+              /usr/local/bin/docker-compose up -d
+              EOF
+
+  tags = {
+    Name        = "${var.environment}-catalog-server"
+    Environment = upper(var.environment)
+  }
+}
+
+# 2.3. Elastic IP for Catalog Service
+resource "aws_eip" "catalog_eip" {
+  instance = aws_instance.catalog_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name        = "${var.environment}-catalog-service-eip"
+    Environment = upper(var.environment)
+  }
+}
+
+# 2.4. Output the Catalog Service IP
+output "catalog_public_ip" {
+  description = "The Elastic Public IP address of the Catalog Server"
+  value       = aws_eip.catalog_eip.public_ip
 }
