@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  auth-service:
+    image: kachiliquingal/uce-auth-service:${IMAGE_TAG:-latest}
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-adminpassword}
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-auth_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:-super_secret_key_for_jwt_auth_uce}
+    
+  catalog-service:
+    image: kachiliquingal/uce-catalog-service:${IMAGE_TAG:-latest}
+    restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=${MONGO_URI:-mongodb://admin:adminpassword@catalog-mongo:27017/catalog_db?authSource=admin}
