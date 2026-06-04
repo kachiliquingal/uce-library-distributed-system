@@ -74,7 +74,6 @@ resource "aws_instance" "auth_server" {
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
-  # User Data Script: Install Docker, standalone docker-compose, and run the stack
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
@@ -82,55 +81,31 @@ resource "aws_instance" "auth_server" {
               systemctl start docker
               systemctl enable docker
               
-              # Install Docker Compose standalone binary
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
 
-              # Create Docker Compose file dynamically
-              cat << 'COMPOSE' > /home/ec2-user/docker-compose.yml
-              version: '3.8'
-              
-              services:
-                postgres:
-                  image: postgres:15-alpine
-                  environment:
-                    POSTGRES_USER: admin
-                    POSTGRES_PASSWORD: adminpassword
-                    POSTGRES_DB: auth_db
-                  ports:
-                    - "5432:5432"
-                  volumes:
-                    - postgres_data:/var/lib/postgresql/data
-                
-                redis:
-                  image: redis:7-alpine
-                  ports:
-                    - "6379:6379"
-                
-                auth-service:
-                  image: kachiliquingal/uce-auth-service:${var.docker_image_tag}
-                  ports:
-                    - "3001:3001"
-                  environment:
-                    - PORT=3001
-                    - DB_USER=admin
-                    - DB_PASSWORD=adminpassword
-                    - DB_HOST=postgres
-                    - DB_PORT=5432
-                    - DB_NAME=auth_db
-                    - REDIS_URL=redis://redis:6379
-                    - JWT_SECRET=super_secret_key_for_jwt_auth_uce
-                  depends_on:
-                    - postgres
-                    - redis
-              
-              volumes:
-                postgres_data:
-              COMPOSE
+              # Copiar los YAML de arquitectura separada
+              cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+${file("${path.module}/../deploy/docker-compose.db.yml")}
+              DBCOMPOSE
 
-              # Run the stack using the explicit binary path
+              cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+${file("${path.module}/../deploy/docker-compose.apps.yml")}
+              APPCOMPOSE
+
+              # Crear archivo .env seguro
+              cat << 'ENVFILE' > /home/ec2-user/.env
+              IMAGE_TAG=${var.docker_image_tag}
+              DB_USER=admin
+              DB_PASSWORD=${var.db_password}
+              DB_NAME=auth_db
+              JWT_SECRET=${var.jwt_secret}
+              ENVFILE
+
+              # Desplegar solo las bases y servicios de Auth
               cd /home/ec2-user
-              /usr/local/bin/docker-compose up -d
+              /usr/local/bin/docker-compose -f docker-compose.db.yml up -d postgres redis
+              /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
               EOF
 
   tags = {
@@ -150,7 +125,7 @@ resource "aws_eip" "auth_eip" {
   }
 }
 
-# 1.4. Output the Elastic IP to easily access the service
+# 1.4. Output the Elastic IP
 output "public_ip" {
   description = "The Elastic Public IP address of the Auth Server"
   value       = aws_eip.auth_eip.public_ip
@@ -209,37 +184,30 @@ resource "aws_instance" "catalog_server" {
               systemctl start docker
               systemctl enable docker
               
-              # Install Docker Compose standalone binary
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
 
-              # Create Docker Compose file dynamically for Catalog
-              cat << 'COMPOSE' > /home/ec2-user/docker-compose.yml
-              version: '3.8'
-              
-              services:
-                catalog-mongo:
-                  image: mongo:latest
-                  environment:
-                    MONGO_INITDB_ROOT_USERNAME: admin
-                    MONGO_INITDB_ROOT_PASSWORD: adminpassword
-                  ports:
-                    - "27017:27017"
-                
-                catalog-service:
-                  image: kachiliquingal/uce-catalog-service:${var.docker_image_tag}-${var.environment}
-                  ports:
-                    - "3002:3002"
-                  environment:
-                    - PORT=3002
-                    - MONGO_URI=mongodb://admin:adminpassword@catalog-mongo:27017/catalog_db?authSource=admin
-                  depends_on:
-                    - catalog-mongo
-              COMPOSE
+              # Copiar los YAML de arquitectura separada
+              cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+${file("${path.module}/../deploy/docker-compose.db.yml")}
+              DBCOMPOSE
 
-              # Run the catalog stack
+              cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+${file("${path.module}/../deploy/docker-compose.apps.yml")}
+              APPCOMPOSE
+
+              # Crear archivo .env seguro
+              cat << 'ENVFILE' > /home/ec2-user/.env
+              IMAGE_TAG=${var.docker_image_tag}-${var.environment}
+              MONGO_USER=admin
+              MONGO_PASSWORD=${var.mongo_password}
+              MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+              ENVFILE
+
+              # Desplegar solo la base y servicio de Catalog
               cd /home/ec2-user
-              /usr/local/bin/docker-compose up -d
+              /usr/local/bin/docker-compose -f docker-compose.db.yml up -d catalog-mongo
+              /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
               EOF
 
   tags = {
