@@ -76,10 +76,11 @@ resource "aws_instance" "auth_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
+              dnf update -y
+              dnf install -y docker
               systemctl start docker
               systemctl enable docker
+              usermod -a -G docker ec2-user
               
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
@@ -179,10 +180,11 @@ resource "aws_instance" "catalog_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
+              dnf update -y
+              dnf install -y docker
               systemctl start docker
               systemctl enable docker
+              usermod -a -G docker ec2-user
               
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
