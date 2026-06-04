@@ -145,3 +145,6 @@ vite.config.ts.timestamp-*
 # Terraform
 **/.terraform/
 .terraform.tfstate
+
+# Turborepo cache
+.turbo
