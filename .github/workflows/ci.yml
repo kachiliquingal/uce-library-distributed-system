@@ -1,0 +1,24 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: ["qa", "main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Turborepo Build (Cache Test)
+        run: npm run build
