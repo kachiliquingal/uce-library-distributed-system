@@ -1,8 +1,6 @@
 # 1. Terraform Configuration and Remote State (S3)
 terraform {
   backend "s3" {
-    # The bucket and key are dynamically injected via CLI in GitHub Actions
-    # to support multiple AWS Academy accounts.
     region = "us-east-1"
   }
   required_providers {
@@ -76,31 +74,29 @@ resource "aws_instance" "auth_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              exec > >(tee /var/log/user-data.log)
-              exec 2>&1
-
-              # Asegurar instalación limpia de Docker en AL2023
+              
+              # Ensure a clean Docker installation in AL2023
               dnf update -y
               dnf install -y docker
               
-              # Pausa breve para asegurar que el binario está disponible
+              # Brief pause to ensure the binary is available
               sleep 5
               
               systemctl start docker
               systemctl enable docker
               usermod -a -G docker ec2-user
               
-              # Instalar Docker Compose v2 y validar version (Observacion 3)
+              # Install Docker Compose v2 and validate version
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
               /usr/local/bin/docker-compose version
 
-              # Crear red compartida de Docker (forzar inicio de daemon primero)
+              # Create a shared Docker network (force daemon to start first)
               systemctl restart docker
               sleep 5
               docker network create microservices-network || true
 
-              # Copiar los YAML de arquitectura separada
+              # Copy the separate architecture YAMLs
               cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
               DBCOMPOSE
@@ -109,7 +105,7 @@ ${file("${path.module}/../deploy/docker-compose.db.yml")}
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
               APPCOMPOSE
 
-              # Crear archivo .env completo
+              # Create a complete .env file
               cat << 'ENVFILE' > /home/ec2-user/.env
               IMAGE_TAG=${var.docker_image_tag}
               DB_USER=admin
@@ -120,14 +116,14 @@ ${file("${path.module}/../deploy/docker-compose.apps.yml")}
               JWT_SECRET=${var.jwt_secret}
               ENVFILE
 
-              # Desplegar bases de datos
+              # Deploy databases
               cd /home/ec2-user
               /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
               
               echo "Esperando a que las bases de datos inicialicen..."
               sleep 20
               
-              # Desplegar aplicación
+              # Deploy application
               /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
               EOF
 
@@ -202,31 +198,29 @@ resource "aws_instance" "catalog_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              exec > >(tee /var/log/user-data.log)
-              exec 2>&1
-
-              # Asegurar instalación limpia de Docker en AL2023
+              
+              # Ensure a clean Docker installation in AL2023
               dnf update -y
               dnf install -y docker
               
-              # Pausa breve para asegurar que el binario está disponible
+              # Brief pause to ensure the binary is available
               sleep 5
               
               systemctl start docker
               systemctl enable docker
               usermod -a -G docker ec2-user
               
-              # Instalar Docker Compose v2 y validar version (Observacion 3)
+              # Install Docker Compose v2 and validate version
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
               /usr/local/bin/docker-compose version
 
-              # Crear red compartida de Docker (forzar inicio de daemon primero)
+              # Create a shared Docker network (force daemon to start first)
               systemctl restart docker
               sleep 5
               docker network create microservices-network || true
 
-              # Copiar los YAML de arquitectura separada
+              # Copy the separate architecture YAMLs
               cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
               DBCOMPOSE
@@ -235,21 +229,21 @@ ${file("${path.module}/../deploy/docker-compose.db.yml")}
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
               APPCOMPOSE
 
-              # Crear archivo .env completo (Generando la URI de Mongo aquí)
+              # Create a complete .env file (Generating the Mongo URI here)
               cat << 'ENVFILE' > /home/ec2-user/.env
               IMAGE_TAG=${var.docker_image_tag}
               MONGO_PASSWORD=${var.mongo_password}
               MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
               ENVFILE
 
-              # Desplegar base de datos
+              # Deploy database
               cd /home/ec2-user
               /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
               
               echo "Esperando a que la base de datos inicialice..."
               sleep 20
               
-              # Desplegar aplicación
+              # Deploy application
               /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
               EOF
 
