@@ -76,6 +76,9 @@ resource "aws_instance" "auth_server" {
 
   user_data = <<-EOF
               #!/bin/bash
+              exec > >(tee /var/log/user-data.log)
+              exec 2>&1
+
               dnf update -y
               dnf install -y docker
               systemctl start docker
@@ -85,7 +88,10 @@ resource "aws_instance" "auth_server" {
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
 
-              # Copiar los YAML de arquitectura separada
+              # Create a shared Docker network
+              docker network create microservices-network || true
+
+              # Copy the separate architecture YAMLs
               cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
               DBCOMPOSE
@@ -94,18 +100,20 @@ ${file("${path.module}/../deploy/docker-compose.db.yml")}
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
               APPCOMPOSE
 
-              # Crear archivo .env seguro
+              # Create a secure .env file
               cat << 'ENVFILE' > /home/ec2-user/.env
               IMAGE_TAG=${var.docker_image_tag}
-              DB_USER=admin
               DB_PASSWORD=${var.db_password}
-              DB_NAME=auth_db
               JWT_SECRET=${var.jwt_secret}
               ENVFILE
 
-              # Desplegar solo las bases y servicios de Auth
+              # Deploy only the Auth databases and services
               cd /home/ec2-user
-              /usr/local/bin/docker-compose -f docker-compose.db.yml up -d postgres redis
+              /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
+              
+              echo "Esperando a que las bases de datos inicialicen..."
+              sleep 15
+              
               /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
               EOF
 
@@ -180,6 +188,9 @@ resource "aws_instance" "catalog_server" {
 
   user_data = <<-EOF
               #!/bin/bash
+              exec > >(tee /var/log/user-data.log)
+              exec 2>&1
+
               dnf update -y
               dnf install -y docker
               systemctl start docker
@@ -189,7 +200,10 @@ resource "aws_instance" "catalog_server" {
               curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
 
-              # Copiar los YAML de arquitectura separada
+              # Create a shared Docker network
+              docker network create microservices-network || true
+
+              # Copy the separate architecture YAMLs
               cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
               DBCOMPOSE
@@ -198,17 +212,19 @@ ${file("${path.module}/../deploy/docker-compose.db.yml")}
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
               APPCOMPOSE
 
-              # Crear archivo .env seguro
+              # Create a secure .env file
               cat << 'ENVFILE' > /home/ec2-user/.env
-              IMAGE_TAG=${var.docker_image_tag}-${var.environment}
-              MONGO_USER=admin
+              IMAGE_TAG=${var.docker_image_tag}
               MONGO_PASSWORD=${var.mongo_password}
-              MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
               ENVFILE
 
-              # Desplegar solo la base y servicio de Catalog
+              # Deploy only the Catalog base and service
               cd /home/ec2-user
-              /usr/local/bin/docker-compose -f docker-compose.db.yml up -d catalog-mongo
+              /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
+              
+              echo "Esperando a que las bases de datos inicialicen..."
+              sleep 15
+              
               /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
               EOF
 
