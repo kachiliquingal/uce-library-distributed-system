@@ -30,8 +30,6 @@ data "aws_ami" "amazon_linux" {
 # ==========================================
 # MICROSERVICE 1: AUTH SERVICE
 # ==========================================
-
-# 1.1. Security Group to allow traffic
 resource "aws_security_group" "auth_sg" {
   name        = "${var.environment}-auth-service-sg"
   description = "Allow inbound traffic for Auth Service ${upper(var.environment)}"
@@ -65,67 +63,55 @@ resource "aws_security_group" "auth_sg" {
   }
 }
 
-# 1.2. EC2 Instance Provisioning with Docker Compose
 resource "aws_instance" "auth_server" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  user_data_replace_on_change = true
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              
-              # Ensure a clean Docker installation in AL2023
-              dnf update -y
-              dnf install -y docker
-              
-              # Brief pause to ensure the binary is available
-              sleep 5
-              
-              systemctl start docker
-              systemctl enable docker
-              usermod -a -G docker ec2-user
-              
-              # Install Docker Compose v2 and validate version
-              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
-              /usr/local/bin/docker-compose version
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Esperando a liberar el bloqueo de DNF..."
+  sleep 5
+done
 
-              # Create a shared Docker network (force daemon to start first)
-              systemctl restart docker
-              sleep 5
-              docker network create microservices-network || true
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
 
-              # Copy the separate architecture YAMLs
-              cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
-              DBCOMPOSE
+DBCOMPOSE
 
-              cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
-              APPCOMPOSE
+APPCOMPOSE
 
-              # Create a complete .env file
-              cat << 'ENVFILE' > /home/ec2-user/.env
-              IMAGE_TAG=${var.docker_image_tag}
-              DB_USER=admin
-              DB_PASSWORD=${var.db_password}
-              DB_HOST=postgres
-              DB_NAME=auth_db
-              REDIS_URL=redis://redis:6379
-              JWT_SECRET=${var.jwt_secret}
-              ENVFILE
+cat << 'ENVFILE' > /home/ec2-user/.env
+IMAGE_TAG=${var.docker_image_tag}
+DB_USER=admin
+DB_PASSWORD=${var.db_password}
+DB_HOST=postgres
+DB_NAME=auth_db
+REDIS_URL=redis://redis:6379
+JWT_SECRET=${var.jwt_secret}
+ENVFILE
 
-              # Deploy databases
-              cd /home/ec2-user
-              /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
-              
-              echo "Esperando a que las bases de datos inicialicen..."
-              sleep 20
-              
-              # Deploy application
-              /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
-              EOF
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
+sleep 20
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
+EOF
+  , "\r", "")
 
   tags = {
     Name        = "${var.environment}-auth-service-instance"
@@ -133,7 +119,6 @@ ${file("${path.module}/../deploy/docker-compose.apps.yml")}
   }
 }
 
-# 1.3. Elastic IP Assignment
 resource "aws_eip" "auth_eip" {
   instance = aws_instance.auth_server.id
   domain   = "vpc"
@@ -144,18 +129,14 @@ resource "aws_eip" "auth_eip" {
   }
 }
 
-# 1.4. Output the Elastic IP
 output "public_ip" {
   description = "The Elastic Public IP address of the Auth Server"
   value       = aws_eip.auth_eip.public_ip
 }
 
-
 # ==========================================
 # MICROSERVICE 2: CATALOG SERVICE
 # ==========================================
-
-# 2.1. Security Group for Catalog Service
 resource "aws_security_group" "catalog_sg" {
   name        = "${var.environment}-catalog-service-sg"
   description = "Allow inbound traffic for Catalog Service ${upper(var.environment)}"
@@ -189,63 +170,51 @@ resource "aws_security_group" "catalog_sg" {
   }
 }
 
-# 2.2. EC2 Instance Provisioning for Catalog Service
 resource "aws_instance" "catalog_server" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  user_data_replace_on_change = true
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              
-              # Ensure a clean Docker installation in AL2023
-              dnf update -y
-              dnf install -y docker
-              
-              # Brief pause to ensure the binary is available
-              sleep 5
-              
-              systemctl start docker
-              systemctl enable docker
-              usermod -a -G docker ec2-user
-              
-              # Install Docker Compose v2 and validate version
-              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
-              /usr/local/bin/docker-compose version
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Esperando a liberar el bloqueo de DNF..."
+  sleep 5
+done
 
-              # Create a shared Docker network (force daemon to start first)
-              systemctl restart docker
-              sleep 5
-              docker network create microservices-network || true
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
 
-              # Copy the separate architecture YAMLs
-              cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
 ${file("${path.module}/../deploy/docker-compose.db.yml")}
-              DBCOMPOSE
+DBCOMPOSE
 
-              cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
 ${file("${path.module}/../deploy/docker-compose.apps.yml")}
-              APPCOMPOSE
+APPCOMPOSE
 
-              # Create a complete .env file (Generating the Mongo URI here)
-              cat << 'ENVFILE' > /home/ec2-user/.env
-              IMAGE_TAG=${var.docker_image_tag}
-              MONGO_PASSWORD=${var.mongo_password}
-              MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
-              ENVFILE
+cat << 'ENVFILE' > /home/ec2-user/.env
+IMAGE_TAG=${var.docker_image_tag}
+MONGO_PASSWORD=${var.mongo_password}
+MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+ENVFILE
 
-              # Deploy database
-              cd /home/ec2-user
-              /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
-              
-              echo "Esperando a que la base de datos inicialice..."
-              sleep 20
-              
-              # Deploy application
-              /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
-              EOF
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
+sleep 20
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
+EOF
+  , "\r", "")
 
   tags = {
     Name        = "${var.environment}-catalog-server"
@@ -253,7 +222,6 @@ ${file("${path.module}/../deploy/docker-compose.apps.yml")}
   }
 }
 
-# 2.3. Elastic IP for Catalog Service
 resource "aws_eip" "catalog_eip" {
   instance = aws_instance.catalog_server.id
   domain   = "vpc"
@@ -264,7 +232,6 @@ resource "aws_eip" "catalog_eip" {
   }
 }
 
-# 2.4. Output the Catalog Service IP
 output "catalog_public_ip" {
   description = "The Elastic Public IP address of the Catalog Server"
   value       = aws_eip.catalog_eip.public_ip
