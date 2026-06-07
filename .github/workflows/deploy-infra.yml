@@ -60,3 +60,31 @@ jobs:
         run: |
           cd terraform
           terraform apply -auto-approve tfplan
+
+      - name: Extract IPs and inject them into the frontend
+        run: |
+          cd terraform
+          AUTH_IP=$(terraform output -raw public_ip)
+          CATALOG_IP=$(terraform output -raw catalog_public_ip)
+          
+          # Go to the root directory and create the production .env file for Vite
+          cd ..
+          echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
+          echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
+          
+          echo "IPs injected successfully: AUTH=$AUTH_IP, CATALOG=$CATALOG_IP"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Upload Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apps/frontend
+          push: true
+          tags: |
+            kachiliquingal/uce-frontend:${{ env.TF_VAR_docker_image_tag }}
+            kachiliquingal/uce-frontend:latest

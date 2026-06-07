@@ -236,3 +236,90 @@ output "catalog_public_ip" {
   description = "The Elastic Public IP address of the Catalog Server"
   value       = aws_eip.catalog_eip.public_ip
 }
+
+# ==========================================
+# MICROSERVICE 3: FRONTEND SERVICE
+# ==========================================
+resource "aws_security_group" "frontend_sg" {
+  name        = "${var.environment}-frontend-service-sg"
+  description = "Allow inbound traffic for Frontend Service ${upper(var.environment)}"
+
+  ingress {
+    description = "Allow HTTP web traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow SSH administration"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-frontend-service-sg"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_instance" "frontend_server" {
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  user_data_replace_on_change = true
+
+  vpc_security_group_ids = [aws_security_group.frontend_sg.id]
+
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Esperando a liberar el bloqueo de DNF..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
+
+IMAGE_NAME="kachiliquingal/uce-frontend:${var.docker_image_tag}"
+
+# Bucle inteligente: Espera a que Github Actions termine de compilar e inyectar IPs
+until docker pull $IMAGE_NAME; do
+  echo "Esperando a que la imagen del frontend este disponible en DockerHub..."
+  sleep 15
+done
+
+docker run -d -p 80:80 --name uce-frontend --restart always $IMAGE_NAME
+EOF
+  , "\r", "")
+
+  tags = {
+    Name        = "${var.environment}-frontend-server"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_eip" "frontend_eip" {
+  instance = aws_instance.frontend_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name        = "${var.environment}-frontend-service-eip"
+    Environment = upper(var.environment)
+  }
+}
+
+output "frontend_public_ip" {
+  description = "The Elastic Public IP address of the Frontend Server"
+  value       = aws_eip.frontend_eip.public_ip
+}
