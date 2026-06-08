@@ -64,9 +64,8 @@ resource "aws_security_group" "auth_sg" {
 }
 
 resource "aws_instance" "auth_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
@@ -178,9 +177,8 @@ resource "aws_security_group" "catalog_sg" {
 }
 
 resource "aws_instance" "catalog_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id]
 
@@ -288,13 +286,12 @@ resource "aws_security_group" "frontend_sg" {
 }
 
 resource "aws_instance" "frontend_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id]
 
-user_data = replace(<<EOF
+  user_data = replace(<<EOF
 #!/bin/bash
 until dnf install -y docker; do
   echo "Waiting to release DNF lock..."
