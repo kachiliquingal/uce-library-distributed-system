@@ -72,9 +72,6 @@ jobs:
           echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
           echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
 
-          # Official method to tell Docker NOT to ignore this vital file
-          echo "!.env.production" >> apps/frontend/.dockerignore
-
           echo "IPs injected successfully: AUTH=$AUTH_IP, CATALOG=$CATALOG_IP"
 
       - name: Login to Docker Hub
