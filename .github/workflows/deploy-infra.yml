@@ -16,7 +16,7 @@ jobs:
     env:
       # Define the environment based on the branch (qa or prod)
       TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}
-      TF_VAR_docker_image_tag: "1.0.0"
+      TF_VAR_docker_image_tag: "1.0.0-${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}"
       AWS_REGION: "us-east-1"
 
       # Dynamic injection of the S3 bucket name based on the account
@@ -66,12 +66,15 @@ jobs:
           cd terraform
           AUTH_IP=$(terraform output -raw public_ip)
           CATALOG_IP=$(terraform output -raw catalog_public_ip)
-          
+
           # Go to the root directory and create the production .env file for Vite
           cd ..
           echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
           echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
-          
+
+          # Official method to tell Docker NOT to ignore this vital file
+          echo "!.env.production" >> apps/frontend/.dockerignore
+
           echo "IPs injected successfully: AUTH=$AUTH_IP, CATALOG=$CATALOG_IP"
 
       - name: Login to Docker Hub
@@ -87,4 +90,3 @@ jobs:
           push: true
           tags: |
             kachiliquingal/uce-frontend:${{ env.TF_VAR_docker_image_tag }}
-            kachiliquingal/uce-frontend:latest
