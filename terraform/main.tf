@@ -73,7 +73,7 @@ resource "aws_instance" "auth_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until dnf install -y docker; do
-  echo "Esperando a liberar el bloqueo de DNF..."
+  echo "Waiting to release DNF lock..."
   sleep 5
 done
 
@@ -110,6 +110,13 @@ cd /home/ec2-user
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
+
+# THE DEVOPS ROBOT (Watchtower)
+# DockerHub will be monitored every 60 seconds to automatically update auth-service
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 auth-service
 EOF
   , "\r", "")
 
@@ -180,7 +187,7 @@ resource "aws_instance" "catalog_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until dnf install -y docker; do
-  echo "Esperando a liberar el bloqueo de DNF..."
+  echo "Waiting to release DNF lock..."
   sleep 5
 done
 
@@ -213,6 +220,13 @@ cd /home/ec2-user
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
+
+# THE DEVOPS ROBOT (Watchtower)
+# DockerHub will be monitored every 60 seconds to automatically update catalog-service
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 catalog-service
 EOF
   , "\r", "")
 
@@ -280,10 +294,10 @@ resource "aws_instance" "frontend_server" {
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id]
 
-  user_data = replace(<<EOF
+user_data = replace(<<EOF
 #!/bin/bash
 until dnf install -y docker; do
-  echo "Esperando a liberar el bloqueo de DNF..."
+  echo "Waiting to release DNF lock..."
   sleep 5
 done
 
@@ -293,13 +307,15 @@ usermod -a -G docker ec2-user
 
 IMAGE_NAME="kachiliquingal/uce-frontend:${var.docker_image_tag}"
 
-# Bucle inteligente: Espera a que Github Actions termine de compilar e inyectar IPs
-until docker pull $IMAGE_NAME; do
-  echo "Esperando a que la imagen del frontend este disponible en DockerHub..."
-  sleep 15
-done
-
+# 1. Initially launch the frontend
 docker run -d -p 80:80 --name uce-frontend --restart always $IMAGE_NAME
+
+# 2. THE DEVOPS ROBOT (Watchtower)
+# DockerHub will monitor every 60 seconds and automatically update uce-frontend
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 uce-frontend
 EOF
   , "\r", "")
 
