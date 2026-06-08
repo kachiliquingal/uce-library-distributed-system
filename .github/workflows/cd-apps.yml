@@ -8,7 +8,7 @@ on:
       - ".github/workflows/cd-apps.yml"
 
 jobs:
-  build-and-push:
+  build-backends:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,11 +23,70 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push
+      - name: Build and Push Backends
         uses: docker/build-push-action@v4
         with:
           context: ./apps/${{ matrix.app }}
           push: true
           tags: |
             kachiliquingal/uce-${{ matrix.app }}:1.0.0-${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}
-            kachiliquingal/uce-${{ matrix.app }}:latest
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}
+      TF_VAR_docker_image_tag: "1.0.0-${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}"
+      AWS_REGION: "us-east-1"
+      TF_STATE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'uce-library-terraform-state-prod-kachiliquingal' || 'uce-library-terraform-state-kachiliquingal' }}
+      AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.QA_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_SECRET_ACCESS_KEY || secrets.QA_AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_SESSION_TOKEN || secrets.QA_AWS_SESSION_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform (Read-Only Mode)
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: false
+
+      - name: Terraform Init (Connect to S3 State)
+        run: |
+          cd terraform
+          terraform init -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" -backend-config="key=${{ env.TF_VAR_environment }}/terraform.tfstate"
+
+      - name: Extract IPs and inject them into the frontend
+        run: |
+          cd terraform
+          AUTH_IP=$(terraform output -raw public_ip | tr -d '[:space:]')
+          CATALOG_IP=$(terraform output -raw catalog_public_ip | tr -d '[:space:]')
+
+          if [ -z "$AUTH_IP" ] || [ -z "$CATALOG_IP" ]; then
+            echo "Error Crítico: Las IPs están vacías. Asegúrate de que deploy-infra.yml se haya ejecutado primero."
+            exit 1
+          fi
+
+          cd ..
+          echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
+          echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
+          echo "!.env.production" >> apps/frontend/.dockerignore
+
+          echo "=== VERIFICACIÓN DEL .env.production ==="
+          cat apps/frontend/.env.production
+          echo "========================================"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Upload Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apps/frontend
+          push: true
+          tags: |
+            kachiliquingal/uce-frontend:${{ env.TF_VAR_docker_image_tag }}
