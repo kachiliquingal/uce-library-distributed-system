@@ -31,7 +31,7 @@ data "aws_ami" "amazon_linux" {
 # MICROSERVICE 1: AUTH SERVICE
 # ==========================================
 resource "aws_security_group" "auth_sg" {
-  name        = "${var.environment}-auth-service-sg"
+  name_prefix = "${var.environment}-auth-service-sg-"
   description = "Allow inbound traffic for Auth Service ${upper(var.environment)}"
 
   ingress {
@@ -154,7 +154,7 @@ output "public_ip" {
 # MICROSERVICE 2: CATALOG SERVICE
 # ==========================================
 resource "aws_security_group" "catalog_sg" {
-  name        = "${var.environment}-catalog-service-sg"
+  name_prefix = "${var.environment}-catalog-service-sg-"
   description = "Allow inbound traffic for Catalog Service ${upper(var.environment)}"
 
   ingress {
@@ -273,7 +273,7 @@ output "catalog_public_ip" {
 # MICROSERVICE 3: FRONTEND SERVICE
 # ==========================================
 resource "aws_security_group" "frontend_sg" {
-  name        = "${var.environment}-frontend-service-sg"
+  name_prefix = "${var.environment}-frontend-service-sg-"
   description = "Allow inbound traffic for Frontend Service ${upper(var.environment)}"
 
   ingress {
