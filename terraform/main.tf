@@ -61,12 +61,15 @@ resource "aws_security_group" "auth_sg" {
     Name        = "${var.environment}-auth-service-sg"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "auth_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
@@ -124,6 +127,12 @@ EOF
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
   }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
 resource "aws_eip" "auth_eip" {
@@ -175,12 +184,15 @@ resource "aws_security_group" "catalog_sg" {
     Name        = "${var.environment}-catalog-service-sg"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "catalog_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id]
 
@@ -234,6 +246,12 @@ EOF
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
   }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
 resource "aws_eip" "catalog_eip" {
@@ -285,12 +303,15 @@ resource "aws_security_group" "frontend_sg" {
     Name        = "${var.environment}-frontend-service-sg"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "frontend_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t2.micro"
-  user_data_replace_on_change = true
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id]
 
@@ -322,6 +343,12 @@ EOF
   tags = {
     Name        = "${var.environment}-frontend-server"
     Environment = upper(var.environment)
+  }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
   }
 }
 

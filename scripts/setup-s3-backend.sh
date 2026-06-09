@@ -1,19 +1,30 @@
 #!/bin/bash
-# Script to auto-provision the Terraform bucket
-# Use the AWS account ID to make the bucket name globally unique
+# Script to auto-provision the Terraform S3 backend bucket.
+# Uses the TF_STATE_BUCKET env variable set by the workflow.
+# If not set, falls back to a name based on the AWS Account ID.
 
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="uce-tf-state-${AWS_ACCOUNT_ID}"
 REGION="us-east-1"
 
-echo "Verificando el bucket de estado de Terraform: $BUCKET_NAME"
-
-if aws s3 ls "s3://$BUCKET_NAME" 2>&1 | grep -q 'NoSuchBucket'; then
-  echo "El bucket no existe. Creando $BUCKET_NAME automáticamente..."
-  aws s3 mb s3://$BUCKET_NAME --region $REGION
+# Use the bucket name from the workflow environment if available
+if [ -z "$TF_STATE_BUCKET" ]; then
+  AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+  BUCKET_NAME="uce-tf-state-${AWS_ACCOUNT_ID}"
+  echo "TF_STATE_BUCKET=$BUCKET_NAME" >> $GITHUB_ENV
 else
-  echo "El bucket $BUCKET_NAME ya está aprovisionado y listo."
+  BUCKET_NAME="$TF_STATE_BUCKET"
 fi
 
-# Export the bucket name so that GitHub Actions can use it in `terraform init`
-echo "TF_STATE_BUCKET=$BUCKET_NAME" >> $GITHUB_ENV
+echo "Verifying Terraform state bucket: $BUCKET_NAME"
+
+if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+  echo "Bucket does not exist. Creating $BUCKET_NAME..."
+  aws s3 mb "s3://$BUCKET_NAME" --region "$REGION"
+
+  # Enable versioning for state file safety
+  aws s3api put-bucket-versioning \
+    --bucket "$BUCKET_NAME" \
+    --versioning-configuration Status=Enabled
+  echo "Versioning enabled on bucket $BUCKET_NAME."
+else
+  echo "Bucket $BUCKET_NAME is already provisioned and ready."
+fi
