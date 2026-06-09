@@ -22,5 +22,26 @@ jobs:
           rm package-lock.json
           npm install
 
-      - name: Turborepo Build (Cache Test)
+      - name: Turborepo Build
         run: npm run build
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      - name: Lint Check
+        run: npm run lint
+
+  validate-dockerfiles:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [auth-service, catalog-service, frontend]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate Dockerfile (${{ matrix.app }})
+        run: |
+          echo "Validating Dockerfile for ${{ matrix.app }}..."
+          docker build --file apps/${{ matrix.app }}/Dockerfile apps/${{ matrix.app }} --tag test-${{ matrix.app }}:ci
+          echo "✅ Dockerfile for ${{ matrix.app }} builds successfully"
