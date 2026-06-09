@@ -1,19 +1,20 @@
-# Stage 1: Build
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-# Stage 2: Production
+# 1. Use an official Node.js base image (lightweight 'alpine' version for better performance)
 FROM node:18-alpine
-WORKDIR /app
+
+# 2. Set the working directory inside the container
+WORKDIR /usr/src/app
+
+# 3. Copy only the dependency files (to leverage Docker's cache)
 COPY package*.json ./
-RUN npm install --omit=dev
-COPY --from=builder /app/dist ./dist
 
-USER node
+# 4. Install the pure dependencies
+RUN npm install
 
+# 5. Copy the rest of the source code of the microservice (respecting the .dockerignore)
+COPY . .
+
+# 6. Expose the port through which the service communicates
 EXPOSE 3001
-CMD ["node", "dist/index.js"]
+
+# 7. Command to run the application in TypeScript
+CMD ["npx", "ts-node", "src/index.ts"]

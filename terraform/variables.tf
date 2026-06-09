@@ -14,21 +14,3 @@ variable "docker_image_tag" {
   type        = string
   default     = "latest"
 }
-
-variable "db_password" {
-  description = "PostgreSQL password"
-  type        = string
-  sensitive   = true
-}
-
-variable "jwt_secret" {
-  description = "JWT Secret for Auth"
-  type        = string
-  sensitive   = true
-}
-
-variable "mongo_password" {
-  description = "MongoDB password"
-  type        = string
-  sensitive   = true
-}
