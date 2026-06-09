@@ -23,6 +23,7 @@ export const useCatalogStore = create((set) => ({
 
       set({ books: fetchedBooks, isLoading: false });
     } catch (error) {
+      console.error(error);
       set({
         error: "Error al conectar con el microservicio de catálogo",
         isLoading: false,
