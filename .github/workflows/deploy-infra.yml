@@ -35,11 +35,6 @@ jobs:
           terraform_version: 1.5.0
           terraform_wrapper: false
 
-      - name: Execute S3 Backend Setup Script
-        run: |
-          chmod +x ./scripts/setup-s3-backend.sh
-          ./scripts/setup-s3-backend.sh
-
       - name: Terraform Init
         run: |
           cd terraform

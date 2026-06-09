@@ -71,20 +71,12 @@ resource "aws_instance" "auth_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
-  sleep 5
-done
-
+until dnf install -y docker; do sleep 5; done
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
-
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
-
-systemctl restart docker
-sleep 5
 docker network create microservices-network || true
 
 cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
@@ -96,7 +88,7 @@ ${file("${path.module}/../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
 cat << 'ENVFILE' > /home/ec2-user/.env
-IMAGE_TAG=${var.docker_image_tag}
+IMAGE_TAG=1.0.0-qa
 DB_USER=admin
 DB_PASSWORD=${var.db_password}
 DB_HOST=postgres
@@ -110,18 +102,17 @@ cd /home/ec2-user
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
 
-# THE DEVOPS ROBOT (Watchtower)
-# DockerHub will be monitored every 60 seconds to automatically update auth-service
-docker run -d \
-  --name watchtower \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 auth-service
+docker run -d --name watchtower -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower -i 60 auth-service
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [ami, user_data]
   }
 }
 
@@ -184,20 +175,12 @@ resource "aws_instance" "catalog_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
-  sleep 5
-done
-
+until dnf install -y docker; do sleep 5; done
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
-
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
-
-systemctl restart docker
-sleep 5
 docker network create microservices-network || true
 
 cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
@@ -209,7 +192,7 @@ ${file("${path.module}/../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
 cat << 'ENVFILE' > /home/ec2-user/.env
-IMAGE_TAG=${var.docker_image_tag}
+IMAGE_TAG=1.0.0-qa
 MONGO_PASSWORD=${var.mongo_password}
 MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
 ENVFILE
@@ -219,18 +202,17 @@ cd /home/ec2-user
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
 
-# THE DEVOPS ROBOT (Watchtower)
-# DockerHub will be monitored every 60 seconds to automatically update catalog-service
-docker run -d \
-  --name watchtower \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 catalog-service
+docker run -d --name watchtower -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower -i 60 catalog-service
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [ami, user_data]
   }
 }
 
@@ -291,34 +273,26 @@ resource "aws_instance" "frontend_server" {
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id]
 
-  user_data = replace(<<EOF
+user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
-  sleep 5
-done
-
+until dnf install -y docker; do sleep 5; done
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ec2-user
 
-IMAGE_NAME="kachiliquingal/uce-frontend:${var.docker_image_tag}"
+docker run -d -p 80:80 --name uce-frontend --restart always kachiliquingal/uce-frontend:1.0.0-qa
 
-# 1. Initially launch the frontend
-docker run -d -p 80:80 --name uce-frontend --restart always $IMAGE_NAME
-
-# 2. THE DEVOPS ROBOT (Watchtower)
-# DockerHub will monitor every 60 seconds and automatically update uce-frontend
-docker run -d \
-  --name watchtower \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 uce-frontend
+docker run -d --name watchtower -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower -i 60 uce-frontend
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-frontend-server"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [ami, user_data]
   }
 }
 

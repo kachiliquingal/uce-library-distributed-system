@@ -71,7 +71,6 @@ jobs:
           cd ..
           echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
           echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
-          echo "!.env.production" >> apps/frontend/.dockerignore
 
           echo "=== VERIFICACIÓN DEL .env.production ==="
           cat apps/frontend/.env.production
