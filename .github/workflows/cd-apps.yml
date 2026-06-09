@@ -65,8 +65,11 @@ jobs:
           AUTH_IP=$(terraform output -raw public_ip | tr -d '[:space:]')
           CATALOG_IP=$(terraform output -raw catalog_public_ip | tr -d '[:space:]')
 
-          if [ -z "$AUTH_IP" ] || [ -z "$CATALOG_IP" ]; then
-            echo "Critical Error: IPs are empty. Make sure deploy-infra.yml has been executed first."
+          # Validate that IPs are not empty and don't contain Terraform warnings
+          if [ -z "$AUTH_IP" ] || [ -z "$CATALOG_IP" ] || [[ "$AUTH_IP" == *"Warning"* ]] || [[ "$CATALOG_IP" == *"Warning"* ]]; then
+            echo "Critical Error: IPs are empty or contain warnings. This means Terraform state is empty or missing."
+            echo "AUTH_IP: $AUTH_IP"
+            echo "CATALOG_IP: $CATALOG_IP"
             exit 1
           fi
 
