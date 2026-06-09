@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  auth-service:
+    image: kachiliquingal/uce-auth-service:${IMAGE_TAG}
+    restart: always
+    command: sh -c "sleep 15 && node dist/index.js"
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - microservices-network
+
+  catalog-service:
+    image: kachiliquingal/uce-catalog-service:${IMAGE_TAG}
+    restart: always
+    command: sh -c "sleep 15 && node dist/index.js"
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=${MONGO_URI}
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    external: true

@@ -2,11 +2,21 @@
   "name": "uce-library-distributed-system",
   "version": "1.0.0",
   "description": "Library Book Loan Management System - Microservices Architecture",
+  "packageManager": "npm@10.9.3",
   "private": true,
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
   "author": "Alejandro Chiliquinga",
   "license": "ISC"
 }

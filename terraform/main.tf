@@ -1,8 +1,6 @@
 # 1. Terraform Configuration and Remote State (S3)
 terraform {
   backend "s3" {
-    # The bucket and key are dynamically injected via CLI in GitHub Actions
-    # to support multiple AWS Academy accounts.
     region = "us-east-1"
   }
   required_providers {
@@ -32,10 +30,8 @@ data "aws_ami" "amazon_linux" {
 # ==========================================
 # MICROSERVICE 1: AUTH SERVICE
 # ==========================================
-
-# 1.1. Security Group to allow traffic
 resource "aws_security_group" "auth_sg" {
-  name        = "${var.environment}-auth-service-sg"
+  name_prefix = "${var.environment}-auth-service-sg-"
   description = "Allow inbound traffic for Auth Service ${upper(var.environment)}"
 
   ingress {
@@ -65,81 +61,80 @@ resource "aws_security_group" "auth_sg" {
     Name        = "${var.environment}-auth-service-sg"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-# 1.2. EC2 Instance Provisioning with Docker Compose
 resource "aws_instance" "auth_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
-  # User Data Script: Install Docker, standalone docker-compose, and run the stack
-  user_data = <<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl start docker
-              systemctl enable docker
-              
-              # Install Docker Compose standalone binary
-              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Waiting to release DNF lock..."
+  sleep 5
+done
 
-              # Create Docker Compose file dynamically
-              cat << 'COMPOSE' > /home/ec2-user/docker-compose.yml
-              version: '3.8'
-              
-              services:
-                postgres:
-                  image: postgres:15-alpine
-                  environment:
-                    POSTGRES_USER: admin
-                    POSTGRES_PASSWORD: adminpassword
-                    POSTGRES_DB: auth_db
-                  ports:
-                    - "5432:5432"
-                  volumes:
-                    - postgres_data:/var/lib/postgresql/data
-                
-                redis:
-                  image: redis:7-alpine
-                  ports:
-                    - "6379:6379"
-                
-                auth-service:
-                  image: kachiliquingal/uce-auth-service:${var.docker_image_tag}
-                  ports:
-                    - "3001:3001"
-                  environment:
-                    - PORT=3001
-                    - DB_USER=admin
-                    - DB_PASSWORD=adminpassword
-                    - DB_HOST=postgres
-                    - DB_PORT=5432
-                    - DB_NAME=auth_db
-                    - REDIS_URL=redis://redis:6379
-                    - JWT_SECRET=super_secret_key_for_jwt_auth_uce
-                  depends_on:
-                    - postgres
-                    - redis
-              
-              volumes:
-                postgres_data:
-              COMPOSE
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
 
-              # Run the stack using the explicit binary path
-              cd /home/ec2-user
-              /usr/local/bin/docker-compose up -d
-              EOF
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+${file("${path.module}/../deploy/docker-compose.db.yml")}
+DBCOMPOSE
+
+cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+${file("${path.module}/../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << 'ENVFILE' > /home/ec2-user/.env
+IMAGE_TAG=${var.docker_image_tag}
+DB_USER=admin
+DB_PASSWORD=${var.db_password}
+DB_HOST=postgres
+DB_NAME=auth_db
+REDIS_URL=redis://redis:6379
+JWT_SECRET=${var.jwt_secret}
+ENVFILE
+
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
+sleep 20
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
+
+# THE DEVOPS ROBOT (Watchtower)
+# DockerHub will be monitored every 60 seconds to automatically update auth-service
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 auth-service
+EOF
+  , "\r", "")
 
   tags = {
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
   }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
-# 1.3. Elastic IP Assignment
 resource "aws_eip" "auth_eip" {
   instance = aws_instance.auth_server.id
   domain   = "vpc"
@@ -150,20 +145,16 @@ resource "aws_eip" "auth_eip" {
   }
 }
 
-# 1.4. Output the Elastic IP to easily access the service
 output "public_ip" {
   description = "The Elastic Public IP address of the Auth Server"
   value       = aws_eip.auth_eip.public_ip
 }
 
-
 # ==========================================
 # MICROSERVICE 2: CATALOG SERVICE
 # ==========================================
-
-# 2.1. Security Group for Catalog Service
 resource "aws_security_group" "catalog_sg" {
-  name        = "${var.environment}-catalog-service-sg"
+  name_prefix = "${var.environment}-catalog-service-sg-"
   description = "Allow inbound traffic for Catalog Service ${upper(var.environment)}"
 
   ingress {
@@ -193,62 +184,76 @@ resource "aws_security_group" "catalog_sg" {
     Name        = "${var.environment}-catalog-service-sg"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-# 2.2. EC2 Instance Provisioning for Catalog Service
 resource "aws_instance" "catalog_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl start docker
-              systemctl enable docker
-              
-              # Install Docker Compose standalone binary
-              curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Waiting to release DNF lock..."
+  sleep 5
+done
 
-              # Create Docker Compose file dynamically for Catalog
-              cat << 'COMPOSE' > /home/ec2-user/docker-compose.yml
-              version: '3.8'
-              
-              services:
-                catalog-mongo:
-                  image: mongo:latest
-                  environment:
-                    MONGO_INITDB_ROOT_USERNAME: admin
-                    MONGO_INITDB_ROOT_PASSWORD: adminpassword
-                  ports:
-                    - "27017:27017"
-                
-                catalog-service:
-                  image: kachiliquingal/uce-catalog-service:${var.docker_image_tag}-${var.environment}
-                  ports:
-                    - "3002:3002"
-                  environment:
-                    - PORT=3002
-                    - MONGO_URI=mongodb://admin:adminpassword@catalog-mongo:27017/catalog_db?authSource=admin
-                  depends_on:
-                    - catalog-mongo
-              COMPOSE
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
 
-              # Run the catalog stack
-              cd /home/ec2-user
-              /usr/local/bin/docker-compose up -d
-              EOF
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+${file("${path.module}/../deploy/docker-compose.db.yml")}
+DBCOMPOSE
+
+cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+${file("${path.module}/../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << 'ENVFILE' > /home/ec2-user/.env
+IMAGE_TAG=${var.docker_image_tag}
+MONGO_PASSWORD=${var.mongo_password}
+MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+ENVFILE
+
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
+sleep 20
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
+
+# THE DEVOPS ROBOT (Watchtower)
+# DockerHub will be monitored every 60 seconds to automatically update catalog-service
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 catalog-service
+EOF
+  , "\r", "")
 
   tags = {
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
   }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
-# 2.3. Elastic IP for Catalog Service
 resource "aws_eip" "catalog_eip" {
   instance = aws_instance.catalog_server.id
   domain   = "vpc"
@@ -259,8 +264,105 @@ resource "aws_eip" "catalog_eip" {
   }
 }
 
-# 2.4. Output the Catalog Service IP
 output "catalog_public_ip" {
   description = "The Elastic Public IP address of the Catalog Server"
   value       = aws_eip.catalog_eip.public_ip
+}
+
+# ==========================================
+# MICROSERVICE 3: FRONTEND SERVICE
+# ==========================================
+resource "aws_security_group" "frontend_sg" {
+  name_prefix = "${var.environment}-frontend-service-sg-"
+  description = "Allow inbound traffic for Frontend Service ${upper(var.environment)}"
+
+  ingress {
+    description = "Allow HTTP web traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow SSH administration"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-frontend-service-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_instance" "frontend_server" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+
+  vpc_security_group_ids = [aws_security_group.frontend_sg.id]
+
+user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Waiting to release DNF lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
+
+IMAGE_NAME="kachiliquingal/uce-frontend:${var.docker_image_tag}"
+
+# 1. Initially launch the frontend
+docker run -d -p 80:80 --name uce-frontend --restart always $IMAGE_NAME
+
+# 2. THE DEVOPS ROBOT (Watchtower)
+# DockerHub will monitor every 60 seconds and automatically update uce-frontend
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 uce-frontend
+EOF
+  , "\r", "")
+
+  tags = {
+    Name        = "${var.environment}-frontend-server"
+    Environment = upper(var.environment)
+  }
+
+  # Prevent instance destruction when user_data or AMI changes.
+  # Watchtower handles Docker image updates automatically.
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
+}
+
+resource "aws_eip" "frontend_eip" {
+  instance = aws_instance.frontend_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name        = "${var.environment}-frontend-service-eip"
+    Environment = upper(var.environment)
+  }
+}
+
+output "frontend_public_ip" {
+  description = "The Elastic Public IP address of the Frontend Server"
+  value       = aws_eip.frontend_eip.public_ip
 }
