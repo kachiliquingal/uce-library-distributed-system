@@ -1,5 +1,5 @@
 # ==============================================================================
-# QA Environment - Elastic IPs
+# Production Environment - Elastic IPs
 # ==============================================================================
 
 resource "aws_eip" "api_gateway_eip" {

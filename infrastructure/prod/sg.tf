@@ -3,19 +3,60 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# Application Load Balancer Security Group
+# API Gateway & Bastion Security Group (Public)
 # ------------------------------------------------------------------------------
-resource "aws_security_group" "alb_sg" {
-  name_prefix = "${var.environment}-alb-sg-"
-  description = "Allow inbound HTTP traffic to the ALB ${upper(var.environment)}"
+resource "aws_security_group" "api_gateway_sg" {
+  name_prefix = "${var.environment}-api-gateway-sg-"
+  description = "Allow inbound HTTP and SSH traffic to API Gateway / Bastion"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "Allow HTTP traffic from the internet"
+    description = "Allow HTTP web traffic from the internet"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow SSH administration from the internet"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-api-gateway-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ------------------------------------------------------------------------------
+# Application Load Balancer Security Group (Internal)
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "alb_sg" {
+  name_prefix = "${var.environment}-alb-sg-"
+  description = "Allow inbound HTTP traffic to the ALB ONLY from API Gateway"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    description     = "Allow HTTP traffic from API Gateway"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   egress {
@@ -36,11 +77,11 @@ resource "aws_security_group" "alb_sg" {
 }
 
 # ------------------------------------------------------------------------------
-# Auth Service Security Group (Traffic from ALB only)
+# Auth Service Security Group (Internal only)
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "auth_sg" {
   name_prefix = "${var.environment}-auth-service-sg-"
-  description = "Allow traffic from ALB to Auth Service ${upper(var.environment)}"
+  description = "Allow traffic from ALB (HTTP) and Bastion (SSH) to Auth Service"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -52,11 +93,11 @@ resource "aws_security_group" "auth_sg" {
   }
 
   ingress {
-    description = "Allow SSH administration"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   egress {
@@ -77,11 +118,11 @@ resource "aws_security_group" "auth_sg" {
 }
 
 # ------------------------------------------------------------------------------
-# Catalog Service Security Group (Traffic from ALB only)
+# Catalog Service Security Group (Internal only)
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "catalog_sg" {
   name_prefix = "${var.environment}-catalog-service-sg-"
-  description = "Allow traffic from ALB to Catalog Service ${upper(var.environment)}"
+  description = "Allow traffic from ALB (HTTP) and Bastion (SSH) to Catalog Service"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -93,11 +134,11 @@ resource "aws_security_group" "catalog_sg" {
   }
 
   ingress {
-    description = "Allow SSH administration"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   egress {
@@ -118,11 +159,11 @@ resource "aws_security_group" "catalog_sg" {
 }
 
 # ------------------------------------------------------------------------------
-# Frontend Service Security Group (Traffic from ALB only)
+# Frontend Service Security Group (Internal only)
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "frontend_sg" {
   name_prefix = "${var.environment}-frontend-service-sg-"
-  description = "Allow traffic from ALB to Frontend Service ${upper(var.environment)}"
+  description = "Allow traffic from ALB (HTTP) and Bastion (SSH) to Frontend Service"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -134,11 +175,11 @@ resource "aws_security_group" "frontend_sg" {
   }
 
   ingress {
-    description = "Allow SSH administration"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   egress {

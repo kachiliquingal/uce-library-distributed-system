@@ -2,22 +2,12 @@
 # Production Environment - Outputs
 # ==============================================================================
 
-output "alb_dns_name" {
-  description = "The DNS name of the Application Load Balancer"
-  value       = aws_lb.main.dns_name
+output "api_gateway_public_ip" {
+  description = "The Elastic Public IP address of the API Gateway / Bastion. Give this to the engineer."
+  value       = aws_eip.api_gateway_eip.public_ip
 }
 
-output "auth_public_ip" {
-  description = "The ALB DNS name (auth service is behind the ALB in production)"
-  value       = aws_lb.main.dns_name
-}
-
-output "catalog_public_ip" {
-  description = "The ALB DNS name (catalog service is behind the ALB in production)"
-  value       = aws_lb.main.dns_name
-}
-
-output "frontend_public_ip" {
-  description = "The ALB DNS name (frontend is behind the ALB in production)"
+output "internal_alb_dns_name" {
+  description = "The internal DNS name of the ALB (for debugging purposes)"
   value       = aws_lb.main.dns_name
 }

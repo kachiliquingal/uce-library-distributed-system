@@ -61,7 +61,5 @@ jobs:
         run: |
           cd ${{ env.TF_WORK_DIR }}
           echo "=== Infrastructure Outputs ==="
-          echo "Auth Service IP: $(terraform output -raw auth_public_ip)"
-          echo "Catalog Service IP: $(terraform output -raw catalog_public_ip)"
-          echo "Frontend IP: $(terraform output -raw frontend_public_ip)"
+          echo "API Gateway / Bastion IP: $(terraform output -raw api_gateway_public_ip)"
           echo "==============================="
