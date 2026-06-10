@@ -66,6 +66,10 @@ EOF
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
 # ------------------------------------------------------------------------------
@@ -128,6 +132,10 @@ EOF
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
   }
+
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
 }
 
 # ------------------------------------------------------------------------------
@@ -168,6 +176,10 @@ EOF
   tags = {
     Name        = "${var.environment}-frontend-server"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [user_data, ami]
   }
 }
 
