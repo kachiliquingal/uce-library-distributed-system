@@ -38,6 +38,8 @@ jobs:
     env:
       TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}
       TF_VAR_docker_image_tag: "1.0.0-${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}"
+      TF_WORK_DIR: ${{ github.ref == 'refs/heads/main' && 'infrastructure/prod' || 'infrastructure/qa' }}
+      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
       AWS_REGION: "us-east-1"
       TF_STATE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'uce-library-terraform-state-prod-kachiliquingal' || 'uce-library-terraform-state-kachiliquingal' }}
       AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.QA_AWS_ACCESS_KEY_ID }}
@@ -56,31 +58,44 @@ jobs:
 
       - name: Terraform Init (Connect to S3 State)
         run: |
-          cd terraform
+          cd ${{ env.TF_WORK_DIR }}
           terraform init -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" -backend-config="key=${{ env.TF_VAR_environment }}/terraform.tfstate"
 
       - name: Extract IPs and inject into frontend
         run: |
-          cd terraform
-          AUTH_IP=$(terraform output -raw public_ip | tr -d '[:space:]')
-          CATALOG_IP=$(terraform output -raw catalog_public_ip | tr -d '[:space:]')
+          cd ${{ env.TF_WORK_DIR }}
 
-          # Validate that IPs are not empty and don't contain Terraform warnings
-          if [ -z "$AUTH_IP" ] || [ -z "$CATALOG_IP" ] || [[ "$AUTH_IP" == *"Warning"* ]] || [[ "$CATALOG_IP" == *"Warning"* ]]; then
-            echo "Critical Error: IPs are empty or contain warnings. This means Terraform state is empty or missing."
-            echo "AUTH_IP: $AUTH_IP"
-            echo "CATALOG_IP: $CATALOG_IP"
-            exit 1
+          if [ "${{ env.IS_PROD }}" = "true" ]; then
+            # In production, all services are behind the ALB
+            ALB_DNS=$(terraform output -raw alb_dns_name | tr -d '[:space:]')
+
+            if [ -z "$ALB_DNS" ] || [[ "$ALB_DNS" == *"Warning"* ]]; then
+              echo "Critical Error: ALB DNS is empty or contains warnings."
+              echo "ALB_DNS: $ALB_DNS"
+              exit 1
+            fi
+
+            # Frontend uses relative paths via ALB routing
+            echo "VITE_AUTH_API_URL=http://$ALB_DNS/api/auth" > ../../apps/frontend/.env.production
+            echo "VITE_CATALOG_API_URL=http://$ALB_DNS/api/catalog" >> ../../apps/frontend/.env.production
+          else
+            # In QA, each service has its own Elastic IP
+            AUTH_IP=$(terraform output -raw auth_public_ip | tr -d '[:space:]')
+            CATALOG_IP=$(terraform output -raw catalog_public_ip | tr -d '[:space:]')
+
+            if [ -z "$AUTH_IP" ] || [ -z "$CATALOG_IP" ] || [[ "$AUTH_IP" == *"Warning"* ]] || [[ "$CATALOG_IP" == *"Warning"* ]]; then
+              echo "Critical Error: IPs are empty or contain warnings."
+              echo "AUTH_IP: $AUTH_IP"
+              echo "CATALOG_IP: $CATALOG_IP"
+              exit 1
+            fi
+
+            echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > ../../apps/frontend/.env.production
+            echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> ../../apps/frontend/.env.production
           fi
 
-          cd ..
-
-          # Generate .env.production with the correct backend API URLs
-          echo "VITE_AUTH_API_URL=http://$AUTH_IP:3001/api/auth" > apps/frontend/.env.production
-          echo "VITE_CATALOG_API_URL=http://$CATALOG_IP:3002/api/catalog" >> apps/frontend/.env.production
-
           echo "=== .env.production Verification ==="
-          cat apps/frontend/.env.production
+          cat ../../apps/frontend/.env.production
           echo "====================================="
 
       - name: Login to Docker Hub
