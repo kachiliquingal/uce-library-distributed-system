@@ -1,12 +1,17 @@
-variable "environment" {
-  description = "The deployment environment (qa or prod)"
-  type        = string
-}
+# ==============================================================================
+# QA Environment - Variables
+# ==============================================================================
 
 variable "aws_region" {
   description = "The AWS region to deploy into"
   type        = string
   default     = "us-east-1"
+}
+
+variable "environment" {
+  description = "The deployment environment"
+  type        = string
+  default     = "qa"
 }
 
 variable "docker_image_tag" {
@@ -16,19 +21,19 @@ variable "docker_image_tag" {
 }
 
 variable "db_password" {
-  description = "PostgreSQL password"
+  description = "PostgreSQL password for Auth Service"
   type        = string
   sensitive   = true
 }
 
 variable "jwt_secret" {
-  description = "JWT Secret for Auth"
+  description = "JWT Secret for Auth Service token signing"
   type        = string
   sensitive   = true
 }
 
 variable "mongo_password" {
-  description = "MongoDB password"
+  description = "MongoDB password for Catalog Service"
   type        = string
   sensitive   = true
 }
