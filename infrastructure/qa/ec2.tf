@@ -57,16 +57,14 @@ docker run -d \
   --name watchtower \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 auth-service
+
+# Force recreation v2
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [user_data, ami]
   }
 }
 
@@ -121,16 +119,14 @@ docker run -d \
   --name watchtower \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 catalog-service
+
+# Force recreation v2
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [user_data, ami]
   }
 }
 
@@ -164,16 +160,14 @@ docker run -d \
   --name watchtower \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-frontend
+
+# Force recreation v2
 EOF
   , "\r", "")
 
   tags = {
     Name        = "${var.environment}-frontend-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [user_data, ami]
   }
 }
 
