@@ -8,6 +8,7 @@
 resource "aws_instance" "auth_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id]
 
@@ -78,6 +79,7 @@ EOF
 resource "aws_instance" "catalog_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id]
 
@@ -144,6 +146,7 @@ EOF
 resource "aws_instance" "frontend_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id]
 
@@ -189,6 +192,7 @@ EOF
 resource "aws_instance" "api_gateway_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.api_gateway_sg.id]
 
@@ -236,6 +240,7 @@ EOF
 resource "aws_instance" "brokers_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.brokers_sg.id]
 
