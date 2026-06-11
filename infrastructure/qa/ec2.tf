@@ -239,7 +239,7 @@ EOF
 # ------------------------------------------------------------------------------
 resource "aws_instance" "brokers_server" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t3.micro"
+  instance_type = "t3.small"
   key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.brokers_sg.id]
