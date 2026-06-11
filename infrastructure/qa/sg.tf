@@ -161,3 +161,48 @@ resource "aws_security_group" "frontend_sg" {
     create_before_destroy = true
   }
 }
+
+# ------------------------------------------------------------------------------
+# Brokers Security Group (Internal only)
+# ------------------------------------------------------------------------------
+
+data "aws_vpc" "default" {
+  default = true
+}
+
+resource "aws_security_group" "brokers_sg" {
+  name_prefix = "${var.environment}-brokers-sg-"
+  description = "Allow inbound traffic for Brokers from internal network"
+
+  ingress {
+    description = "Allow internal traffic to all broker ports from VPC"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.default.cidr_block]
+  }
+
+  ingress {
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-brokers-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}

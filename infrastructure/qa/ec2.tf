@@ -229,3 +229,63 @@ EOF
     ignore_changes = [user_data, ami]
   }
 }
+
+# ------------------------------------------------------------------------------
+# Brokers & n8n Server (INFRA-02)
+# ------------------------------------------------------------------------------
+resource "aws_instance" "brokers_server" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t3.micro"
+
+  vpc_security_group_ids = [aws_security_group.brokers_sg.id]
+
+  user_data = replace(<<EOF
+#!/bin/bash
+until dnf install -y docker; do
+  echo "Waiting to release DNF lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
+
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create brokers-network || true
+
+cat << 'BROKERSCOMPOSE' > /home/ec2-user/docker-compose.brokers.yml
+${file("${path.module}/../../deploy/docker-compose.brokers.yml")}
+BROKERSCOMPOSE
+
+cat << 'MQTTCONF' > /home/ec2-user/mosquitto.conf
+${file("${path.module}/../../deploy/mosquitto.conf")}
+MQTTCONF
+
+cat << 'ENVFILE' > /home/ec2-user/.env
+HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+RABBITMQ_PASSWORD=admin123
+ENVFILE
+
+# Create n8n data directory and fix permissions
+mkdir -p /home/ec2-user/.n8n
+chown -R 1000:1000 /home/ec2-user/.n8n
+
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.brokers.yml --env-file .env up -d
+EOF
+  , "\r", "")
+
+  tags = {
+    Name        = "${var.environment}-brokers-server"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [user_data, ami]
+  }
+}
+

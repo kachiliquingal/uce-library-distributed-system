@@ -3,6 +3,11 @@
 # ==============================================================================
 
 output "api_gateway_public_ip" {
-  description = "The Elastic Public IP address of the API Gateway / Bastion. Give this to the engineer."
+  description = "The public Elastic IP of the API Gateway / Bastion Host"
   value       = aws_eip.api_gateway_eip.public_ip
+}
+
+output "brokers_private_ip" {
+  description = "The private IP of the Brokers (Kafka, RabbitMQ, MQTT) Server"
+  value       = aws_instance.brokers_server.private_ip
 }
