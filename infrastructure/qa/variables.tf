@@ -37,3 +37,9 @@ variable "mongo_password" {
   type        = string
   sensitive   = true
 }
+
+variable "aws_key_name" {
+  description = "The SSH key pair name for EC2 instances"
+  type        = string
+  default     = "vockey" # Default name for AWS Educate
+}
