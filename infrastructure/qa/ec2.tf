@@ -244,6 +244,11 @@ resource "aws_instance" "brokers_server" {
 
   vpc_security_group_ids = [aws_security_group.brokers_sg.id]
 
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
   user_data = replace(<<EOF
 #!/bin/bash
 until dnf install -y docker; do
