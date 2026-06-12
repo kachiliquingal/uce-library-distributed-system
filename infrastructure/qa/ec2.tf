@@ -277,14 +277,6 @@ cat << 'MQTTCONF' > /home/ec2-user/mosquitto.conf
 ${file("${path.module}/../../deploy/mosquitto.conf")}
 MQTTCONF
 
-cat << 'RMQCONF' > /home/ec2-user/rabbitmq.conf
-${file("${path.module}/../../deploy/rabbitmq.conf")}
-RMQCONF
-
-cat << 'RMQDEF' > /home/ec2-user/rabbitmq_definitions.json
-${file("${path.module}/../../deploy/rabbitmq_definitions.json")}
-RMQDEF
-
 cat << 'ENVFILE' > /home/ec2-user/.env
 HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 RABBITMQ_PASSWORD=admin123
@@ -302,6 +294,10 @@ EOF
   tags = {
     Name        = "${var.environment}-brokers-server"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [user_data, ami]
   }
 }
 
