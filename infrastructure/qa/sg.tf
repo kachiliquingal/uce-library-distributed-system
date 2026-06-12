@@ -163,23 +163,75 @@ resource "aws_security_group" "frontend_sg" {
 }
 
 # ------------------------------------------------------------------------------
+# Internal Services Shared Security Group
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "internal_services_sg" {
+  name_prefix = "${var.environment}-internal-services-sg-"
+  description = "Shared SG for internal microservices communication (Membership Tag)"
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-internal-services-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ------------------------------------------------------------------------------
 # Brokers Security Group (Internal only)
 # ------------------------------------------------------------------------------
-
-data "aws_vpc" "default" {
-  default = true
-}
 
 resource "aws_security_group" "brokers_sg" {
   name_prefix = "${var.environment}-brokers-sg-"
   description = "Allow inbound traffic for Brokers from internal network"
 
   ingress {
-    description = "Allow internal traffic to all broker ports from VPC"
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.default.cidr_block]
+    description     = "Kafka from Internal Services & API Gateway"
+    from_port       = 9092
+    to_port         = 9092
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "RabbitMQ AMQP from Internal Services & API Gateway"
+    from_port       = 5672
+    to_port         = 5672
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "RabbitMQ management UI from API Gateway"
+    from_port       = 15672
+    to_port         = 15672
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "MQTT from Internal Services & API Gateway"
+    from_port       = 1883
+    to_port         = 1883
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "n8n UI from API Gateway"
+    from_port       = 5678
+    to_port         = 5678
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
   }
 
   ingress {
