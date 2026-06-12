@@ -40,7 +40,7 @@ APPCOMPOSE
 
 cat << 'ENVFILE' > /home/ec2-user/.env
 IMAGE_TAG=${var.docker_image_tag}
-DB_USER=admin
+DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
 DB_HOST=postgres
 DB_NAME=auth_db
@@ -63,13 +63,11 @@ docker run -d \
 EOF
   , "\r", "")
 
+  user_data_replace_on_change = true
+
   tags = {
     Name        = "${var.environment}-auth-service-instance"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [ami]
   }
 }
 
@@ -130,13 +128,11 @@ docker run -d \
 EOF
   , "\r", "")
 
+  user_data_replace_on_change = true
+
   tags = {
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [ami]
   }
 }
 
@@ -176,13 +172,11 @@ docker run -d \
 EOF
   , "\r", "")
 
+  user_data_replace_on_change = true
+
   tags = {
     Name        = "${var.environment}-frontend-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [ami]
   }
 }
 
@@ -224,13 +218,11 @@ docker run -d \
 EOF
   , "\r", "")
 
+  user_data_replace_on_change = true
+
   tags = {
     Name        = "${var.environment}-api-gateway-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [ami]
   }
 }
 
@@ -292,7 +284,7 @@ RMQDEF
 
 cat << ENVFILE > /home/ec2-user/.env
 HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-RABBITMQ_PASSWORD=admin123
+RABBITMQ_PASSWORD=${var.rabbitmq_password}
 ENVFILE
 
 # Create n8n data directory and fix permissions
@@ -304,13 +296,11 @@ cd /home/ec2-user
 EOF
   , "\r", "")
 
+  user_data_replace_on_change = true
+
   tags = {
     Name        = "${var.environment}-brokers-server"
     Environment = upper(var.environment)
-  }
-
-  lifecycle {
-    ignore_changes = [ami]
   }
 }
 
