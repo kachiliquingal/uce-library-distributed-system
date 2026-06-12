@@ -274,16 +274,8 @@ cat << 'MQTTCONF' > /home/ec2-user/mosquitto.conf
 ${file("${path.module}/../../deploy/mosquitto.conf")}
 MQTTCONF
 
-cat << 'RMQCONF' > /home/ec2-user/rabbitmq.conf
-${file("${path.module}/../../deploy/rabbitmq.conf")}
-RMQCONF
-
-cat << 'RMQDEF' > /home/ec2-user/rabbitmq_definitions.json
-${file("${path.module}/../../deploy/rabbitmq_definitions.json")}
-RMQDEF
-
 cat << ENVFILE > /home/ec2-user/.env
-HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+HOST_IP=$(hostname -I | awk '{print $1}')
 RABBITMQ_PASSWORD=${var.rabbitmq_password}
 ENVFILE
 

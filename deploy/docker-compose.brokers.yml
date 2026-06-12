@@ -39,12 +39,35 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin123}
     volumes:
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
+      - rabbitmq-data:/var/lib/rabbitmq
     restart: unless-stopped
     networks:
       - brokers-network
 
+  rabbitmq-init:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq-init
+    depends_on:
+      - rabbitmq
+    networks:
+      - brokers-network
+    entrypoint: [ '/bin/bash', '-c' ]
+    command: |
+      "
+      echo 'Waiting for RabbitMQ to be ready...'
+      sleep 15
+      echo 'Creating RabbitMQ Definitions...'
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare exchange name=library.dlx type=direct durable=true
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare queue name=fine.trigger.dlq durable=true
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare queue name=fine.trigger durable=true arguments='{\"x-dead-letter-exchange\":\"library.dlx\",\"x-dead-letter-routing-key\":\"fine.trigger.dlq\"}'
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare binding source=library.dlx destination=fine.trigger.dlq routing_key=fine.trigger.dlq
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare queue name=notifications durable=true
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare queue name=book.reservations durable=true
+      rabbitmqadmin -H rabbitmq -u admin -p $${RABBITMQ_DEFAULT_PASS} declare queue name=user.activity durable=true
+      echo 'Successfully created all RabbitMQ definitions!'
+      "
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin123}
   kafka-init:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka-init
