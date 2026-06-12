@@ -14,6 +14,24 @@ resource "aws_instance" "auth_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
+# Wait for EBS volume to attach
+echo "Waiting for EBS volume /dev/xvdf to attach..."
+while [ ! -b /dev/xvdf ]; do
+  sleep 5
+done
+
+echo "Formatting EBS volume if necessary..."
+if ! file -s /dev/xvdf | grep -q 'ext4'; then
+  mkfs.ext4 /dev/xvdf
+fi
+
+mkdir -p /data
+mount /dev/xvdf /data
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
+
+mkdir -p /data/postgres
+chmod 777 /data/postgres
+
 until dnf install -y docker; do
   echo "Waiting to release DNF lock..."
   sleep 5
@@ -71,6 +89,23 @@ EOF
   }
 }
 
+resource "aws_ebs_volume" "auth_db_vol" {
+  availability_zone = aws_instance.auth_server.availability_zone
+  size              = 10
+  type              = "gp3"
+
+  tags = {
+    Name        = "${var.environment}-auth-db-vol"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_volume_attachment" "auth_db_att" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.auth_db_vol.id
+  instance_id = aws_instance.auth_server.id
+}
+
 # ------------------------------------------------------------------------------
 # Catalog Service Instance
 # ------------------------------------------------------------------------------
@@ -83,6 +118,24 @@ resource "aws_instance" "catalog_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
+# Wait for EBS volume to attach
+echo "Waiting for EBS volume /dev/xvdf to attach..."
+while [ ! -b /dev/xvdf ]; do
+  sleep 5
+done
+
+echo "Formatting EBS volume if necessary..."
+if ! file -s /dev/xvdf | grep -q 'ext4'; then
+  mkfs.ext4 /dev/xvdf
+fi
+
+mkdir -p /data
+mount /dev/xvdf /data
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
+
+mkdir -p /data/mongo
+chmod 777 /data/mongo
+
 until dnf install -y docker; do
   echo "Waiting to release DNF lock..."
   sleep 5
@@ -134,6 +187,23 @@ EOF
     Name        = "${var.environment}-catalog-server"
     Environment = upper(var.environment)
   }
+}
+
+resource "aws_ebs_volume" "catalog_db_vol" {
+  availability_zone = aws_instance.catalog_server.availability_zone
+  size              = 10
+  type              = "gp3"
+
+  tags = {
+    Name        = "${var.environment}-catalog-db-vol"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_volume_attachment" "catalog_db_att" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.catalog_db_vol.id
+  instance_id = aws_instance.catalog_server.id
 }
 
 # ------------------------------------------------------------------------------
