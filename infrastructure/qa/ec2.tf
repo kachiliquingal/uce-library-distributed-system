@@ -198,7 +198,7 @@ resource "aws_instance" "api_gateway_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
+until dnf install -y docker telnet; do
   echo "Waiting to release DNF lock..."
   sleep 5
 done
