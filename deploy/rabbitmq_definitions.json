@@ -1,0 +1,117 @@
+{
+  "rabbit_version": "3.12",
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "2N85V8j3r8a/5v8H8rD6B9K1q4X7N3T8y5P6Q2G4v6M8=",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "policies": [],
+  "queues": [
+    {
+      "name": "fine.trigger",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "library.dlx",
+        "x-dead-letter-routing-key": "fine.trigger.dlq"
+      }
+    },
+    {
+      "name": "fine.trigger.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.email",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "library.dlx",
+        "x-dead-letter-routing-key": "notifications.email.dlq"
+      }
+    },
+    {
+      "name": "notifications.email.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "library.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "library.dlx",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "library.events",
+      "vhost": "/",
+      "destination": "fine.trigger",
+      "destination_type": "queue",
+      "routing_key": "fine.trigger",
+      "arguments": {}
+    },
+    {
+      "source": "library.events",
+      "vhost": "/",
+      "destination": "notifications.email",
+      "destination_type": "queue",
+      "routing_key": "notifications.email",
+      "arguments": {}
+    },
+    {
+      "source": "library.dlx",
+      "vhost": "/",
+      "destination": "fine.trigger.dlq",
+      "destination_type": "queue",
+      "routing_key": "fine.trigger.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "library.dlx",
+      "vhost": "/",
+      "destination": "notifications.email.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.email.dlq",
+      "arguments": {}
+    }
+  ]
+}
