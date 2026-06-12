@@ -10,7 +10,7 @@ resource "aws_instance" "auth_server" {
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
-  vpc_security_group_ids = [aws_security_group.auth_sg.id]
+  vpc_security_group_ids = [aws_security_group.auth_sg.id, aws_security_group.internal_services_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
@@ -81,7 +81,7 @@ resource "aws_instance" "catalog_server" {
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
-  vpc_security_group_ids = [aws_security_group.catalog_sg.id]
+  vpc_security_group_ids = [aws_security_group.catalog_sg.id, aws_security_group.internal_services_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
@@ -148,7 +148,7 @@ resource "aws_instance" "frontend_server" {
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
-  vpc_security_group_ids = [aws_security_group.frontend_sg.id]
+  vpc_security_group_ids = [aws_security_group.frontend_sg.id, aws_security_group.internal_services_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
