@@ -26,6 +26,8 @@ jobs:
       TF_VAR_db_password: ${{ secrets.TF_VAR_db_password }}
       TF_VAR_jwt_secret: ${{ secrets.TF_VAR_jwt_secret }}
       TF_VAR_mongo_password: ${{ secrets.TF_VAR_mongo_password }}
+      TF_VAR_db_user: ${{ secrets.TF_VAR_DB_USER }}
+      TF_VAR_rabbitmq_password: ${{ secrets.TF_VAR_RABBITMQ_PASSWORD }}
 
     steps:
       - name: Checkout repository

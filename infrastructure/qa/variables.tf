@@ -43,3 +43,15 @@ variable "aws_key_name" {
   type        = string
   default     = "vockey" # Default name for AWS Educate
 }
+
+variable "rabbitmq_password" {
+  description = "RabbitMQ administrator password"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_user" {
+  description = "Database administrator username"
+  type        = string
+  sensitive   = true
+}
