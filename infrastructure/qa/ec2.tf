@@ -282,10 +282,10 @@ cat << 'MQTTCONF' > /home/ec2-user/mosquitto.conf
 ${file("${path.module}/../../deploy/mosquitto.conf")}
 MQTTCONF
 
-cat << EOF > /home/ec2-user/.env
+cat << ENVFILE > /home/ec2-user/.env
 HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 RABBITMQ_PASSWORD=admin123
-EOF
+ENVFILE
 
 # Create n8n data directory and fix permissions
 mkdir -p /home/ec2-user/.n8n
