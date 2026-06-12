@@ -303,9 +303,5 @@ EOF
     Name        = "${var.environment}-brokers-server"
     Environment = upper(var.environment)
   }
-
-  lifecycle {
-    ignore_changes = [user_data, ami]
-  }
 }
 
