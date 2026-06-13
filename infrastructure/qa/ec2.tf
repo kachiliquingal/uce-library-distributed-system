@@ -277,7 +277,7 @@ docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 user-service
 
-# Force recreation v2
+# Force recreation v3
 EOF
   , "\r", "")
 
