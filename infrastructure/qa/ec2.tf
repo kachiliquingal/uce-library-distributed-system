@@ -211,7 +211,7 @@ resource "aws_volume_attachment" "catalog_db_att" {
 # ------------------------------------------------------------------------------
 resource "aws_instance" "user_server" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
+  instance_type = "t3.small"
   key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
@@ -235,6 +235,13 @@ echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
 mkdir -p /data/neo4j
 chmod 777 /data/neo4j
+
+# Create 2GB Swap file to prevent Out Of Memory (OOM) crashes on t3.small
+fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 until dnf install -y docker; do
   echo "Waiting to release DNF lock..."
