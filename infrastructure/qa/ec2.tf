@@ -214,7 +214,7 @@ resource "aws_instance" "user_server" {
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
-  vpc_security_group_ids = [aws_security_group.catalog_sg.id, aws_security_group.internal_services_sg.id]
+  vpc_security_group_ids = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
