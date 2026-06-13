@@ -45,7 +45,13 @@ variable "aws_key_name" {
 }
 
 variable "rabbitmq_password" {
-  description = "RabbitMQ administrator password"
+  description = "RabbitMQ Password"
+  type        = string
+  sensitive   = true
+}
+
+variable "neo4j_password" {
+  description = "Neo4j Database Password"
   type        = string
   sensitive   = true
 }
