@@ -207,6 +207,106 @@ resource "aws_volume_attachment" "catalog_db_att" {
 }
 
 # ------------------------------------------------------------------------------
+# User Service Instance
+# ------------------------------------------------------------------------------
+resource "aws_instance" "user_server" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+  key_name      = var.aws_key_name
+
+  vpc_security_group_ids = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
+
+  user_data = replace(<<EOF
+#!/bin/bash
+# Wait for EBS volume to attach
+echo "Waiting for EBS volume /dev/xvdf to attach..."
+while [ ! -b /dev/xvdf ]; do
+  sleep 5
+done
+
+echo "Formatting EBS volume if necessary..."
+if ! file -s /dev/xvdf | grep -q 'ext4'; then
+  mkfs.ext4 /dev/xvdf
+fi
+
+mkdir -p /data
+mount /dev/xvdf /data
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
+
+mkdir -p /data/neo4j
+chmod 777 /data/neo4j
+
+until dnf install -y docker; do
+  echo "Waiting to release DNF lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
+
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+${file("${path.module}/../../deploy/docker-compose.db.yml")}
+DBCOMPOSE
+
+cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+${file("${path.module}/../../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << ENVFILE > /home/ec2-user/.env
+IMAGE_TAG=${var.docker_image_tag}
+NEO4J_PASSWORD=${var.neo4j_password}
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
+ENVFILE
+
+cd /home/ec2-user
+/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d neo4j
+sleep 20
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d user-service
+
+# Watchtower - Auto-updates Docker images every 60 seconds
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 user-service
+
+# Force recreation v3
+EOF
+  , "\r", "")
+
+  user_data_replace_on_change = true
+
+  tags = {
+    Name        = "${var.environment}-user-server"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_ebs_volume" "user_db_vol" {
+  availability_zone = aws_instance.user_server.availability_zone
+  size              = 10
+  type              = "gp3"
+
+  tags = {
+    Name        = "${var.environment}-user-db-vol"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_volume_attachment" "user_db_att" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.user_db_vol.id
+  instance_id = aws_instance.user_server.id
+}
+
+# ------------------------------------------------------------------------------
 # Frontend Service Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "frontend_server" {
@@ -277,6 +377,7 @@ IMAGE_NAME="kachiliquingal/uce-api-gateway:${var.docker_image_tag}"
 docker run -d -p 80:80 --name uce-api-gateway \
   -e AUTH_SERVICE_URL=${aws_instance.auth_server.private_ip}:3001 \
   -e CATALOG_SERVICE_URL=${aws_instance.catalog_server.private_ip}:3002 \
+  -e USER_SERVICE_URL=${aws_instance.user_server.private_ip}:3003 \
   -e FRONTEND_SERVICE_URL=${aws_instance.frontend_server.private_ip}:80 \
   --restart always $IMAGE_NAME
 
@@ -353,7 +454,7 @@ ${file("${path.module}/../../deploy/rabbitmq_definitions.json")}
 RMQDEF
 
 cat << ENVFILE > /home/ec2-user/.env
-HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+HOST_IP=$(hostname -I | awk '{print $1}')
 RABBITMQ_PASSWORD=${var.rabbitmq_password}
 ENVFILE
 

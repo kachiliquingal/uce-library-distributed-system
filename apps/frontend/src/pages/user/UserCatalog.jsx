@@ -47,6 +47,13 @@ export const UserCatalog = () => {
             />
           </div>
           <button 
+            onClick={() => window.location.href = '/admin/users'}
+            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors font-semibold"
+            title="Gestión de Usuarios"
+          >
+            Usuarios
+          </button>
+          <button 
             onClick={logout}
             className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             title="Cerrar sesión"

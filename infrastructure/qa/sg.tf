@@ -83,6 +83,54 @@ resource "aws_security_group" "auth_sg" {
 }
 
 # ------------------------------------------------------------------------------
+# User Service Security Group (Internal only)
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "user_sg" {
+  name_prefix = "${var.environment}-user-service-sg-"
+  description = "Allow inbound traffic for User Service ${upper(var.environment)} ONLY from API Gateway"
+
+  ingress {
+    description     = "Allow User Service API traffic from API Gateway"
+    from_port       = 3003
+    to_port         = 3003
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  ingress {
+    description     = "Allow gRPC traffic from internal services"
+    from_port       = 50051
+    to_port         = 50051
+    protocol        = "tcp"
+    security_groups = [aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-user-service-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ------------------------------------------------------------------------------
 # Catalog Service Security Group (Internal only)
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "catalog_sg" {

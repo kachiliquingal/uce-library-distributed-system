@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { Client } from "pg";
 import { createClient } from "redis";
 import { createAuthRouter } from "./infrastructure/routes/authRoutes";
+import { kafkaProducer } from "./infrastructure/kafka/Producer";
 
 // Load environment variables
 dotenv.config();
@@ -71,4 +72,5 @@ app.use("/api/auth", createAuthRouter(pgClient));
 app.listen(port, async () => {
   console.log(`[Auth Service] Server running on port ${port}`);
   await initializeDatabases();
+  await kafkaProducer.connect();
 });

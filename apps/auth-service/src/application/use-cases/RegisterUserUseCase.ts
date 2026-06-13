@@ -1,6 +1,7 @@
 import { User } from "../../domain/entities/User";
 import { UserRepository } from "../../domain/ports/UserRepository";
 import { PasswordHasher } from "../../domain/ports/PasswordHasher";
+import { kafkaProducer } from "../../infrastructure/kafka/Producer";
 
 export class RegisterUserUseCase {
   constructor(
@@ -28,7 +29,20 @@ export class RegisterUserUseCase {
     // 4. Save using the Port (Interface)
     const savedUser = await this.userRepository.save(newUser);
 
-    // 5. Return user data securely (without password)
+    // 5. Emit user.registered event to Kafka
+    await kafkaProducer.publish("auth-events", {
+      event: "user.registered",
+      payload: {
+        id: savedUser.id?.toString(),
+        email: savedUser.email,
+        role: savedUser.role,
+        firstName: "",
+        lastName: "",
+        isActive: true
+      }
+    });
+
+    // 6. Return user data securely (without password)
     return {
       id: savedUser.id,
       email: savedUser.email,

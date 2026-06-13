@@ -36,6 +36,19 @@ services:
     networks:
       - microservices-network
 
+  neo4j:
+    image: neo4j:5.18.0
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - /data/neo4j:/data
+    networks:
+      - microservices-network
+
 
 networks:
   microservices-network:

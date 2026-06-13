@@ -31,6 +31,21 @@ services:
     networks:
       - microservices-network
 
+  user-service:
+    image: kachiliquingal/uce-user-service:${IMAGE_TAG}
+    restart: always
+    environment:
+      - PORT=3003
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+    ports:
+      - "3003:3003"
+      - "50051:50051"
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true

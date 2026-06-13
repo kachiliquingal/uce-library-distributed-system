@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { LoginPage } from "./pages/LoginPage";
 import { UserCatalog } from "./pages/user/UserCatalog";
+import { AdminUserManagement } from "./pages/admin/AdminUserManagement";
 
 // Component to protect private routes
 const ProtectedRoute = ({ children }) => {
@@ -35,6 +36,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserCatalog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <AdminUserManagement />
               </ProtectedRoute>
             }
           />
