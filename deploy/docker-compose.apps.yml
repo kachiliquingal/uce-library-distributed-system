@@ -31,6 +31,20 @@ services:
     networks:
       - microservices-network
 
+  user-service:
+    image: kachiliquingal/uce-user-service:${IMAGE_TAG}
+    restart: always
+    command: sh -c "sleep 15 && node dist/index.js"
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true
