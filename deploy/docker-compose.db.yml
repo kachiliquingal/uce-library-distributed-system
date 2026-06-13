@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /data/postgres:/var/lib/postgresql/data
     networks:
       - microservices-network
 
@@ -31,11 +31,27 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
       - "27017:27017"
+    volumes:
+      - /data/mongo:/data/db
     networks:
       - microservices-network
 
-volumes:
-  postgres_data:
+  neo4j:
+    image: neo4j:5.18.1
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 512m
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - /data/neo4j/data:/data
+      - /data/neo4j/plugins:/plugins
+    networks:
+      - microservices-network
 
 networks:
   microservices-network:
