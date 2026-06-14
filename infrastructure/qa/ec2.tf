@@ -6,7 +6,7 @@
 # Auth Service Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "auth_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
@@ -32,14 +32,14 @@ echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
 mkdir -p /data/postgres
 chmod 777 /data/postgres
 
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
@@ -48,15 +48,15 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
 ${file("${path.module}/../../deploy/docker-compose.db.yml")}
 DBCOMPOSE
 
-cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
-cat << 'ENVFILE' > /home/ec2-user/.env
+cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
@@ -66,7 +66,7 @@ REDIS_URL=redis://redis:6379
 JWT_SECRET=${var.jwt_secret}
 ENVFILE
 
-cd /home/ec2-user
+cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
@@ -110,7 +110,7 @@ resource "aws_volume_attachment" "auth_db_att" {
 # Catalog Service Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "catalog_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
@@ -136,14 +136,14 @@ echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
 mkdir -p /data/mongo
 chmod 777 /data/mongo
 
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
@@ -152,21 +152,21 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
 ${file("${path.module}/../../deploy/docker-compose.db.yml")}
 DBCOMPOSE
 
-cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
-cat << 'ENVFILE' > /home/ec2-user/.env
+cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 MONGO_PASSWORD=${var.mongo_password}
 MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
 ENVFILE
 
-cd /home/ec2-user
+cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
@@ -210,7 +210,7 @@ resource "aws_volume_attachment" "catalog_db_att" {
 # User Service Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "user_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.aws_key_name
 
@@ -243,14 +243,14 @@ mkswap /swapfile
 swapon /swapfile
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
@@ -259,21 +259,21 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ec2-user/docker-compose.db.yml
+cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
 ${file("${path.module}/../../deploy/docker-compose.db.yml")}
 DBCOMPOSE
 
-cat << 'APPCOMPOSE' > /home/ec2-user/docker-compose.apps.yml
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
-cat << 'ENVFILE' > /home/ec2-user/.env
+cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 NEO4J_PASSWORD=${var.neo4j_password}
 NEO4J_URI=bolt://neo4j:7687
 ENVFILE
 
-cd /home/ec2-user
+cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d neo4j
 sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d user-service
@@ -317,7 +317,7 @@ resource "aws_volume_attachment" "user_db_att" {
 # Frontend Service Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "frontend_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
@@ -325,14 +325,14 @@ resource "aws_instance" "frontend_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 IMAGE_NAME="kachiliquingal/uce-frontend:${var.docker_image_tag}"
 
@@ -361,7 +361,7 @@ EOF
 # API Gateway & Bastion Instance
 # ------------------------------------------------------------------------------
 resource "aws_instance" "api_gateway_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
 
@@ -369,14 +369,14 @@ resource "aws_instance" "api_gateway_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker telnet; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io telnet; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 IMAGE_NAME="kachiliquingal/uce-api-gateway:${var.docker_image_tag}"
 
@@ -408,7 +408,7 @@ EOF
 # Brokers & n8n Server (INFRA-02)
 # ------------------------------------------------------------------------------
 resource "aws_instance" "brokers_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.aws_key_name
 
@@ -421,14 +421,14 @@ resource "aws_instance" "brokers_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes on t3.micro
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
@@ -444,32 +444,32 @@ systemctl restart docker
 sleep 5
 docker network create brokers-network || true
 
-cat << 'BROKERSCOMPOSE' > /home/ec2-user/docker-compose.brokers.yml
+cat << 'BROKERSCOMPOSE' > /home/ubuntu/docker-compose.brokers.yml
 ${file("${path.module}/../../deploy/docker-compose.brokers.yml")}
 BROKERSCOMPOSE
 
-cat << 'MQTTCONF' > /home/ec2-user/mosquitto.conf
+cat << 'MQTTCONF' > /home/ubuntu/mosquitto.conf
 ${file("${path.module}/../../deploy/mosquitto.conf")}
 MQTTCONF
 
-cat << 'RMQCONF' > /home/ec2-user/rabbitmq.conf
+cat << 'RMQCONF' > /home/ubuntu/rabbitmq.conf
 ${file("${path.module}/../../deploy/rabbitmq.conf")}
 RMQCONF
 
-cat << 'RMQDEF' > /home/ec2-user/rabbitmq_definitions.json
+cat << 'RMQDEF' > /home/ubuntu/rabbitmq_definitions.json
 ${file("${path.module}/../../deploy/rabbitmq_definitions.json")}
 RMQDEF
 
-cat << ENVFILE > /home/ec2-user/.env
+cat << ENVFILE > /home/ubuntu/.env
 HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 RABBITMQ_PASSWORD=${var.rabbitmq_password}
 ENVFILE
 
 # Create n8n data directory and fix permissions
-mkdir -p /home/ec2-user/.n8n
-chown -R 1000:1000 /home/ec2-user/.n8n
+mkdir -p /home/ubuntu/.n8n
+chown -R 1000:1000 /home/ubuntu/.n8n
 
-cd /home/ec2-user
+cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.brokers.yml --env-file .env up -d
 EOF
   , "\r", "")
