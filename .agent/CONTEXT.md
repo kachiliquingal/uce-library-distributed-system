@@ -104,7 +104,7 @@ uce-library/                         ← monorepo root (Turborepo)
 │   ├── catalog-service/             ✅ MS-02
 │   ├── loan-service/                ❌ MS-03 — TODO
 │   ├── notification-service/        ❌ MS-04 — TODO
-│   ├── user-service/                ❌ MS-05 — TODO
+│   ├── user-service/                ✅ MS-05
 │   ├── fine-service/                ❌ MS-06 — TODO
 │   ├── report-service/              ❌ MS-07 — TODO
 │   ├── reservation-service/         ❌ MS-08 — TODO
@@ -143,7 +143,7 @@ uce-library/                         ← monorepo root (Turborepo)
 
 ## Microservices Build Order (follow this sequence)
 
-1. ❌ MS-05 user-service — loan-service needs its gRPC server first
+1. ✅ MS-05 user-service — loan-service needs its gRPC server first
 2. ❌ MS-03 loan-service — core domain, unlocks Kafka events for everyone else
 3. ❌ MS-04 notification-service — pure consumer, no blockers
 4. ❌ MS-06 fine-service — needs loan-service RabbitMQ events
