@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { Client } from "pg";
 import { createClient } from "redis";
 import { createAuthRouter } from "./infrastructure/routes/authRoutes";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./infrastructure/swagger/config";
 
 // Load environment variables
 dotenv.config();
@@ -69,6 +71,9 @@ app.get("/health", (req, res) => {
 });
 
 // --- HERE WE CONNECT HEXAGONAL ARCHITECTURE ---
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Mount Auth Routes
 app.use("/api/auth", createAuthRouter(pgClient));
 

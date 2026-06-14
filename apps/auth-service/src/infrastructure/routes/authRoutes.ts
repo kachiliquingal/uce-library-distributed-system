@@ -24,7 +24,53 @@ export const createAuthRouter = (pgClient: Client): Router => {
   const authController = new AuthController(registerUseCase, loginUseCase);
 
   // 4. Define the REST routes
+  
+  /**
+   * @swagger
+   * /register:
+   *   post:
+   *     summary: Register a new user
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               role:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: User created successfully
+   */
   router.post("/register", authController.register);
+
+  /**
+   * @swagger
+   * /login:
+   *   post:
+   *     summary: Login user
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               email:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Login successful
+   */
   router.post("/login", authController.login);
 
   return router;

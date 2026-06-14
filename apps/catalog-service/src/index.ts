@@ -14,6 +14,12 @@ const port = process.env.PORT || 3002;
 app.use(cors());
 app.use(express.json());
 
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./infrastructure/swagger/config";
+
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // API Routes
 app.use("/api/catalog/books", bookRoutes);
 
