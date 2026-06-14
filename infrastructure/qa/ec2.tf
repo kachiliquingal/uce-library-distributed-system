@@ -463,6 +463,7 @@ RMQDEF
 cat << ENVFILE > /home/ubuntu/.env
 HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 RABBITMQ_PASSWORD=${var.rabbitmq_password}
+KAFKA_REPLICATION_FACTOR=1
 ENVFILE
 
 # Create n8n data directory and fix permissions

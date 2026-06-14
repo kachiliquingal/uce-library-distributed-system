@@ -58,14 +58,14 @@ services:
       echo 'Waiting for Kafka to be ready...'
       cub kafka-ready -b kafka:29092 1 60 &&
       echo 'Creating Kafka topics...'
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic auth-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic catalog-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic loan-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic user-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic fine-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic inventory-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic notification-events &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic system-events &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic user.registered &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic book.added &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic book.updated &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic book.borrowed &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic book.returned &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic fine.created &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic user.updated &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3 --replication-factor ${KAFKA_REPLICATION_FACTOR:-1} --config retention.ms=604800000 --topic user.suspended &&
       echo 'Successfully created all topics!'
       "
 
