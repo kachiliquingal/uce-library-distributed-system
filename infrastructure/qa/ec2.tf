@@ -64,6 +64,7 @@ DB_HOST=postgres
 DB_NAME=auth_db
 REDIS_URL=redis://redis:6379
 JWT_SECRET=${var.jwt_secret}
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
@@ -164,6 +165,7 @@ cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 MONGO_PASSWORD=${var.mongo_password}
 MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
@@ -271,6 +273,7 @@ cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 NEO4J_PASSWORD=${var.neo4j_password}
 NEO4J_URI=bolt://neo4j:7687
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu

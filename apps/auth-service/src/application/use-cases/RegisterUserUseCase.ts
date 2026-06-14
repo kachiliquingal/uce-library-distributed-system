@@ -28,7 +28,16 @@ export class RegisterUserUseCase {
     // 4. Save using the Port (Interface)
     const savedUser = await this.userRepository.save(newUser);
 
-    // 5. Return user data securely (without password)
+    // 5. Emit Event to Kafka
+    await import("../../infrastructure/kafka/KafkaProducer").then((m) =>
+      m.KafkaProducer.getInstance().emitEvent("user.registered", "UserRegistered", {
+        userId: savedUser.id,
+        email: savedUser.email,
+        role: savedUser.role,
+      })
+    );
+
+    // 6. Return user data securely (without password)
     return {
       id: savedUser.id,
       email: savedUser.email,

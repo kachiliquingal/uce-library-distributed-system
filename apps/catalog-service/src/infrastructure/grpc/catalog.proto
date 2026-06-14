@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package catalog;
+
+service CatalogService {
+  rpc ValidateISBN (ISBNRequest) returns (ISBNResponse);
+}
+
+message ISBNRequest {
+  string isbn = 1;
+}
+
+message ISBNResponse {
+  bool isValid = 1;
+  string title = 2;
+  string author = 3;
+}

@@ -19,7 +19,17 @@ app.use("/api/users", userRoutes);
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.listen(port, () => {
+import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+import { GrpcServer } from "./infrastructure/grpc/GrpcServer";
+
+app.listen(port, async () => {
   console.log(`[User Service] Server is running on port ${port}`);
   console.log(`[User Service] Swagger docs at http://localhost:${port}/api-docs`);
+  
+  // Connect to Kafka
+  await KafkaProducer.getInstance().connect();
+
+  // Start gRPC Server
+  const grpcServer = new GrpcServer();
+  grpcServer.start();
 });
