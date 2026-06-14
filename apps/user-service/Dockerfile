@@ -6,6 +6,7 @@ RUN npm install
 
 COPY . .
 RUN npm run build
+RUN mkdir -p dist/infrastructure/grpc && cp src/infrastructure/grpc/*.proto dist/infrastructure/grpc/ || true
 
 FROM node:20-alpine AS runner
 WORKDIR /app

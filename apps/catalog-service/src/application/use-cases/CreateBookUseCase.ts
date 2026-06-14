@@ -13,6 +13,13 @@ export class CreateBookUseCase {
 
     // Force the book to be entered as available by default
     const newBook = { ...bookData, available: true };
-    return this.bookRepository.save(newBook);
+    const savedBook = await this.bookRepository.save(newBook);
+
+    // Emit event to Kafka
+    await import("../../infrastructure/kafka/KafkaProducer").then((m) =>
+      m.KafkaProducer.getInstance().emitEvent("book.added", "BookAdded", savedBook)
+    );
+
+    return savedBook;
   }
 }

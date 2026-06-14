@@ -17,6 +17,11 @@ export class UpdateBookUseCase {
       throw new Error(`Book with id ${id} not found in the catalog`);
     }
 
+    // Emit event to Kafka
+    await import("../../infrastructure/kafka/KafkaProducer").then((m) =>
+      m.KafkaProducer.getInstance().emitEvent("book.updated", "BookUpdated", updatedBook)
+    );
+
     return updatedBook;
   }
 }

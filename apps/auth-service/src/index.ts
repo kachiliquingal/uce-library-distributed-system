@@ -28,6 +28,8 @@ const redisClient = createClient({
   url: process.env.REDIS_URL,
 });
 
+import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+
 const initializeDatabases = async () => {
   try {
     // Connect to PostgreSQL
@@ -48,8 +50,11 @@ const initializeDatabases = async () => {
     // Connect to Redis
     await redisClient.connect();
     console.log("[Auth Service] Connected to Redis successfully.");
+
+    // Connect to Kafka
+    await KafkaProducer.getInstance().connect();
   } catch (error) {
-    console.error("[Auth Service] Database connection failed:", error);
+    console.error("[Auth Service] Initialization failed:", error);
     process.exit(1);
   }
 };

@@ -10,9 +10,12 @@
     "test": "ts-node tests/unit.test.ts"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "kafkajs": "^2.2.4",
     "neo4j-driver": "^5.20.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"

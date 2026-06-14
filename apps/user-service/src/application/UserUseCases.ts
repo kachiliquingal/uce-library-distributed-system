@@ -24,5 +24,13 @@ export class UserUseCases {
     const user = await this.userRepository.getUserById(userId);
     if (!user) throw new Error("User not found");
     await this.userRepository.assignRoleToUser(userId, roleName);
+    
+    // Emit event to Kafka
+    await import("../infrastructure/kafka/KafkaProducer").then((m) =>
+      m.KafkaProducer.getInstance().emitEvent("user.updated", "UserRoleUpdated", {
+        userId,
+        newRole: roleName
+      })
+    );
   }
 }
