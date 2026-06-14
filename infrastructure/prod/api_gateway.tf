@@ -3,21 +3,21 @@
 # ==============================================================================
 
 resource "aws_instance" "api_gateway_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.api_gateway_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 IMAGE_NAME="kachiliquingal/uce-api-gateway:${var.docker_image_tag}"
 
