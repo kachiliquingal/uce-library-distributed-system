@@ -53,5 +53,33 @@ export const useAuthStore = create((set) => ({
     set({ user: null, token: null, isAuthenticated: false });
   },
 
+  validateSession: async () => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      return false;
+    }
+
+    set({ isLoading: true });
+    try {
+      const response = await authApi.get("/validate-token", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.valid && response.data.user) {
+        set({
+          user: response.data.user,
+          isAuthenticated: true,
+          isLoading: false
+        });
+        return true;
+      }
+      throw new Error("Invalid token");
+    } catch (error) {
+      localStorage.removeItem("auth_token");
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      return false;
+    }
+  },
+
   clearError: () => set({ error: null }),
 }));

@@ -1,35 +1,65 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { LoginPage } from "./pages/LoginPage";
 import { UserCatalog } from "./pages/user/UserCatalog";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
 
-// Component to protect private routes
+// Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
 };
 
-function App() {
+// Protected Route strictly for ADMIN
+const AdminRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== "ADMIN") return <Navigate to="/catalog" replace />;
+  
+  return children;
+};
+
+function App() {
+  const { isAuthenticated, user, validateSession, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    validateSession();
+  }, [validateSession]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  // Helper to determine home path based on role
+  const getHomePath = () => {
+    return user?.role === "ADMIN" ? "/admin" : "/catalog";
+  };
 
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
         <Routes>
-          {/* If you are already logged in and go to login, we send you to the catalog */}
+          {/* Public Route */}
           <Route
             path="/login"
             element={
               isAuthenticated ? (
-                <Navigate to="/catalog" replace />
+                <Navigate to={getHomePath()} replace />
               ) : (
                 <LoginPage />
               )
             }
           />
 
-          {/* Private Routes */}
+          {/* User Routes */}
           <Route
             path="/catalog"
             element={
@@ -39,11 +69,21 @@ function App() {
             }
           />
 
-          {/* Default Redirection */}
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+
+          {/* Fallback */}
           <Route
             path="*"
             element={
-              <Navigate to={isAuthenticated ? "/catalog" : "/login"} replace />
+              <Navigate to={isAuthenticated ? getHomePath() : "/login"} replace />
             }
           />
         </Routes>

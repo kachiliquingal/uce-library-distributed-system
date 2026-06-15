@@ -1,10 +1,15 @@
 import { AuthForm } from "../components/auth/AuthForm";
 import { useNavigate } from "react-router-dom";
 
+import { useAuthStore } from "../store/authStore";
+
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+
   const handleSuccess = () => {
-    navigate("/catalog");
+    // If the state hasn't updated fast enough in the component, navigate to root and let App.jsx handle it
+    navigate("/");
   };
 
   return (
