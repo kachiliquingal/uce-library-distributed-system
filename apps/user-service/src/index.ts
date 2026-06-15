@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { router as userRoutes } from "./infrastructure/http/routes";
+import { router as userRoutes, userUseCases } from "./infrastructure/http/routes";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./infrastructure/swagger/config";
 
@@ -20,14 +20,21 @@ app.use("/api/users", userRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+import { KafkaConsumerService } from "./infrastructure/kafka/KafkaConsumer";
 import { GrpcServer } from "./infrastructure/grpc/GrpcServer";
 
 app.listen(port, async () => {
   console.log(`[User Service] Server is running on port ${port}`);
   console.log(`[User Service] Swagger docs at http://localhost:${port}/api-docs`);
   
-  // Connect to Kafka
+  // Connect to Kafka Producer
   await KafkaProducer.getInstance().connect();
+
+  // Connect to Kafka Consumer and sync users
+  const kafkaConsumer = KafkaConsumerService.getInstance();
+  kafkaConsumer.setUserUseCases(userUseCases);
+  await kafkaConsumer.connect();
+  await kafkaConsumer.subscribe();
 
   // Start gRPC Server
   const grpcServer = new GrpcServer();

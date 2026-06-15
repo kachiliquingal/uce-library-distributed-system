@@ -127,4 +127,4 @@ router.put("/:id/roles", (req, res) => userController.assignRole(req, res));
  */
 router.get("/:id/permissions", (req, res) => userController.getPermissions(req, res));
 
-export { router };
+export { router, userUseCases };
