@@ -26,12 +26,13 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e AUTH_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e CATALOG_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e FRONTEND_SERVICE_URL=${aws_lb.main.dns_name}:80 \
-  -e USER_SERVICE_URL=localhost:3003 \
+  -e USER_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   --restart always $IMAGE_NAME
 
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-api-gateway
 EOF
@@ -42,7 +43,5 @@ EOF
     Environment = upper(var.environment)
   }
 
-  lifecycle {
-    ignore_changes = [user_data, ami]
-  }
+  user_data_replace_on_change = true
 }
