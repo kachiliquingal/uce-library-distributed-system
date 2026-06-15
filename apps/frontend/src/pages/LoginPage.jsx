@@ -5,7 +5,6 @@ import { useAuthStore } from "../store/authStore";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
 
   const handleSuccess = () => {
     // If the state hasn't updated fast enough in the component, navigate to root and let App.jsx handle it

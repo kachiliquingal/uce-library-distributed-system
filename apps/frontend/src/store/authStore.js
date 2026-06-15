@@ -74,7 +74,7 @@ export const useAuthStore = create((set) => ({
         return true;
       }
       throw new Error("Invalid token");
-    } catch (error) {
+    } catch {
       localStorage.removeItem("auth_token");
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       return false;
