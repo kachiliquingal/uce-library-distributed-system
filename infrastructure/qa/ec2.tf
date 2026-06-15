@@ -75,6 +75,7 @@ sleep 20
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 auth-service
 
@@ -176,6 +177,7 @@ sleep 20
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 catalog-service
 
@@ -287,6 +289,7 @@ sleep 20
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 user-service
 
@@ -348,6 +351,7 @@ docker run -d -p 80:80 --name uce-frontend --restart always $IMAGE_NAME
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-frontend
 
@@ -397,6 +401,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-api-gateway
 EOF
