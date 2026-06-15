@@ -51,4 +51,17 @@ export class UserController {
       }
     }
   }
+
+  async getPermissions(req: Request, res: Response): Promise<void> {
+    try {
+      const permissions = await this.userUseCases.getPermissions(req.params.id);
+      res.status(200).json({ permissions });
+    } catch (error: any) {
+      if (error.message === "User not found") {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  }
 }

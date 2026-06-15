@@ -26,11 +26,22 @@ export class Neo4jUserRepository implements UserRepository {
       isActive: node.properties.isActive,
       createdAt: new Date(node.properties.createdAt),
       updatedAt: new Date(node.properties.updatedAt),
-      roles: rolesNode.map((r: any) => ({
-        id: r.properties.id,
-        name: r.properties.name,
-        permissions: []
-      }))
+      roles: rolesNode.map((r: any) => {
+        const roleName = r.properties.name;
+        let permissions: string[] = [];
+        
+        if (roleName === "ADMIN") {
+          permissions = ["manage:all"];
+        } else if (roleName === "USER") {
+          permissions = ["read:books", "borrow:books"];
+        }
+        
+        return {
+          id: r.properties.id || roleName, // Fallback to roleName if id missing
+          name: roleName,
+          permissions
+        };
+      })
     };
   }
 
