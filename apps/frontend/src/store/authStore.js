@@ -5,7 +5,7 @@ export const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem("auth_token") || null,
   isAuthenticated: !!localStorage.getItem("auth_token"),
-  isLoading: false,
+  isLoading: !!localStorage.getItem("auth_token"),
   error: null,
 
   login: async (email, password) => {
