@@ -221,19 +221,22 @@ resource "aws_instance" "user_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 # Wait for EBS volume to attach
-echo "Waiting for EBS volume /dev/xvdf to attach..."
-while [ ! -b /dev/xvdf ]; do
+echo "Waiting for EBS volume to attach..."
+DEVICE="/dev/xvdf"
+while true; do
+  if [ -b "/dev/nvme1n1" ]; then DEVICE="/dev/nvme1n1"; break; fi
+  if [ -b "/dev/xvdf" ]; then DEVICE="/dev/xvdf"; break; fi
   sleep 5
 done
 
 echo "Formatting EBS volume if necessary..."
-if ! file -s /dev/xvdf | grep -q 'ext4'; then
-  mkfs.ext4 /dev/xvdf
+if ! file -s $DEVICE | grep -q 'ext4'; then
+  mkfs.ext4 $DEVICE
 fi
 
 mkdir -p /data
-mount /dev/xvdf /data
-echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
+mount $DEVICE /data
+echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
 mkdir -p /data/neo4j
 chmod 777 /data/neo4j
