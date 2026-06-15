@@ -19,17 +19,20 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [usersRes, booksRes] = await Promise.all([
-          userApi.get("/"),
-          catalogApi.get("/")
-        ]);
+        const usersRes = await userApi.get("/");
         setUsers(usersRes.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+
+      try {
+        const booksRes = await catalogApi.get("/books");
         setBooks(booksRes.data);
       } catch (error) {
-        console.error("Error fetching admin data:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching books:", error);
       }
+
+      setIsLoading(false);
     };
     fetchData();
   }, []);
