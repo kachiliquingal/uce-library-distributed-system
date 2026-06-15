@@ -44,6 +44,18 @@ variable "mongo_password" {
   sensitive   = true
 }
 
+variable "neo4j_password" {
+  description = "Neo4j password for User Service"
+  type        = string
+  sensitive   = true
+}
+
+variable "rabbitmq_password" {
+  description = "RabbitMQ password for Brokers Service"
+  type        = string
+  sensitive   = true
+}
+
 # --- ASG Configuration ---
 
 variable "asg_min_size" {
