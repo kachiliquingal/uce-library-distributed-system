@@ -19,6 +19,10 @@ export class RegisterUserUseCase {
       throw new Error("User with this email already exists");
     }
 
+    if (role !== "USER" && role !== "ADMIN") {
+      throw new Error("Invalid role. Must be USER or ADMIN");
+    }
+
     // 2. Hash the password
     const hashedPassword = await this.passwordHasher.hash(plainPassword);
 

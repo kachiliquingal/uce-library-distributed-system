@@ -21,6 +21,10 @@ export class UserUseCases {
   }
 
   async assignRole(userId: string, roleName: string): Promise<void> {
+    if (roleName !== "USER" && roleName !== "ADMIN") {
+      throw new Error("Invalid role. Must be USER or ADMIN");
+    }
+
     const user = await this.userRepository.getUserById(userId);
     if (!user) throw new Error("User not found");
     await this.userRepository.assignRoleToUser(userId, roleName);
@@ -32,5 +36,18 @@ export class UserUseCases {
         newRole: roleName
       })
     );
+  }
+
+  async getPermissions(userId: string): Promise<string[]> {
+    const user = await this.userRepository.getUserById(userId);
+    if (!user) throw new Error("User not found");
+    
+    // Collect all unique permissions from user roles
+    const permissions = new Set<string>();
+    user.roles.forEach(role => {
+      role.permissions?.forEach(p => permissions.add(p));
+    });
+    
+    return Array.from(permissions);
   }
 }

@@ -25,6 +25,14 @@ class MockBookRepository implements BookRepository {
     return this.books.find((b) => b.isbn === isbn) || null;
   }
 
+  async findById(id: string): Promise<Book | null> {
+    return this.books.find((b) => b.id === id) || null;
+  }
+
+  async findAllAuthors(): Promise<string[]> {
+    return Array.from(new Set(this.books.map((b) => b.author)));
+  }
+
   async update(id: string, bookData: Partial<Book>): Promise<Book | null> {
     const index = this.books.findIndex((b) => b.id === id);
     if (index === -1) return null;

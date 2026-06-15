@@ -5,6 +5,8 @@ import { CreateBookUseCase } from "../../application/use-cases/CreateBookUseCase
 import { GetAllBooksUseCase } from "../../application/use-cases/GetAllBooksUseCase";
 import { UpdateBookUseCase } from "../../application/use-cases/UpdateBookUseCase";
 import { DeleteBookUseCase } from "../../application/use-cases/DeleteBookUseCase";
+import { GetBookByIdUseCase } from "../../application/use-cases/GetBookByIdUseCase";
+import { GetAllAuthorsUseCase } from "../../application/use-cases/GetAllAuthorsUseCase";
 
 const router = Router();
 
@@ -14,12 +16,16 @@ const createBookUseCase = new CreateBookUseCase(bookRepository);
 const getAllBooksUseCase = new GetAllBooksUseCase(bookRepository);
 const updateBookUseCase = new UpdateBookUseCase(bookRepository);
 const deleteBookUseCase = new DeleteBookUseCase(bookRepository);
+const getBookByIdUseCase = new GetBookByIdUseCase(bookRepository);
+const getAllAuthorsUseCase = new GetAllAuthorsUseCase(bookRepository);
 
 const bookController = new BookController(
   createBookUseCase,
   getAllBooksUseCase,
   updateBookUseCase,
   deleteBookUseCase,
+  getBookByIdUseCase,
+  getAllAuthorsUseCase,
 );
 
 // Definition of Endpoints
@@ -60,6 +66,38 @@ router.post("/", (req, res) => bookController.createBook(req, res));
  *         description: List of all books
  */
 router.get("/", (req, res) => bookController.getAllBooks(req, res));
+
+/**
+ * @swagger
+ * /authors:
+ *   get:
+ *     summary: Get all unique authors
+ *     tags: [Catalog]
+ *     responses:
+ *       200:
+ *         description: List of authors
+ */
+router.get("/authors", (req, res) => bookController.getAuthors(req, res));
+
+/**
+ * @swagger
+ * /{id}:
+ *   get:
+ *     summary: Get book by ID
+ *     tags: [Catalog]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Book details
+ *       404:
+ *         description: Book not found
+ */
+router.get("/:id", (req, res) => bookController.getBookById(req, res));
 
 /**
  * @swagger

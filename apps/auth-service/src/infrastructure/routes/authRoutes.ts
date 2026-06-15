@@ -73,5 +73,21 @@ export const createAuthRouter = (pgClient: Client): Router => {
    */
   router.post("/login", authController.login);
 
+  /**
+   * @swagger
+   * /validate-token:
+   *   get:
+   *     summary: Validate JWT token
+   *     tags: [Auth]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Token is valid
+   *       401:
+   *         description: Token is invalid or expired
+   */
+  router.get("/validate-token", authController.validateToken);
+
   return router;
 };

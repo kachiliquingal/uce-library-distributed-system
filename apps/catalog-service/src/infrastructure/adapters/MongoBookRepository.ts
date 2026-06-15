@@ -19,6 +19,15 @@ export class MongoBookRepository implements BookRepository {
     return book ? (book.toJSON() as Book) : null;
   }
 
+  async findById(id: string): Promise<Book | null> {
+    const book = await BookModel.findById(id);
+    return book ? (book.toJSON() as Book) : null;
+  }
+
+  async findAllAuthors(): Promise<string[]> {
+    return await BookModel.distinct("author");
+  }
+
   async update(id: string, book: Partial<Book>): Promise<Book | null> {
     const updatedBook = await BookModel.findByIdAndUpdate(id, book, {
       new: true,
