@@ -45,10 +45,10 @@ export class Neo4jUserRepository implements UserRepository {
     };
   }
 
-  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User> {
+  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<User> {
     const session = this.driver.session();
     try {
-      const id = randomUUID();
+      const id = data.id || randomUUID();
       const now = new Date().toISOString();
       
       const result = await session.run(

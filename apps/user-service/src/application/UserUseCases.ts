@@ -4,7 +4,7 @@ import { UserRepository } from "../domain/UserRepository";
 export class UserUseCases {
   constructor(private userRepository: UserRepository) {}
 
-  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User> {
+  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<User> {
     const existingUser = await this.userRepository.getUserByEmail(data.email);
     if (existingUser) {
       throw new Error("User already exists with this email");

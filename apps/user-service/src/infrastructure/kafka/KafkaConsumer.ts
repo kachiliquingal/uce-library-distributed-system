@@ -59,7 +59,8 @@ export class KafkaConsumerService {
                 email: userData.email,
                 firstName: userData.email.split('@')[0], // Fallback if no name provided
                 lastName: "",
-                isActive: true
+                isActive: true,
+                roles: []
               });
 
               // Assign the role emitted by auth-service
