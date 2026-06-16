@@ -25,6 +25,7 @@ module "auth_asg" {
 
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
+  key_name      = var.aws_key_name
 
   security_groups = [aws_security_group.auth_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -112,6 +113,7 @@ module "catalog_asg" {
 
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
+  key_name      = var.aws_key_name
 
   security_groups = [aws_security_group.catalog_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -195,6 +197,7 @@ module "frontend_asg" {
 
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
+  key_name      = var.aws_key_name
 
   security_groups = [aws_security_group.frontend_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -256,6 +259,7 @@ module "user_asg" {
 
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
+  key_name      = var.aws_key_name
 
   security_groups = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -322,6 +326,7 @@ EOF
 resource "aws_instance" "brokers_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
+  key_name      = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.brokers_sg.id]
 
