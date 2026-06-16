@@ -11,3 +11,13 @@ output "internal_alb_dns_name" {
   description = "The internal DNS name of the ALB (for debugging purposes)"
   value       = aws_lb.main.dns_name
 }
+
+output "brokers_private_ip" {
+  description = "The private IP address of the Brokers Server (Kafka/RabbitMQ)"
+  value       = aws_instance.brokers_server.private_ip
+}
+
+output "brokers_public_ip" {
+  description = "The public IP address of the Brokers Server (useful for debugging, though internal comms use private IP)"
+  value       = aws_instance.brokers_server.public_ip
+}
