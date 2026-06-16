@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+
   const handleSuccess = () => {
-    navigate("/catalog");
+    // If the state hasn't updated fast enough in the component, navigate to root and let App.jsx handle it
+    navigate("/");
   };
 
   return (

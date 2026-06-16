@@ -26,18 +26,29 @@ export class Neo4jUserRepository implements UserRepository {
       isActive: node.properties.isActive,
       createdAt: new Date(node.properties.createdAt),
       updatedAt: new Date(node.properties.updatedAt),
-      roles: rolesNode.map((r: any) => ({
-        id: r.properties.id,
-        name: r.properties.name,
-        permissions: []
-      }))
+      roles: rolesNode.map((r: any) => {
+        const roleName = r.properties.name;
+        let permissions: string[] = [];
+        
+        if (roleName === "ADMIN") {
+          permissions = ["manage:all"];
+        } else if (roleName === "USER") {
+          permissions = ["read:books", "borrow:books"];
+        }
+        
+        return {
+          id: r.properties.id || roleName, // Fallback to roleName if id missing
+          name: roleName,
+          permissions
+        };
+      })
     };
   }
 
-  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User> {
+  async createUser(data: Omit<User, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<User> {
     const session = this.driver.session();
     try {
-      const id = randomUUID();
+      const id = data.id || randomUUID();
       const now = new Date().toISOString();
       
       const result = await session.run(

@@ -3,6 +3,7 @@ version: "3.8"
 services:
   auth-service:
     image: kachiliquingal/uce-auth-service:${IMAGE_TAG}
+    container_name: auth-service
     restart: always
     command: sh -c "sleep 15 && node dist/index.js"
     ports:
@@ -16,32 +17,39 @@ services:
       - DB_NAME=${DB_NAME}
       - REDIS_URL=${REDIS_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
     networks:
       - microservices-network
 
   catalog-service:
     image: kachiliquingal/uce-catalog-service:${IMAGE_TAG}
+    container_name: catalog-service
     restart: always
     command: sh -c "sleep 15 && node dist/index.js"
     ports:
       - "3002:3002"
+      - "50052:50052"
     environment:
       - PORT=3002
       - MONGO_URI=${MONGO_URI}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
     networks:
       - microservices-network
 
   user-service:
     image: kachiliquingal/uce-user-service:${IMAGE_TAG}
+    container_name: user-service
     restart: always
     command: sh -c "sleep 15 && node dist/index.js"
     ports:
       - "3003:3003"
+      - "50051:50051"
     environment:
       - PORT=3003
       - NEO4J_URI=${NEO4J_URI}
       - NEO4J_USER=${NEO4J_USER:-neo4j}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
     networks:
       - microservices-network
 

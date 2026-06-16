@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { Client } from "pg";
 import { createClient } from "redis";
 import { createAuthRouter } from "./infrastructure/routes/authRoutes";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./infrastructure/swagger/config";
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +30,8 @@ const redisClient = createClient({
   url: process.env.REDIS_URL,
 });
 
+import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+
 const initializeDatabases = async () => {
   try {
     // Connect to PostgreSQL
@@ -48,8 +52,11 @@ const initializeDatabases = async () => {
     // Connect to Redis
     await redisClient.connect();
     console.log("[Auth Service] Connected to Redis successfully.");
+
+    // Connect to Kafka
+    await KafkaProducer.getInstance().connect();
   } catch (error) {
-    console.error("[Auth Service] Database connection failed:", error);
+    console.error("[Auth Service] Initialization failed:", error);
     process.exit(1);
   }
 };
@@ -64,6 +71,9 @@ app.get("/health", (req, res) => {
 });
 
 // --- HERE WE CONNECT HEXAGONAL ARCHITECTURE ---
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Mount Auth Routes
 app.use("/api/auth", createAuthRouter(pgClient));
 

@@ -78,7 +78,7 @@ router.get("/:id", (req, res) => userController.getUserById(req, res));
 /**
  * @swagger
  * /api/users/{id}/roles:
- *   post:
+ *   put:
  *     summary: Assign role to user
  *     tags: [Users]
  *     parameters:
@@ -98,12 +98,33 @@ router.get("/:id", (req, res) => userController.getUserById(req, res));
  *             properties:
  *               roleName:
  *                 type: string
+ *                 enum: [USER, ADMIN]
  *     responses:
  *       200:
  *         description: Role assigned
  *       404:
  *         description: User not found
  */
-router.post("/:id/roles", (req, res) => userController.assignRole(req, res));
+router.put("/:id/roles", (req, res) => userController.assignRole(req, res));
 
-export { router };
+/**
+ * @swagger
+ * /api/users/{id}/permissions:
+ *   get:
+ *     summary: Get user permissions based on roles
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of permissions
+ *       404:
+ *         description: User not found
+ */
+router.get("/:id/permissions", (req, res) => userController.getPermissions(req, res));
+
+export { router, userUseCases };

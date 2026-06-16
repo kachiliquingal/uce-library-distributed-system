@@ -10,16 +10,23 @@ export const catalogApi = axios.create({
   baseURL: import.meta.env.VITE_CATALOG_API_URL,
 });
 
+// Exclusive client for the User Service
+export const userApi = axios.create({
+  baseURL: import.meta.env.VITE_USER_API_URL,
+});
+
 // Interceptor to automatically inject the JWT token into protected routes
-catalogApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+const addTokenInterceptor = (config) => {
+  const token = localStorage.getItem("auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
+const errorInterceptor = (error) => {
+  return Promise.reject(error);
+};
+
+catalogApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
+userApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);

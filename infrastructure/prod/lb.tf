@@ -93,6 +93,30 @@ resource "aws_lb_target_group" "frontend_tg" {
   }
 }
 
+resource "aws_lb_target_group" "user_tg" {
+  name     = "${var.environment}-user-tg"
+  port     = 3003
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.default.id
+
+  health_check {
+    enabled             = true
+    path                = "/health"
+    port                = "3003"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 30
+    matcher             = "200"
+  }
+
+  tags = {
+    Name        = "${var.environment}-user-tg"
+    Environment = upper(var.environment)
+  }
+}
+
 # ------------------------------------------------------------------------------
 # ALB Listener (Port 80) + Routing Rules
 # ------------------------------------------------------------------------------
@@ -138,6 +162,23 @@ resource "aws_lb_listener_rule" "catalog_routing" {
   condition {
     path_pattern {
       values = ["/api/catalog/*"]
+    }
+  }
+}
+
+# Route /api/users/* → User Service Target Group
+resource "aws_lb_listener_rule" "user_routing" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 300
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.user_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/users/*"]
     }
   }
 }

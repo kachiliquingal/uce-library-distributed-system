@@ -27,11 +27,14 @@
       }
     },
     {
-      "name": "notifications",
+      "name": "notifications.email",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
-      "arguments": {}
+      "arguments": {
+        "x-dead-letter-exchange": "library.dlx",
+        "x-dead-letter-routing-key": "notifications.email.dlq"
+      }
     },
     {
       "name": "book.reservations",
@@ -53,6 +56,13 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "notifications.email.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "bindings": [
@@ -62,6 +72,14 @@
       "destination": "fine.trigger.dlq",
       "destination_type": "queue",
       "routing_key": "fine.trigger.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "library.dlx",
+      "vhost": "/",
+      "destination": "notifications.email.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.email.dlq",
       "arguments": {}
     }
   ]

@@ -14,17 +14,34 @@ const port = process.env.PORT || 3002;
 app.use(cors());
 app.use(express.json());
 
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./infrastructure/swagger/config";
+
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // API Routes
 app.use("/api/catalog/books", bookRoutes);
 
+import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+import { GrpcServer } from "./infrastructure/grpc/GrpcServer";
+
 // Database Connection
-const initializeDatabase = async () => {
+const initializeServices = async () => {
   try {
     const mongoUri = process.env.MONGO_URI as string;
     await mongoose.connect(mongoUri);
     console.log("[Catalog Service] Connected to MongoDB successfully");
+
+    // Connect to Kafka
+    await KafkaProducer.getInstance().connect();
+
+    // Start gRPC Server
+    const grpcServer = new GrpcServer();
+    grpcServer.start();
+
   } catch (error) {
-    console.error("[Catalog Service] MongoDB connection failed:", error);
+    console.error("[Catalog Service] Initialization failed:", error);
     process.exit(1);
   }
 };
@@ -37,5 +54,5 @@ app.get("/health", (req, res) => {
 // Start Server
 app.listen(port, async () => {
   console.log(`[Catalog Service] Server running on port ${port}`);
-  await initializeDatabase();
+  await initializeServices();
 });

@@ -3,21 +3,21 @@
 # ==============================================================================
 
 resource "aws_instance" "api_gateway_server" {
-  ami           = data.aws_ami.amazon_linux.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 
   vpc_security_group_ids = [aws_security_group.api_gateway_sg.id]
 
   user_data = replace(<<EOF
 #!/bin/bash
-until dnf install -y docker; do
-  echo "Waiting to release DNF lock..."
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
+usermod -a -G docker ubuntu
 
 IMAGE_NAME="kachiliquingal/uce-api-gateway:${var.docker_image_tag}"
 
@@ -26,12 +26,13 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e AUTH_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e CATALOG_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e FRONTEND_SERVICE_URL=${aws_lb.main.dns_name}:80 \
-  -e USER_SERVICE_URL=localhost:3003 \
+  -e USER_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   --restart always $IMAGE_NAME
 
 # Watchtower - Auto-updates Docker images every 60 seconds
 docker run -d \
   --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-api-gateway
 EOF
@@ -42,7 +43,5 @@ EOF
     Environment = upper(var.environment)
   }
 
-  lifecycle {
-    ignore_changes = [user_data, ami]
-  }
+  user_data_replace_on_change = true
 }
