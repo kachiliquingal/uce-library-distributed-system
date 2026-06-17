@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bookRoutes from "./infrastructure/routes/bookRoutes";
+import { logger } from "./utils/logger";
 
 // Initialize environment variables
 dotenv.config();
@@ -31,7 +32,7 @@ const initializeServices = async () => {
   try {
     const mongoUri = process.env.MONGO_URI as string;
     await mongoose.connect(mongoUri);
-    console.log("[Catalog Service] Connected to MongoDB successfully");
+    logger.info("[Catalog Service] Connected to MongoDB successfully");
 
     // Connect to Kafka
     await KafkaProducer.getInstance().connect();
@@ -41,7 +42,7 @@ const initializeServices = async () => {
     grpcServer.start();
 
   } catch (error) {
-    console.error("[Catalog Service] Initialization failed:", error);
+    logger.error("[Catalog Service] Initialization failed:", error);
     process.exit(1);
   }
 };
@@ -53,6 +54,6 @@ app.get("/health", (req, res) => {
 
 // Start Server
 app.listen(port, async () => {
-  console.log(`[Catalog Service] Server running on port ${port}`);
+  logger.info(`[Catalog Service] Server running on port ${port}`);
   await initializeServices();
 });

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { catalogApi } from "../api/client";
+import logger from "../utils/logger";
 
 export const useCatalogStore = create((set) => ({
   books: [],
@@ -23,7 +24,7 @@ export const useCatalogStore = create((set) => ({
 
       set({ books: fetchedBooks, isLoading: false });
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       set({
         error: "Error al conectar con el microservicio de catálogo",
         isLoading: false,

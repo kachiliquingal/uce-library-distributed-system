@@ -6,6 +6,7 @@ import { createClient } from "redis";
 import { createAuthRouter } from "./infrastructure/routes/authRoutes";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./infrastructure/swagger/config";
+import { logger } from "./utils/logger";
 
 // Load environment variables
 dotenv.config();
@@ -36,7 +37,7 @@ const initializeDatabases = async () => {
   try {
     // Connect to PostgreSQL
     await pgClient.connect();
-    console.log("[Auth Service] Connected to PostgreSQL successfully.");
+    logger.info("[Auth Service] Connected to PostgreSQL successfully.");
 
     // Create Users Table if not exists
     await pgClient.query(`
@@ -47,16 +48,16 @@ const initializeDatabases = async () => {
         role VARCHAR(50) NOT NULL DEFAULT 'USER'
       );
     `);
-    console.log("[Auth Service] Users table verified in PostgreSQL.");
+    logger.info("[Auth Service] Users table verified in PostgreSQL.");
 
     // Connect to Redis
     await redisClient.connect();
-    console.log("[Auth Service] Connected to Redis successfully.");
+    logger.info("[Auth Service] Connected to Redis successfully.");
 
     // Connect to Kafka
     await KafkaProducer.getInstance().connect();
   } catch (error) {
-    console.error("[Auth Service] Initialization failed:", error);
+    logger.error("[Auth Service] Initialization failed:", error);
     process.exit(1);
   }
 };
@@ -79,6 +80,6 @@ app.use("/api/auth", createAuthRouter(pgClient));
 
 // Start Server
 app.listen(port, async () => {
-  console.log(`[Auth Service] Server running on port ${port}`);
+  logger.info(`[Auth Service] Server running on port ${port}`);
   await initializeDatabases();
 });
