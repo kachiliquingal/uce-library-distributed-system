@@ -1,5 +1,6 @@
 import { Kafka, Consumer } from "kafkajs";
 import { UserUseCases } from "../../application/UserUseCases";
+import { logger } from "../../utils/logger";
 
 export class KafkaConsumerService {
   private static instance: KafkaConsumerService;
@@ -30,9 +31,9 @@ export class KafkaConsumerService {
   public async connect(): Promise<void> {
     try {
       await this.consumer.connect();
-      console.log(`[Kafka Consumer] Connected to Kafka at ${process.env.KAFKA_BROKERS || 'localhost:9092'}`);
+      logger.info(`[Kafka Consumer] Connected to Kafka at ${process.env.KAFKA_BROKERS || 'localhost:9092'}`);
     } catch (error) {
-      console.error("[Kafka Consumer] Connection error:", error);
+      logger.error("[Kafka Consumer] Connection error:", error);
     }
   }
 
@@ -47,11 +48,11 @@ export class KafkaConsumerService {
           
           try {
             const eventPayload = JSON.parse(message.value.toString());
-            console.log(`[Kafka Consumer] Received event from ${topic}:`, eventPayload.event);
+            logger.info(`[Kafka Consumer] Received event from ${topic}:`, eventPayload.event);
 
             if (eventPayload.event === "UserRegistered" && this.userUseCases) {
               const userData = eventPayload.data;
-              console.log(`[Kafka Consumer] Processing UserRegistered for email: ${userData.email}`);
+              logger.info(`[Kafka Consumer] Processing UserRegistered for email: ${userData.email}`);
               
               // Map auth-service data to user-service Neo4j format
               await this.userUseCases.createUser({
@@ -66,17 +67,17 @@ export class KafkaConsumerService {
               // Assign the role emitted by auth-service
               if (userData.role) {
                 await this.userUseCases.assignRole(userData.userId?.toString(), userData.role);
-                console.log(`[Kafka Consumer] Assigned role ${userData.role} to user ${userData.userId}`);
+                logger.info(`[Kafka Consumer] Assigned role ${userData.role} to user ${userData.userId}`);
               }
             }
           } catch (error) {
-            console.error(`[Kafka Consumer] Error processing message from topic ${topic}:`, error);
+            logger.error(`[Kafka Consumer] Error processing message from topic ${topic}:`, error);
           }
         },
       });
-      console.log("[Kafka Consumer] Subscribed to topics successfully");
+      logger.info("[Kafka Consumer] Subscribed to topics successfully");
     } catch (error) {
-      console.error("[Kafka Consumer] Error subscribing to topics:", error);
+      logger.error("[Kafka Consumer] Error subscribing to topics:", error);
     }
   }
 

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { router as userRoutes, userUseCases } from "./infrastructure/http/routes";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./infrastructure/swagger/config";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -24,8 +25,8 @@ import { KafkaConsumerService } from "./infrastructure/kafka/KafkaConsumer";
 import { GrpcServer } from "./infrastructure/grpc/GrpcServer";
 
 app.listen(port, async () => {
-  console.log(`[User Service] Server is running on port ${port}`);
-  console.log(`[User Service] Swagger docs at http://localhost:${port}/api-docs`);
+  logger.info(`[User Service] Server is running on port ${port}`);
+  logger.info(`[User Service] Swagger docs at http://localhost:${port}/api-docs`);
   
   // Connect to Kafka Producer
   await KafkaProducer.getInstance().connect();

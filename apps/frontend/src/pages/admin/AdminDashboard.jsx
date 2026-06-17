@@ -9,6 +9,7 @@ import {
   LogOut
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import logger from "../../utils/logger";
 
 export const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -22,14 +23,14 @@ export const AdminDashboard = () => {
         const usersRes = await userApi.get("/");
         setUsers(usersRes.data);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        logger.error("Error fetching users:", error);
       }
 
       try {
         const booksRes = await catalogApi.get("/books");
         setBooks(booksRes.data);
       } catch (error) {
-        console.error("Error fetching books:", error);
+        logger.error("Error fetching books:", error);
       }
 
       setIsLoading(false);
