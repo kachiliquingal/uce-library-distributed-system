@@ -1,12 +1,14 @@
 import log from 'loglevel';
 
-// Set default level based on environment
+// Establish default enterprise levels
 const currentEnv = import.meta.env.MODE || 'development';
 
-if (currentEnv === 'production') {
-  log.setLevel('warn'); // Only show warn and error in Prod
-} else {
-  log.setLevel('debug'); // Show everything in Dev
+// We default to 'info' in all environments so HTTP interceptors are visible in the console.
+log.setLevel(currentEnv === 'production' ? 'info' : 'debug');
+
+// PERFECT ENGINEERING: Expose logger to the window object for runtime debugging in Production
+if (typeof window !== 'undefined') {
+  window.appLogger = log;
 }
 
 // Enhance logger with prefixes for better visibility in DevTools
