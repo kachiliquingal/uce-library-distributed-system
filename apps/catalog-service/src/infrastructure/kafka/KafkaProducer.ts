@@ -1,4 +1,5 @@
 import { Kafka, Producer } from 'kafkajs';
+import { logger } from '../../utils/logger';
 
 export class KafkaProducer {
   private static instance: KafkaProducer;
@@ -23,9 +24,9 @@ export class KafkaProducer {
   public async connect(): Promise<void> {
     try {
       await this.producer.connect();
-      console.log(`[Kafka] Catalog Service connected to Kafka at ${process.env.KAFKA_BROKERS || 'localhost:9092'}`);
+      logger.info(`[Kafka] Catalog Service connected to Kafka at ${process.env.KAFKA_BROKERS || 'localhost:9092'}`);
     } catch (error) {
-      console.error('[Kafka] Error connecting Catalog Service to Kafka:', error);
+      logger.error('[Kafka] Error connecting Catalog Service to Kafka:', error);
     }
   }
 
@@ -42,9 +43,9 @@ export class KafkaProducer {
         topic,
         messages: [message]
       });
-      console.log(`[Kafka] Event emitted: ${eventName} -> Topic: ${topic}`);
+      logger.info(`[Kafka] Event emitted: ${eventName} -> Topic: ${topic}`);
     } catch (error) {
-      console.error(`[Kafka] Failed to emit event ${eventName}:`, error);
+      logger.error(`[Kafka] Failed to emit event ${eventName}:`, error);
     }
   }
 

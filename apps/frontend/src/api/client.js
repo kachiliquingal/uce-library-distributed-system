@@ -1,4 +1,5 @@
 import axios from "axios";
+import logger from "../utils/logger";
 
 // Exclusive client for the Auth Service
 export const authApi = axios.create({
@@ -30,3 +31,19 @@ const errorInterceptor = (error) => {
 
 catalogApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 userApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
+
+// Add Response Interceptors for Logging (Professor's Requirement)
+const responseLogger = (response) => {
+  logger.info(`Response from ${response.config.url}:`, response.data);
+  return response;
+};
+
+const responseErrorLogger = (error) => {
+  logger.error(`API Error on ${error.config?.url}:`, error.response?.data || error.message);
+  return Promise.reject(error);
+};
+
+authApi.interceptors.response.use(responseLogger, responseErrorLogger);
+catalogApi.interceptors.response.use(responseLogger, responseErrorLogger);
+userApi.interceptors.response.use(responseLogger, responseErrorLogger);
+

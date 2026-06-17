@@ -1,6 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
+import { logger } from '../../utils/logger';
 
 export class GrpcServer {
   private server: grpc.Server;
@@ -30,18 +31,18 @@ export class GrpcServer {
       grpc.ServerCredentials.createInsecure(),
       (err, bindPort) => {
         if (err) {
-          console.error('[Catalog gRPC] Failed to bind server:', err);
+          logger.error('[Catalog gRPC] Failed to bind server:', err);
           return;
         }
         this.server.start();
-        console.log(`[Catalog gRPC] Server running on port ${bindPort}`);
+        logger.info(`[Catalog gRPC] Server running on port ${bindPort}`);
       }
     );
   }
 
   private async validateISBN(call: any, callback: any) {
     const isbn = call.request.isbn;
-    console.log(`[Catalog gRPC] Received ValidateISBN request for ISBN: ${isbn}`);
+    logger.info(`[Catalog gRPC] Received ValidateISBN request for ISBN: ${isbn}`);
     
     // Simple mock logic for validation. In a real scenario, it queries the Database.
     const isValid = isbn && isbn.length >= 10;
