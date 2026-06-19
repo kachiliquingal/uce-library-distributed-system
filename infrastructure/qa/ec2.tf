@@ -28,6 +28,7 @@ chmod +x /usr/local/bin/docker-compose
 
 systemctl restart docker
 sleep 5
+docker network create microservices-network || true
 
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
@@ -94,6 +95,7 @@ chmod +x /usr/local/bin/docker-compose
 
 systemctl restart docker
 sleep 5
+docker network create microservices-network || true
 
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
@@ -163,6 +165,7 @@ chmod +x /usr/local/bin/docker-compose
 
 systemctl restart docker
 sleep 5
+docker network create microservices-network || true
 
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
