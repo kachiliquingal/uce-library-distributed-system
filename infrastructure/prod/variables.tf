@@ -26,6 +26,12 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+variable "user_instance_type" {
+  description = "EC2 instance type for User Service workload (needs 2GB for Neo4j)"
+  type        = string
+  default     = "t3.small"
+}
+
 variable "db_password" {
   description = "PostgreSQL password for Auth Service"
   type        = string
