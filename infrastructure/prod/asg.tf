@@ -258,7 +258,7 @@ module "user_asg" {
   update_default_version      = true
 
   image_id      = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
+  instance_type = var.user_instance_type
   key_name      = var.aws_key_name
 
   security_groups = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
@@ -276,6 +276,13 @@ done
 systemctl start docker
 systemctl enable docker
 usermod -a -G docker ubuntu
+
+# Create 2GB Swap file to prevent Out Of Memory (OOM) crashes on t3.small
+fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
