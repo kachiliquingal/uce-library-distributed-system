@@ -50,28 +50,22 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
-DB_USER=admin
+DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
-DB_HOST=postgres
+DB_HOST=${aws_instance.database_server.private_ip}
 DB_NAME=auth_db
-REDIS_URL=redis://redis:6379
+REDIS_URL=redis://${aws_instance.database_server.private_ip}:6379
 JWT_SECRET=${var.jwt_secret}
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
@@ -138,10 +132,6 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
@@ -149,13 +139,11 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 MONGO_PASSWORD=${var.mongo_password}
-MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+MONGO_URI=mongodb://admin:${var.mongo_password}@${aws_instance.database_server.private_ip}:27017/catalog_db?authSource=admin
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
@@ -291,10 +279,6 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
@@ -302,13 +286,11 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 NEO4J_PASSWORD=${var.neo4j_password}
-NEO4J_URI=bolt://neo4j:7687
+NEO4J_URI=bolt://${aws_instance.database_server.private_ip}:7687
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d neo4j
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d user-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
