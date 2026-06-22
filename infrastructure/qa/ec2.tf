@@ -14,24 +14,6 @@ resource "aws_instance" "auth_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-# Wait for EBS volume to attach
-echo "Waiting for EBS volume /dev/xvdf to attach..."
-while [ ! -b /dev/xvdf ]; do
-  sleep 5
-done
-
-echo "Formatting EBS volume if necessary..."
-if ! file -s /dev/xvdf | grep -q 'ext4'; then
-  mkfs.ext4 /dev/xvdf
-fi
-
-mkdir -p /data
-mount /dev/xvdf /data
-echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
-
-mkdir -p /data/postgres
-chmod 777 /data/postgres
-
 until apt-get update && apt-get install -y docker.io; do
   echo "Waiting to release apt lock..."
   sleep 5
@@ -48,10 +30,6 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
@@ -60,16 +38,14 @@ cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
-DB_HOST=postgres
+DB_HOST=${aws_instance.database_server.private_ip}
 DB_NAME=auth_db
-REDIS_URL=redis://redis:6379
+REDIS_URL=redis://${aws_instance.database_server.private_ip}:6379
 JWT_SECRET=${var.jwt_secret}
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d postgres redis
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d auth-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
@@ -91,22 +67,7 @@ EOF
   }
 }
 
-resource "aws_ebs_volume" "auth_db_vol" {
-  availability_zone = aws_instance.auth_server.availability_zone
-  size              = 10
-  type              = "gp3"
 
-  tags = {
-    Name        = "${var.environment}-auth-db-vol"
-    Environment = upper(var.environment)
-  }
-}
-
-resource "aws_volume_attachment" "auth_db_att" {
-  device_name = "/dev/xvdf"
-  volume_id   = aws_ebs_volume.auth_db_vol.id
-  instance_id = aws_instance.auth_server.id
-}
 
 # ------------------------------------------------------------------------------
 # Catalog Service Instance
@@ -120,24 +81,6 @@ resource "aws_instance" "catalog_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-# Wait for EBS volume to attach
-echo "Waiting for EBS volume /dev/xvdf to attach..."
-while [ ! -b /dev/xvdf ]; do
-  sleep 5
-done
-
-echo "Formatting EBS volume if necessary..."
-if ! file -s /dev/xvdf | grep -q 'ext4'; then
-  mkfs.ext4 /dev/xvdf
-fi
-
-mkdir -p /data
-mount /dev/xvdf /data
-echo "/dev/xvdf /data ext4 defaults,nofail 0 2" >> /etc/fstab
-
-mkdir -p /data/mongo
-chmod 777 /data/mongo
-
 until apt-get update && apt-get install -y docker.io; do
   echo "Waiting to release apt lock..."
   sleep 5
@@ -154,10 +97,6 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
@@ -165,13 +104,11 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 MONGO_PASSWORD=${var.mongo_password}
-MONGO_URI=mongodb://admin:${var.mongo_password}@catalog-mongo:27017/catalog_db?authSource=admin
+MONGO_URI=mongodb://admin:${var.mongo_password}@${aws_instance.database_server.private_ip}:27017/catalog_db?authSource=admin
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d catalog-mongo
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d catalog-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
@@ -193,22 +130,7 @@ EOF
   }
 }
 
-resource "aws_ebs_volume" "catalog_db_vol" {
-  availability_zone = aws_instance.catalog_server.availability_zone
-  size              = 10
-  type              = "gp3"
 
-  tags = {
-    Name        = "${var.environment}-catalog-db-vol"
-    Environment = upper(var.environment)
-  }
-}
-
-resource "aws_volume_attachment" "catalog_db_att" {
-  device_name = "/dev/xvdf"
-  volume_id   = aws_ebs_volume.catalog_db_vol.id
-  instance_id = aws_instance.catalog_server.id
-}
 
 # ------------------------------------------------------------------------------
 # User Service Instance
@@ -222,27 +144,6 @@ resource "aws_instance" "user_server" {
 
   user_data = replace(<<EOF
 #!/bin/bash
-# Wait for EBS volume to attach
-echo "Waiting for EBS volume to attach..."
-DEVICE="/dev/xvdf"
-while true; do
-  if [ -b "/dev/nvme1n1" ]; then DEVICE="/dev/nvme1n1"; break; fi
-  if [ -b "/dev/xvdf" ]; then DEVICE="/dev/xvdf"; break; fi
-  sleep 5
-done
-
-echo "Formatting EBS volume if necessary..."
-if ! file -s $DEVICE | grep -q 'ext4'; then
-  mkfs.ext4 $DEVICE
-fi
-
-mkdir -p /data
-mount $DEVICE /data
-echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
-
-mkdir -p /data/neo4j
-chmod 777 /data/neo4j
-
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes on t3.small
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
 chmod 600 /swapfile
@@ -266,10 +167,6 @@ systemctl restart docker
 sleep 5
 docker network create microservices-network || true
 
-cat << 'DBCOMPOSE' > /home/ubuntu/docker-compose.db.yml
-${file("${path.module}/../../deploy/docker-compose.db.yml")}
-DBCOMPOSE
-
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
 ${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
@@ -277,13 +174,11 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 NEO4J_PASSWORD=${var.neo4j_password}
-NEO4J_URI=bolt://neo4j:7687
+NEO4J_URI=bolt://${aws_instance.database_server.private_ip}:7687
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d neo4j
-sleep 20
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d user-service
 
 # Watchtower - Auto-updates Docker images every 60 seconds
@@ -305,22 +200,7 @@ EOF
   }
 }
 
-resource "aws_ebs_volume" "user_db_vol" {
-  availability_zone = aws_instance.user_server.availability_zone
-  size              = 10
-  type              = "gp3"
 
-  tags = {
-    Name        = "${var.environment}-user-db-vol"
-    Environment = upper(var.environment)
-  }
-}
-
-resource "aws_volume_attachment" "user_db_att" {
-  device_name = "/dev/xvdf"
-  volume_id   = aws_ebs_volume.user_db_vol.id
-  instance_id = aws_instance.user_server.id
-}
 
 # ------------------------------------------------------------------------------
 # Frontend Service Instance
