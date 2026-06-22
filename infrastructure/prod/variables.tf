@@ -87,3 +87,9 @@ variable "asg_desired_capacity" {
   type        = number
   default     = 1
 }
+
+variable "db_user" {
+  description = "Database administrator username"
+  type        = string
+  sensitive   = true
+}
