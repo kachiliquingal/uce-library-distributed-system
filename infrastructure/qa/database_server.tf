@@ -78,9 +78,10 @@ resource "aws_security_group" "database_sg" {
 }
 
 resource "aws_instance" "database_server" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.small" # t3.small provides 2GB RAM, needed for Neo4j+Mongo+Postgres
-  key_name      = var.aws_key_name
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = "t3.small" # t3.small provides 2GB RAM, needed for Neo4j+Mongo+Postgres
+  key_name          = var.aws_key_name
+  availability_zone = "us-east-1a"
 
   vpc_security_group_ids = [aws_security_group.database_sg.id, aws_security_group.internal_services_sg.id]
 
