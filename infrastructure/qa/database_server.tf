@@ -162,6 +162,7 @@ resource "aws_ebs_volume" "database_vol" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [availability_zone]
   }
 
   tags = {
