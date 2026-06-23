@@ -10,11 +10,11 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - DB_USER=${DB_USER}
+      - DB_USER=admin
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${DB_NAME}
+      - DB_NAME=auth_db
       - REDIS_URL=${REDIS_URL}
       - JWT_SECRET=${JWT_SECRET}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
@@ -50,6 +50,48 @@ services:
       - NEO4J_USER=${NEO4J_USER:-neo4j}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+    networks:
+      - microservices-network
+
+  loan-service:
+    image: kachiliquingal/uce-loan-service:${IMAGE_TAG}
+    container_name: loan-service
+    restart: always
+    command: sh -c "sleep 20 && node dist/index.js"
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=loan-mysql
+      - DB_PORT=3306
+      - DB_NAME=loan_db
+      - USER_SERVICE_URL=user-service:50051
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - RABBITMQ_URL=amqp://admin:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    networks:
+      - microservices-network
+
+  frontend:
+    image: kachiliquingal/uce-frontend:${IMAGE_TAG}
+    container_name: frontend
+    restart: always
+    networks:
+      - microservices-network
+
+  api-gateway:
+    image: kachiliquingal/uce-api-gateway:${IMAGE_TAG}
+    container_name: api-gateway
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - AUTH_SERVICE_URL=auth-service:3001
+      - CATALOG_SERVICE_URL=catalog-service:3002
+      - USER_SERVICE_URL=user-service:3003
+      - LOAN_SERVICE_URL=loan-service:3004
+      - FRONTEND_SERVICE_URL=frontend:80
     networks:
       - microservices-network
 

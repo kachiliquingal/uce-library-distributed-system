@@ -54,6 +54,21 @@ services:
     networks:
       - microservices-network
 
+  loan-mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: loan_db
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - /data/mysql:/var/lib/mysql
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true

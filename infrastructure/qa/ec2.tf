@@ -275,6 +275,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e AUTH_SERVICE_URL=${aws_instance.auth_server.private_ip}:3001 \
   -e CATALOG_SERVICE_URL=${aws_instance.catalog_server.private_ip}:3002 \
   -e USER_SERVICE_URL=${aws_instance.user_server.private_ip}:3003 \
+  -e LOAN_SERVICE_URL=${aws_instance.loan_server.private_ip}:3004 \
   -e FRONTEND_SERVICE_URL=${aws_instance.frontend_server.private_ip}:80 \
   --restart always $IMAGE_NAME
 
@@ -374,3 +375,65 @@ EOF
   }
 }
 
+# ------------------------------------------------------------------------------
+# Loan Service Instance
+# ------------------------------------------------------------------------------
+resource "aws_instance" "loan_server" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+  key_name      = var.aws_key_name
+
+  vpc_security_group_ids = [aws_security_group.loan_sg.id, aws_security_group.internal_services_sg.id]
+
+  user_data = replace(<<EOF
+#!/bin/bash
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ubuntu
+
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
+$${file("$${path.module}/../../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << 'ENVFILE' > /home/ubuntu/.env
+IMAGE_TAG=$${var.docker_image_tag}
+DB_USER=$${var.db_user}
+DB_PASSWORD=$${var.db_password}
+DB_HOST=$${aws_instance.database_server.private_ip}
+DB_NAME=loan_db
+RABBITMQ_PASSWORD=$${var.rabbitmq_password}
+KAFKA_BROKERS=$${aws_instance.brokers_server.private_ip}:9092
+ENVFILE
+
+cd /home/ubuntu
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d loan-service
+
+# Watchtower - Auto-updates Docker images every 60 seconds
+docker run -d \
+  --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 loan-service
+
+EOF
+  , "\r", "")
+
+  user_data_replace_on_change = true
+
+  tags = {
+    Name        = "${var.environment}-loan-server"
+    Environment = upper(var.environment)
+  }
+}
