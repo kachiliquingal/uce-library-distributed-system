@@ -4,6 +4,9 @@ import { useAuthStore } from "./store/authStore";
 import { LoginPage } from "./pages/LoginPage";
 import { UserCatalog } from "./pages/user/UserCatalog";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { Layout } from "./components/Layout";
+import { UserLoans } from "./pages/user/UserLoans";
+import { AdminLoans } from "./pages/admin/AdminLoans";
 
 // Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
@@ -64,7 +67,19 @@ function App() {
             path="/catalog"
             element={
               <ProtectedRoute>
-                <UserCatalog />
+                <Layout>
+                  <UserCatalog />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-loans"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UserLoans />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -74,7 +89,29 @@ function App() {
             path="/admin"
             element={
               <AdminRoute>
-                <AdminDashboard />
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/loans"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminLoans />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <div className="text-xl">Admin Users View Coming Soon...</div>
+                </Layout>
               </AdminRoute>
             }
           />

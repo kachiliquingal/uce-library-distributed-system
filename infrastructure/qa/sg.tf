@@ -298,3 +298,43 @@ resource "aws_security_group" "brokers_sg" {
     create_before_destroy = true
   }
 }
+
+# ------------------------------------------------------------------------------
+# Loan Service Security Group (Internal only)
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "loan_sg" {
+  name_prefix = "-loan-service-sg-"
+  description = "Allow inbound traffic for Loan Service ONLY from API Gateway"
+
+  ingress {
+    description     = "Allow Loan Service API traffic from API Gateway"
+    from_port       = 3004
+    to_port         = 3004
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  ingress {
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "-loan-service-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}

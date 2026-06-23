@@ -74,8 +74,22 @@ export const UserCatalog = () => {
                 <span className="text-xs font-semibold bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
                   ISBN: {book.isbn}
                 </span>
-                <button className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                  Ver más
+                <button
+                  onClick={async () => {
+                    try {
+                      const { loanApi } = await import('../../api/loanApi');
+                      const { useAuthStore } = await import('../../store/authStore');
+                      const user = useAuthStore.getState().user;
+                      const token = useAuthStore.getState().token;
+                      await loanApi.borrowBook(user.id, book.isbn, token);
+                      alert(`✅ Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
+                    } catch (error) {
+                      alert(`❌ Error: ${error.message}`);
+                    }
+                  }}
+                  className="text-sm font-semibold bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Prestar
                 </button>
               </div>
             </div>
