@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { loanApi } from '../../api/loanApi';
 import { useAuthStore } from '../../store/authStore';
-import { BookOpen, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export const AdminLoans = () => {
   const { token } = useAuthStore();
@@ -16,6 +16,7 @@ export const AdminLoans = () => {
 
   useEffect(() => {
     fetchLoans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, activeOnly]);
 
   const fetchLoans = async () => {
