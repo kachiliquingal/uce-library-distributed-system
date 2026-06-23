@@ -148,3 +148,5 @@ vite.config.ts.timestamp-*
 
 # Turborepo cache
 .turbo
+# AWS Credentials
+.aws_creds.ps1
