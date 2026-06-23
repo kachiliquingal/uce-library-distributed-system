@@ -404,17 +404,17 @@ sleep 5
 docker network create microservices-network || true
 
 cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
-$${file("$${path.module}/../../deploy/docker-compose.apps.yml")}
+${file("${path.module}/../../deploy/docker-compose.apps.yml")}
 APPCOMPOSE
 
 cat << 'ENVFILE' > /home/ubuntu/.env
-IMAGE_TAG=$${var.docker_image_tag}
-DB_USER=$${var.db_user}
-DB_PASSWORD=$${var.db_password}
-DB_HOST=$${aws_instance.database_server.private_ip}
+IMAGE_TAG=${var.docker_image_tag}
+DB_USER=${var.db_user}
+DB_PASSWORD=${var.db_password}
+DB_HOST=${aws_instance.database_server.private_ip}
 DB_NAME=loan_db
-RABBITMQ_PASSWORD=$${var.rabbitmq_password}
-KAFKA_BROKERS=$${aws_instance.brokers_server.private_ip}:9092
+RABBITMQ_PASSWORD=${var.rabbitmq_password}
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 
 cd /home/ubuntu
