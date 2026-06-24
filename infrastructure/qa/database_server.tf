@@ -85,6 +85,12 @@ resource "aws_instance" "database_server" {
 
   vpc_security_group_ids = [aws_security_group.database_sg.id, aws_security_group.internal_services_sg.id]
 
+  root_block_device {
+    volume_size           = 16
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = replace(<<EOF
 #!/bin/bash
 # Wait for EBS volume to attach
@@ -105,8 +111,8 @@ mkdir -p /data
 mount $DEVICE /data
 echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
-mkdir -p /data/postgres /data/mongo /data/neo4j
-chmod 777 /data/postgres /data/mongo /data/neo4j
+mkdir -p /data/postgres /data/mongo /data/neo4j /data/mysql
+chmod 777 /data/postgres /data/mongo /data/neo4j /data/mysql
 
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
