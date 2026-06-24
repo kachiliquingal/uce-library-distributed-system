@@ -15,7 +15,7 @@ export const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Toaster position="top-right" />
+      <Toaster position="top-right" toastOptions={{ duration: 5000 }} />
       {/* Sidebar */}
       <aside className="w-64 bg-indigo-900 text-white flex flex-col shadow-xl">
         <div className="p-6">
