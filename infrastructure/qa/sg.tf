@@ -105,6 +105,14 @@ resource "aws_security_group" "catalog_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
+  ingress {
+    description     = "Allow gRPC from Internal Services"
+    from_port       = 50052
+    to_port         = 50052
+    protocol        = "tcp"
+    security_groups = [aws_security_group.internal_services_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -143,6 +151,14 @@ resource "aws_security_group" "user_sg" {
     to_port         = 22
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  ingress {
+    description     = "Allow gRPC from Internal Services"
+    from_port       = 50051
+    to_port         = 50051
+    protocol        = "tcp"
+    security_groups = [aws_security_group.internal_services_sg.id]
   }
 
   egress {

@@ -8,8 +8,16 @@ import { KafkaProducer, RabbitMQProducer } from './infrastructure/messaging/Prod
 
 const app = express();
 
+import { logger } from './utils/logger';
+
 app.use(cors());
 app.use(express.json());
+
+// Log incoming requests using winston directly
+app.use((req, res, next) => {
+  logger.info(`[Loan Service] Incoming Request: ${req.method} ${req.url}`);
+  next();
+});
 
 const swaggerOptions = {
   definition: {
@@ -37,17 +45,17 @@ const PORT = process.env.PORT || 3004;
 async function bootstrap() {
   try {
     await AppDataSource.initialize();
-    console.log('Connected to MySQL via TypeORM');
+    logger.info('[Loan Service] Connected to MySQL via TypeORM');
 
     await KafkaProducer.connect();
     await RabbitMQProducer.connect();
 
     app.listen(PORT, () => {
-      console.log(`Loan Service running on port ${PORT}`);
-      console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+      logger.info(`[Loan Service] Server running on port ${PORT}`);
+      logger.info(`[Loan Service] Swagger docs available at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error('Failed to bootstrap Loan Service', error);
+    logger.error('[Loan Service] Failed to bootstrap', error);
     process.exit(1);
   }
 }
