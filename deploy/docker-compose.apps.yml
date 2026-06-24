@@ -10,11 +10,11 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - DB_USER=admin
+      - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=postgres
+      - DB_HOST=${DB_HOST}
       - DB_PORT=5432
-      - DB_NAME=auth_db
+      - DB_NAME=${DB_NAME}
       - REDIS_URL=${REDIS_URL}
       - JWT_SECRET=${JWT_SECRET}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
@@ -64,9 +64,9 @@ services:
       - PORT=3004
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=loan-mysql
+      - DB_HOST=${DB_HOST}
       - DB_PORT=3306
-      - DB_NAME=loan_db
+      - DB_NAME=${DB_NAME}
       - USER_SERVICE_URL=user-service:50051
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
       - RABBITMQ_URL=amqp://admin:${RABBITMQ_PASSWORD}@rabbitmq:5672
