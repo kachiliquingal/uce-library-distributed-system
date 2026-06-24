@@ -82,6 +82,7 @@ resource "aws_instance" "database_server" {
   instance_type     = "t3.small" # t3.small provides 2GB RAM, needed for Neo4j+Mongo+Postgres
   key_name          = var.aws_key_name
   availability_zone = "us-east-1a"
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.database_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -151,6 +152,7 @@ ENVFILE
 cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d
 
+# Trigger recreation to pull loan-mysql
 EOF
   , "\r", "")
 
