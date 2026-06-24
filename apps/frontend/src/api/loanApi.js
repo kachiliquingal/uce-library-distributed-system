@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost';
+export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const loanApi = {
   borrowBook: async (userId, isbn, token) => {
