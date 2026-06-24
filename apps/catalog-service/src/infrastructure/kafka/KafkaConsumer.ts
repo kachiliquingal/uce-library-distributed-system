@@ -25,14 +25,14 @@ export class KafkaConsumer {
             const eventData = JSON.parse(message.value.toString());
 
             if (topic === "book.borrowed") {
-              const { isbn } = eventData;
+              const { isbn } = eventData.data || eventData;
               console.log(`[Kafka] Processing book.borrowed event for ISBN: ${isbn}`);
               await BookModel.updateOne({ isbn }, { available: false });
               console.log(`[Kafka] Book ISBN: ${isbn} marked as not available.`);
             }
 
             if (topic === "book.returned") {
-              const { isbn } = eventData;
+              const { isbn } = eventData.data || eventData;
               console.log(`[Kafka] Processing book.returned event for ISBN: ${isbn}`);
               await BookModel.updateOne({ isbn }, { available: true });
               console.log(`[Kafka] Book ISBN: ${isbn} marked as available.`);
