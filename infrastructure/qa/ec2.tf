@@ -209,6 +209,7 @@ resource "aws_instance" "frontend_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
+  iam_instance_profile = aws_iam_instance_profile.lab_instance_profile.name
 
   vpc_security_group_ids = [aws_security_group.frontend_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -235,7 +236,7 @@ docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-frontend
 
-# Force recreation v2
+  # Force recreation v2 to pull latest image
 EOF
   , "\r", "")
 
