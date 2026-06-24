@@ -105,6 +105,14 @@ resource "aws_security_group" "catalog_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
+  ingress {
+    description     = "Allow gRPC from Internal Services"
+    from_port       = 50052
+    to_port         = 50052
+    protocol        = "tcp"
+    security_groups = [aws_security_group.internal_services_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -143,6 +151,14 @@ resource "aws_security_group" "user_sg" {
     to_port         = 22
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  ingress {
+    description     = "Allow gRPC from Internal Services"
+    from_port       = 50051
+    to_port         = 50051
+    protocol        = "tcp"
+    security_groups = [aws_security_group.internal_services_sg.id]
   }
 
   egress {
@@ -258,6 +274,23 @@ resource "aws_security_group" "brokers_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
   }
 
+  # Neo4j
+  ingress {
+    description     = "Neo4j Bolt from Internal Services & API Gateway"
+    from_port       = 7687
+    to_port         = 7687
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "Neo4j HTTP from API Gateway"
+    from_port       = 7474
+    to_port         = 7474
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
   ingress {
     description     = "MQTT from Internal Services & API Gateway"
     from_port       = 1883
@@ -291,6 +324,46 @@ resource "aws_security_group" "brokers_sg" {
 
   tags = {
     Name        = "${var.environment}-brokers-sg"
+    Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ------------------------------------------------------------------------------
+# Loan Service Security Group (Internal only)
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "loan_sg" {
+  name_prefix = "-loan-service-sg-"
+  description = "Allow inbound traffic for Loan Service ONLY from API Gateway"
+
+  ingress {
+    description     = "Allow Loan Service API traffic from API Gateway"
+    from_port       = 3004
+    to_port         = 3004
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  ingress {
+    description     = "Allow SSH administration from Bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "-loan-service-sg"
     Environment = upper(var.environment)
   }
 

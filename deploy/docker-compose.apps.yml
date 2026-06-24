@@ -53,6 +53,48 @@ services:
     networks:
       - microservices-network
 
+  loan-service:
+    image: kachiliquingal/uce-loan-service:${IMAGE_TAG}
+    container_name: loan-service
+    restart: always
+    command: sh -c "sleep 20 && node dist/index.js"
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME}
+      - USER_SERVICE_URL=${USER_SERVICE_URL}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    networks:
+      - microservices-network
+
+  frontend:
+    image: kachiliquingal/uce-frontend:${IMAGE_TAG}
+    container_name: frontend
+    restart: always
+    networks:
+      - microservices-network
+
+  api-gateway:
+    image: kachiliquingal/uce-api-gateway:${IMAGE_TAG}
+    container_name: api-gateway
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - AUTH_SERVICE_URL=auth-service:3001
+      - CATALOG_SERVICE_URL=catalog-service:3002
+      - USER_SERVICE_URL=user-service:3003
+      - LOAN_SERVICE_URL=loan-service:3004
+      - FRONTEND_SERVICE_URL=frontend:80
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true

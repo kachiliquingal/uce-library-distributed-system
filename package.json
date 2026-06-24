@@ -18,5 +18,20 @@
     "turbo": "latest"
   },
   "author": "Alejandro Chiliquinga",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
+    "amqplib": "^2.0.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "kafkajs": "^2.2.4",
+    "mysql2": "^3.22.5",
+    "reflect-metadata": "^0.2.2",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^1.0.0",
+    "winston": "^3.19.0"
+  }
 }

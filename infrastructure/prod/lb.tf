@@ -117,6 +117,30 @@ resource "aws_lb_target_group" "user_tg" {
   }
 }
 
+resource "aws_lb_target_group" "loan_tg" {
+  name     = "${var.environment}-loan-tg"
+  port     = 3004
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.default.id
+
+  health_check {
+    enabled             = true
+    path                = "/health"
+    port                = "3004"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 30
+    matcher             = "200"
+  }
+
+  tags = {
+    Name        = "${var.environment}-loan-tg"
+    Environment = upper(var.environment)
+  }
+}
+
 # ------------------------------------------------------------------------------
 # ALB Listener (Port 80) + Routing Rules
 # ------------------------------------------------------------------------------
@@ -182,3 +206,21 @@ resource "aws_lb_listener_rule" "user_routing" {
     }
   }
 }
+
+# Route /api/loan/* → Loan Service Target Group
+resource "aws_lb_listener_rule" "loan_routing" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 400
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.loan_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/loan/*"]
+    }
+  }
+}
+

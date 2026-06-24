@@ -51,6 +51,15 @@ resource "aws_security_group" "database_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
   }
 
+  # MySQL
+  ingress {
+    description     = "MySQL from Internal Services & API Gateway"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
   # SSH from Bastion
   ingress {
     description     = "Allow SSH administration from Bastion"
@@ -78,11 +87,19 @@ resource "aws_security_group" "database_sg" {
 }
 
 resource "aws_instance" "database_server" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.small" # t3.small provides 2GB RAM, needed for Neo4j+Mongo+Postgres
-  key_name      = var.aws_key_name
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = "t3.small" # t3.small provides 2GB RAM, needed for Neo4j+Mongo+Postgres
+  key_name          = var.aws_key_name
+  availability_zone = "us-east-1a"
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.database_sg.id, aws_security_group.internal_services_sg.id]
+
+  root_block_device {
+    volume_size           = 16
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
 
   user_data = replace(<<EOF
 #!/bin/bash
@@ -104,8 +121,8 @@ mkdir -p /data
 mount $DEVICE /data
 echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
-mkdir -p /data/postgres /data/mongo /data/neo4j
-chmod 777 /data/postgres /data/mongo /data/neo4j
+mkdir -p /data/postgres /data/mongo /data/neo4j /data/mysql
+chmod 777 /data/postgres /data/mongo /data/neo4j /data/mysql
 
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
@@ -144,6 +161,7 @@ ENVFILE
 cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d
 
+# Trigger recreation to pull loan-mysql
 EOF
   , "\r", "")
 
@@ -162,6 +180,7 @@ resource "aws_ebs_volume" "database_vol" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [availability_zone]
   }
 
   tags = {

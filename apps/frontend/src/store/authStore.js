@@ -66,8 +66,12 @@ export const useAuthStore = create((set) => ({
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.valid && response.data.user) {
+        const userData = response.data.user;
+        if (userData.userId && !userData.id) {
+          userData.id = userData.userId;
+        }
         set({
-          user: response.data.user,
+          user: userData,
           isAuthenticated: true,
           isLoading: false
         });

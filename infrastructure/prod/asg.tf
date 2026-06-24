@@ -387,3 +387,85 @@ EOF
     Environment = upper(var.environment)
   }
 }
+
+# ------------------------------------------------------------------------------
+# Loan Service ASG
+# ------------------------------------------------------------------------------
+module "loan_asg" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "~> 7.0"
+
+  name = "${var.environment}-loan-service-asg"
+
+  min_size                  = var.asg_min_size
+  max_size                  = var.asg_max_size
+  desired_capacity          = var.asg_desired_capacity
+  wait_for_capacity_timeout = 0
+  health_check_type         = "EC2"
+  vpc_zone_identifier       = data.aws_subnets.default.ids
+
+  # Launch Template
+  launch_template_name        = "${var.environment}-loan-service-lt"
+  launch_template_description = "Launch template for Loan Service ${upper(var.environment)}"
+  update_default_version      = true
+
+  image_id      = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+  key_name      = var.aws_key_name
+
+  security_groups = [aws_security_group.loan_sg.id, aws_security_group.internal_services_sg.id]
+
+  # Target Group attachment for ALB
+  target_group_arns = [aws_lb_target_group.loan_tg.arn]
+
+  user_data = base64encode(replace(<<EOF
+#!/bin/bash
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ubuntu
+
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
+$${file("$${path.module}/../../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << 'ENVFILE' > /home/ubuntu/.env
+IMAGE_TAG=$${var.docker_image_tag}
+DB_USER=$${var.db_user}
+DB_PASSWORD=$${var.db_password}
+DB_HOST=$${aws_instance.database_server.private_ip}
+DB_NAME=loan_db
+RABBITMQ_URL=amqp://admin:$${var.rabbitmq_password}@$${aws_instance.brokers_server.private_ip}:5672
+USER_SERVICE_URL=$${aws_lb.main.dns_name}:80
+KAFKA_BROKERS=$${aws_instance.brokers_server.private_ip}:9092
+ENVFILE
+
+cd /home/ubuntu
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d loan-service
+
+# Watchtower - Auto-updates Docker images every 60 seconds
+docker run -d \
+  --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower -i 60 loan-service
+EOF
+  , "\r", ""))
+
+  tags = {
+    Name        = "${var.environment}-loan-service"
+    Environment = upper(var.environment)
+    Service     = "loan-service"
+  }
+}

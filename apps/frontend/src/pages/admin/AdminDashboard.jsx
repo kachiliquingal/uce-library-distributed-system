@@ -5,8 +5,7 @@ import {
   BookOpen, 
   BookMarked, 
   Activity, 
-  TrendingUp,
-  LogOut
+  TrendingUp
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import logger from "../../utils/logger";
@@ -15,10 +14,14 @@ export const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { logout, user } = useAuthStore();
+  const { user } = useAuthStore();
+
+  const [activeLoansCount, setActiveLoansCount] = useState(0);
+  const [topBooks, setTopBooks] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
+      let fetchedBooks = [];
       try {
         const usersRes = await userApi.get("/");
         setUsers(usersRes.data);
@@ -29,8 +32,44 @@ export const AdminDashboard = () => {
       try {
         const booksRes = await catalogApi.get("/books");
         setBooks(booksRes.data);
+        fetchedBooks = booksRes.data;
       } catch (error) {
         logger.error("Error fetching books:", error);
+      }
+
+      try {
+        const { loanApi } = await import('../../api/loanApi');
+        const token = useAuthStore.getState().token;
+        
+        // Fetch all loans to calculate Top 5 and Active count
+        const loansRes = await loanApi.getAllLoans(false, 1, 1000, token);
+        const allLoans = loansRes.data || [];
+        
+        setActiveLoansCount(allLoans.filter(l => l.status === 'ACTIVE').length);
+
+        // Compute Top 5
+        const freqMap = {};
+        allLoans.forEach(l => {
+          freqMap[l.isbn] = (freqMap[l.isbn] || 0) + 1;
+        });
+
+        // Create dictionary from fetchedBooks to map ISBN -> Title
+        const bMap = {};
+        fetchedBooks.forEach(b => { bMap[b.isbn] = b.title; });
+
+        const sorted = Object.entries(freqMap)
+          .sort((a,b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([isbn, count]) => ({
+            isbn,
+            count,
+            title: bMap[isbn] || `Libro no encontrado (${isbn})`
+          }));
+
+        setTopBooks(sorted);
+
+      } catch (error) {
+        logger.error("Error fetching active loans:", error);
       }
 
       setIsLoading(false);
@@ -38,10 +77,9 @@ export const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // Placeholders para MS-03 (Loan Service)
   const stats = {
     totalBooks: books.length,
-    activeLoans: 0, // Pending MS-03
+    activeLoans: activeLoansCount,
     availableBooks: books.filter(b => b.available).length,
     totalUsers: users.length,
   };
@@ -65,20 +103,13 @@ export const AdminDashboard = () => {
                 <Activity className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
-                Admin Panel
+                Panel de Administración
               </span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-gray-600 hidden sm:block">
                 {user?.email}
               </span>
-              <button
-                onClick={logout}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                Salir
-              </button>
             </div>
           </div>
         </div>
@@ -100,7 +131,6 @@ export const AdminDashboard = () => {
             title="Total Usuarios" 
             value={stats.totalUsers} 
             icon={<Users className="h-6 w-6 text-blue-600" />} 
-            trend="+12% este mes"
           />
           <KpiCard 
             title="Total Libros" 
@@ -116,8 +146,6 @@ export const AdminDashboard = () => {
             title="Préstamos Activos" 
             value={stats.activeLoans} 
             icon={<Activity className="h-6 w-6 text-amber-600" />} 
-            trend="Pendiente MS-03"
-            trendColor="text-amber-600"
           />
         </div>
 
@@ -189,21 +217,23 @@ export const AdminDashboard = () => {
                 Top 5: Libros Más Prestados
               </h3>
               <div className="space-y-4 relative z-10">
-                {/* Placeholder items for the future MS-03 */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors">0{i}</span>
-                      <div className="w-32 h-4 bg-gray-100 rounded animate-pulse"></div>
+                {topBooks.length > 0 ? (
+                  topBooks.map((item, index) => (
+                    <div key={item.isbn} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <span className="text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors">0{index + 1}</span>
+                        <div className="truncate text-sm font-medium text-gray-700 group-hover:text-gray-900" title={item.title}>
+                          {item.title}
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full ml-2 shrink-0">
+                        {item.count}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-400">---</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 text-center">
-                  * Los datos reales se conectarán al implementar el Loan Service (MS-03).
-                </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No hay préstamos suficientes.</p>
+                )}
               </div>
             </div>
 

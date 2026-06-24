@@ -74,8 +74,33 @@ export const UserCatalog = () => {
                 <span className="text-xs font-semibold bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
                   ISBN: {book.isbn}
                 </span>
-                <button className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                  Ver más
+                <button
+                  onClick={async () => {
+                    try {
+                      const { loanApi } = await import('../../api/loanApi');
+                      const { useAuthStore } = await import('../../store/authStore');
+                      const { toast } = await import('react-hot-toast');
+                      const user = useAuthStore.getState().user;
+                      const token = useAuthStore.getState().token;
+                      const userId = user?.id || user?.userId;
+                      await loanApi.borrowBook(userId, book.isbn, token);
+                      toast.success(`Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
+                      
+                      // Actualizar el estado local para reflejar el cambio de inmediato
+                      useCatalogStore.getState().fetchBooks();
+                    } catch (error) {
+                      const { toast } = await import('react-hot-toast');
+                      toast.error(`Error: ${error.message}`);
+                    }
+                  }}
+                  disabled={book.available === false}
+                  className={`text-sm font-semibold px-3 py-1 rounded-lg transition-colors ${
+                    book.available !== false 
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {book.available !== false ? "Prestar" : "No disponible"}
                 </button>
               </div>
             </div>

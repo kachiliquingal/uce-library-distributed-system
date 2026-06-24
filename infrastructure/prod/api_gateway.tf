@@ -27,6 +27,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e AUTH_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e CATALOG_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e FRONTEND_SERVICE_URL=${aws_lb.main.dns_name}:80 \
+  -e LOAN_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e USER_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   --restart always $IMAGE_NAME
 
