@@ -258,6 +258,32 @@ resource "aws_security_group" "brokers_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
   }
 
+  # Neo4j
+  ingress {
+    description     = "Neo4j Bolt from Internal Services & API Gateway"
+    from_port       = 7687
+    to_port         = 7687
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
+  ingress {
+    description     = "Neo4j HTTP from API Gateway"
+    from_port       = 7474
+    to_port         = 7474
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
+  }
+
+  # MySQL
+  ingress {
+    description     = "MySQL from Internal Services & API Gateway"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+  }
+
   ingress {
     description     = "MQTT from Internal Services & API Gateway"
     from_port       = 1883
