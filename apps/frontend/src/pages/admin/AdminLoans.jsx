@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { loanApi } from '../../api/loanApi';
+import { catalogApi, userApi } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export const AdminLoans = () => {
   const { token } = useAuthStore();
   const [loans, setLoans] = useState([]);
+  const [booksMap, setBooksMap] = useState({});
+  const [usersMap, setUsersMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeOnly, setActiveOnly] = useState(false);
 
@@ -15,9 +19,36 @@ export const AdminLoans = () => {
   const limit = 10;
 
   useEffect(() => {
+    fetchDictionaries();
+  }, []);
+
+  useEffect(() => {
     fetchLoans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, activeOnly]);
+
+  const fetchDictionaries = async () => {
+    try {
+      const [booksRes, usersRes] = await Promise.all([
+        catalogApi.get("/books"),
+        userApi.get("/")
+      ]);
+      
+      const bMap = {};
+      booksRes.data.forEach(b => {
+        bMap[b.isbn] = b.title;
+      });
+      setBooksMap(bMap);
+
+      const uMap = {};
+      usersRes.data.forEach(u => {
+        uMap[u.id] = `${u.firstName} ${u.lastName}`;
+      });
+      setUsersMap(uMap);
+    } catch (error) {
+      console.error("Error fetching dictionaries:", error);
+    }
+  };
 
   const fetchLoans = async () => {
     try {
@@ -27,7 +58,7 @@ export const AdminLoans = () => {
       setTotal(res.total);
     } catch (error) {
       console.error(error);
-      alert('Error fetching all loans: ' + error.message);
+      toast.error('Error al obtener préstamos: ' + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -37,10 +68,10 @@ export const AdminLoans = () => {
     try {
       if (!window.confirm('¿Confirmar devolución del libro?')) return;
       await loanApi.returnBook(loanId, token);
-      alert('✅ Libro devuelto con éxito');
+      toast.success('Libro devuelto con éxito');
       fetchLoans();
     } catch (error) {
-      alert(`❌ Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -85,8 +116,8 @@ export const AdminLoans = () => {
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-4">ID Préstamo</th>
-                  <th className="px-6 py-4">Usuario (ID)</th>
-                  <th className="px-6 py-4">Libro (ISBN)</th>
+                  <th className="px-6 py-4">Usuario (Nombre)</th>
+                  <th className="px-6 py-4">Libro (Título)</th>
                   <th className="px-6 py-4">Estado</th>
                   <th className="px-6 py-4">Fechas</th>
                   <th className="px-6 py-4 text-right">Acción</th>
@@ -96,8 +127,13 @@ export const AdminLoans = () => {
                 {loans.map(loan => (
                   <tr key={loan.id} className="border-b hover:bg-gray-50">
                     <td className="px-6 py-4 font-mono text-xs">{loan.id.substring(0,8)}...</td>
-                    <td className="px-6 py-4 font-medium text-gray-900">{loan.userId}</td>
-                    <td className="px-6 py-4">{loan.isbn}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {usersMap[loan.userId] || loan.userId}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900 font-medium">
+                      {booksMap[loan.isbn] || loan.isbn}
+                      {booksMap[loan.isbn] && <div className="text-xs font-mono text-gray-400 mt-1">{loan.isbn}</div>}
+                    </td>
                     <td className="px-6 py-4">{getStatusBadge(loan.status)}</td>
                     <td className="px-6 py-4 text-xs">
                       <div><span className="font-semibold">Presta:</span> {new Date(loan.borrowDate).toLocaleDateString()}</div>

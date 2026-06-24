@@ -2,6 +2,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogOut, BookOpen, Clock, Users, Home } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
 export const Layout = ({ children }) => {
   const { user, logout } = useAuthStore();
@@ -14,6 +15,7 @@ export const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-right" />
       {/* Sidebar */}
       <aside className="w-64 bg-indigo-900 text-white flex flex-col shadow-xl">
         <div className="p-6">
@@ -22,7 +24,7 @@ export const Layout = ({ children }) => {
             UCE Library
           </h2>
           <p className="text-indigo-200 text-sm mt-2 font-medium">
-            Welcome, {user?.email.split('@')[0]}
+            Bienvenido, {user?.email.split('@')[0]}
           </p>
           <span className="inline-block mt-2 px-2 py-1 bg-indigo-800 text-xs rounded-full font-semibold">
             {user?.role}
@@ -51,7 +53,7 @@ export const Layout = ({ children }) => {
                   }`
                 }
               >
-                <Clock className="h-5 w-5" /> All Loans
+                <Clock className="h-5 w-5" /> Todos los Préstamos
               </NavLink>
               <NavLink
                 to="/admin/users"
@@ -61,7 +63,7 @@ export const Layout = ({ children }) => {
                   }`
                 }
               >
-                <Users className="h-5 w-5" /> Users Mgt
+                <Users className="h-5 w-5" /> Gestión de Usuarios
               </NavLink>
             </>
           ) : (
@@ -74,7 +76,7 @@ export const Layout = ({ children }) => {
                   }`
                 }
               >
-                <BookOpen className="h-5 w-5" /> Catalog
+                <BookOpen className="h-5 w-5" /> Catálogo
               </NavLink>
               <NavLink
                 to="/my-loans"
@@ -84,7 +86,7 @@ export const Layout = ({ children }) => {
                   }`
                 }
               >
-                <Clock className="h-5 w-5" /> My Loans
+                <Clock className="h-5 w-5" /> Mis Préstamos
               </NavLink>
             </>
           )}
@@ -95,7 +97,7 @@ export const Layout = ({ children }) => {
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-indigo-100 hover:bg-red-600 hover:text-white transition-colors"
           >
-            <LogOut className="h-5 w-5" /> Logout
+            <LogOut className="h-5 w-5" /> Cerrar Sesión
           </button>
         </div>
       </aside>
