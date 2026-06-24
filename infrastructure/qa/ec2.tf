@@ -342,7 +342,7 @@ chmod +x /usr/local/bin/docker-compose
 
 systemctl restart docker
 sleep 5
-docker network create brokers-network || true
+docker network create microservices-network || true
 
 cat << 'BROKERSCOMPOSE' > /home/ubuntu/docker-compose.brokers.yml
 ${file("${path.module}/../../deploy/docker-compose.brokers.yml")}
@@ -373,7 +373,7 @@ chown -R 1000:1000 /home/ubuntu/.n8n
   cd /home/ubuntu
   /usr/local/bin/docker-compose -f docker-compose.brokers.yml --env-file .env up -d
   
-  # Force recreation v4
+  # Force recreation v5
 EOF
   , "\r", "")
 
