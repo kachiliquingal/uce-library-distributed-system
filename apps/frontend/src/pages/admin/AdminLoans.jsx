@@ -66,13 +66,37 @@ export const AdminLoans = () => {
 
   const handleReturn = async (loanId) => {
     try {
-      if (!window.confirm('¿Confirmar devolución del libro?')) return;
       await loanApi.returnBook(loanId, token);
       toast.success('Libro devuelto con éxito');
       fetchLoans();
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     }
+  };
+
+  const confirmReturn = (loanId) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="font-semibold text-gray-900">¿Confirmar devolución del libro?</span>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              handleReturn(loanId);
+            }}
+            className="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            Aceptar
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="bg-gray-200 text-gray-800 px-3 py-1.5 rounded text-xs font-semibold hover:bg-gray-300 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const getStatusBadge = (status) => {
@@ -145,7 +169,7 @@ export const AdminLoans = () => {
                     <td className="px-6 py-4 text-right">
                       {loan.status === 'ACTIVE' && (
                         <button
-                          onClick={() => handleReturn(loan.id)}
+                          onClick={() => confirmReturn(loan.id)}
                           className="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-1 ml-auto"
                         >
                           <RefreshCw className="w-3 h-3" /> Registrar Devolución
