@@ -3,7 +3,7 @@ import { BookModel } from "../database/BookModel";
 
 const kafka = new Kafka({
   clientId: "catalog-service",
-  brokers: [process.env.KAFKA_BROKER || "localhost:9092"],
+  brokers: [(process.env.KAFKA_BROKERS || process.env.KAFKA_BROKER) || "localhost:9092"],
 });
 
 const consumer = kafka.consumer({ groupId: "catalog-service-group" });
