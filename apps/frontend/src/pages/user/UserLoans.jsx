@@ -13,15 +13,21 @@ export const UserLoans = () => {
   const [total, setTotal] = useState(0);
   const limit = 8;
 
+  // Resolve user ID from either 'id' (login response) or 'userId' (JWT decoded)
+  const currentUserId = user?.id || user?.userId;
+
   useEffect(() => {
-    fetchLoans();
+    if (currentUserId) {
+      fetchLoans();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, currentUserId]);
 
   const fetchLoans = async () => {
+    if (!currentUserId) return;
     try {
       setIsLoading(true);
-      const res = await loanApi.getUserLoans(user.id, page, limit, token);
+      const res = await loanApi.getUserLoans(currentUserId, page, limit, token);
       setLoans(res.data);
       setTotal(res.total);
     } catch (error) {

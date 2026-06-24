@@ -81,7 +81,8 @@ export const UserCatalog = () => {
                       const { useAuthStore } = await import('../../store/authStore');
                       const user = useAuthStore.getState().user;
                       const token = useAuthStore.getState().token;
-                      await loanApi.borrowBook(user.id, book.isbn, token);
+                      const userId = user?.id || user?.userId;
+                      await loanApi.borrowBook(userId, book.isbn, token);
                       alert(`✅ Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
                     } catch (error) {
                       alert(`❌ Error: ${error.message}`);
