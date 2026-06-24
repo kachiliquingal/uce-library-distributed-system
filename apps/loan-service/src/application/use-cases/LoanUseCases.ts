@@ -2,6 +2,7 @@ import { ILoanRepository } from '../../domain/ILoanRepository';
 import { Loan } from '../../domain/Loan';
 import { UserClient } from '../../infrastructure/grpc/UserClient';
 import { KafkaProducer, RabbitMQProducer } from '../../infrastructure/messaging/Producers';
+import { logger } from '../../utils/logger';
 
 export class BorrowBookUseCase {
   constructor(private readonly loanRepository: ILoanRepository) {}
@@ -34,6 +35,8 @@ export class BorrowBookUseCase {
       dueDate: savedLoan.dueDate
     });
 
+    logger.info(`[INF] Préstamo creado exitosamente: loanId=${savedLoan.id}, userId=${userId}, isbn=${isbn}`);
+
     return savedLoan;
   }
 }
@@ -58,6 +61,8 @@ export class ReturnBookUseCase {
       returnDate: savedLoan.returnDate,
       status: savedLoan.status
     });
+
+    logger.info(`[INF] Préstamo devuelto exitosamente: loanId=${savedLoan.id}, isbn=${savedLoan.isbn}`);
 
     // Si hay mora, emitir a RabbitMQ
     if (savedLoan.status === 'OVERDUE') {

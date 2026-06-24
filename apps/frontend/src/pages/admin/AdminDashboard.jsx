@@ -17,6 +17,8 @@ export const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { logout, user } = useAuthStore();
 
+  const [activeLoansCount, setActiveLoansCount] = useState(0);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -33,15 +35,24 @@ export const AdminDashboard = () => {
         logger.error("Error fetching books:", error);
       }
 
+      try {
+        const { loanApi } = await import('../../api/loanApi');
+        const token = useAuthStore.getState().token;
+        // Fetch all active loans using the true flag for activeOnly
+        const loansRes = await loanApi.getAllLoans(true, 1, 1, token);
+        setActiveLoansCount(loansRes.total || 0);
+      } catch (error) {
+        logger.error("Error fetching active loans:", error);
+      }
+
       setIsLoading(false);
     };
     fetchData();
   }, []);
 
-  // Placeholders para MS-03 (Loan Service)
   const stats = {
     totalBooks: books.length,
-    activeLoans: 0, // Pending MS-03
+    activeLoans: activeLoansCount,
     availableBooks: books.filter(b => b.available).length,
     totalUsers: users.length,
   };
@@ -116,8 +127,6 @@ export const AdminDashboard = () => {
             title="Préstamos Activos" 
             value={stats.activeLoans} 
             icon={<Activity className="h-6 w-6 text-amber-600" />} 
-            trend="Pendiente MS-03"
-            trendColor="text-amber-600"
           />
         </div>
 
