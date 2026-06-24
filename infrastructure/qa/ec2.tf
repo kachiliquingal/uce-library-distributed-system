@@ -9,6 +9,7 @@ resource "aws_instance" "auth_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.auth_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -76,6 +77,7 @@ resource "aws_instance" "catalog_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.catalog_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -139,6 +141,7 @@ resource "aws_instance" "user_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.user_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -255,6 +258,7 @@ resource "aws_instance" "api_gateway_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.api_gateway_sg.id]
 
@@ -304,8 +308,9 @@ EOF
 # ------------------------------------------------------------------------------
 resource "aws_instance" "brokers_server" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.small"
+  instance_type = "t3.medium"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.brokers_sg.id]
 
@@ -365,8 +370,10 @@ ENVFILE
 mkdir -p /home/ubuntu/.n8n
 chown -R 1000:1000 /home/ubuntu/.n8n
 
-cd /home/ubuntu
-/usr/local/bin/docker-compose -f docker-compose.brokers.yml --env-file .env up -d
+  cd /home/ubuntu
+  /usr/local/bin/docker-compose -f docker-compose.brokers.yml --env-file .env up -d
+  
+  # Force recreation v4
 EOF
   , "\r", "")
 
