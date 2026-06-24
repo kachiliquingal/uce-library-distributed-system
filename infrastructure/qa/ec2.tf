@@ -285,6 +285,8 @@ docker run -d \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   containrrr/watchtower -i 60 uce-api-gateway
+
+  # Force recreation to pick up new microservice IPs
 EOF
   , "\r", "")
 
