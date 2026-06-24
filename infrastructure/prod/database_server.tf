@@ -147,8 +147,6 @@ cd /home/ubuntu
 EOF
   , "\r", "")
 
-  user_data_replace_on_change = true
-
   tags = {
     Name        = "${var.environment}-database-server"
     Environment = upper(var.environment)
@@ -162,6 +160,7 @@ resource "aws_ebs_volume" "database_vol" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [availability_zone]
   }
 
   tags = {
