@@ -2,7 +2,7 @@ export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const loanApi = {
   borrowBook: async (userId, isbn, token) => {
-    const res = await fetch(`${API_URL}/api/loans`, {
+    const res = await fetch(`${API_URL}/api/loans/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
