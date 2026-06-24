@@ -25,6 +25,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/catalog/books", bookRoutes);
 
 import { KafkaProducer } from "./infrastructure/kafka/KafkaProducer";
+import { KafkaConsumer } from "./infrastructure/kafka/KafkaConsumer";
 import { GrpcServer } from "./infrastructure/grpc/GrpcServer";
 
 // Database Connection
@@ -36,6 +37,7 @@ const initializeServices = async () => {
 
     // Connect to Kafka
     await KafkaProducer.getInstance().connect();
+    await KafkaConsumer.start();
 
     // Start gRPC Server
     const grpcServer = new GrpcServer();

@@ -84,13 +84,21 @@ export const UserCatalog = () => {
                       const userId = user?.id || user?.userId;
                       await loanApi.borrowBook(userId, book.isbn, token);
                       alert(`✅ Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
+                      
+                      // Actualizar el estado local para reflejar el cambio de inmediato
+                      useCatalogStore.getState().fetchBooks();
                     } catch (error) {
                       alert(`❌ Error: ${error.message}`);
                     }
                   }}
-                  className="text-sm font-semibold bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors"
+                  disabled={book.available === false}
+                  className={`text-sm font-semibold px-3 py-1 rounded-lg transition-colors ${
+                    book.available !== false 
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
-                  Prestar
+                  {book.available !== false ? "Prestar" : "No disponible"}
                 </button>
               </div>
             </div>
