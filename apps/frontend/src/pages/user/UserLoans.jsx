@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { loanApi } from '../../api/loanApi';
+import { catalogApi } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { BookOpen, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export const UserLoans = () => {
   const { user, token } = useAuthStore();
   const [loans, setLoans] = useState([]);
+  const [booksMap, setBooksMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Pagination state
@@ -17,11 +20,28 @@ export const UserLoans = () => {
   const currentUserId = user?.id || user?.userId;
 
   useEffect(() => {
+    fetchDictionaries();
+  }, []);
+
+  useEffect(() => {
     if (currentUserId) {
       fetchLoans();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, currentUserId]);
+
+  const fetchDictionaries = async () => {
+    try {
+      const booksRes = await catalogApi.get("/books");
+      const bMap = {};
+      booksRes.data.forEach(b => {
+        bMap[b.isbn] = b.title;
+      });
+      setBooksMap(bMap);
+    } catch (error) {
+      console.error("Error fetching dictionary:", error);
+    }
+  };
 
   const fetchLoans = async () => {
     if (!currentUserId) return;
@@ -32,7 +52,7 @@ export const UserLoans = () => {
       setTotal(res.total);
     } catch (error) {
       console.error(error);
-      alert('Error fetching loans: ' + error.message);
+      toast.error('Error al obtener préstamos: ' + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -80,12 +100,17 @@ export const UserLoans = () => {
                   </div>
                   {getStatusBadge(loan.status)}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">ISBN: {loan.isbn}</h3>
-                <div className="text-sm text-gray-500 space-y-2 mt-2 flex-1">
-                  <p><strong>Fecha de Préstamo:</strong> {new Date(loan.borrowDate).toLocaleDateString()}</p>
-                  <p><strong>Fecha de Devolución Esperada:</strong> {new Date(loan.dueDate).toLocaleDateString()}</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2" title={booksMap[loan.isbn] || loan.isbn}>
+                  {booksMap[loan.isbn] || `Libro no encontrado`}
+                </h3>
+                <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded w-max mb-3">
+                  ISBN: {loan.isbn}
+                </span>
+                <div className="text-sm text-gray-500 space-y-2 mt-auto pt-4 border-t border-gray-50">
+                  <p><strong>Presta:</strong> {new Date(loan.borrowDate).toLocaleDateString()}</p>
+                  <p><strong>Vence:</strong> {new Date(loan.dueDate).toLocaleDateString()}</p>
                   {loan.returnDate && (
-                    <p><strong>Devuelto el:</strong> {new Date(loan.returnDate).toLocaleDateString()}</p>
+                    <p className="text-green-600"><strong>Devuelve:</strong> {new Date(loan.returnDate).toLocaleDateString()}</p>
                   )}
                 </div>
               </div>
@@ -98,7 +123,7 @@ export const UserLoans = () => {
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium bg-white shadow-sm"
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium bg-white shadow-sm transition-colors"
               >
                 Anterior
               </button>
@@ -108,7 +133,7 @@ export const UserLoans = () => {
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium bg-white shadow-sm"
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium bg-white shadow-sm transition-colors"
               >
                 Siguiente
               </button>

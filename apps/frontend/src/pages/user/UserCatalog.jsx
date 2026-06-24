@@ -79,16 +79,18 @@ export const UserCatalog = () => {
                     try {
                       const { loanApi } = await import('../../api/loanApi');
                       const { useAuthStore } = await import('../../store/authStore');
+                      const { toast } = await import('react-hot-toast');
                       const user = useAuthStore.getState().user;
                       const token = useAuthStore.getState().token;
                       const userId = user?.id || user?.userId;
                       await loanApi.borrowBook(userId, book.isbn, token);
-                      alert(`✅ Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
+                      toast.success(`Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
                       
                       // Actualizar el estado local para reflejar el cambio de inmediato
                       useCatalogStore.getState().fetchBooks();
                     } catch (error) {
-                      alert(`❌ Error: ${error.message}`);
+                      const { toast } = await import('react-hot-toast');
+                      toast.error(`Error: ${error.message}`);
                     }
                   }}
                   disabled={book.available === false}
