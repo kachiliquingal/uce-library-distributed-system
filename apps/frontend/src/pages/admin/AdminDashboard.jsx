@@ -5,8 +5,7 @@ import {
   BookOpen, 
   BookMarked, 
   Activity, 
-  TrendingUp,
-  LogOut
+  TrendingUp
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import logger from "../../utils/logger";
@@ -15,7 +14,7 @@ export const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { logout, user } = useAuthStore();
+  const { user } = useAuthStore();
 
   const [activeLoansCount, setActiveLoansCount] = useState(0);
   const [topBooks, setTopBooks] = useState([]);
