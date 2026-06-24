@@ -45,5 +45,7 @@ EOF
     Environment = upper(var.environment)
   }
 
-  user_data_replace_on_change = true
+  lifecycle {
+    ignore_changes = [user_data, user_data_replace_on_change]
+  }
 }
