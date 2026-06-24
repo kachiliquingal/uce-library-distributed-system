@@ -385,6 +385,7 @@ resource "aws_instance" "loan_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   key_name      = var.aws_key_name
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.loan_sg.id, aws_security_group.internal_services_sg.id]
 
@@ -416,7 +417,8 @@ DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
 DB_HOST=${aws_instance.database_server.private_ip}
 DB_NAME=loan_db
-RABBITMQ_PASSWORD=${var.rabbitmq_password}
+RABBITMQ_URL=amqp://admin:${var.rabbitmq_password}@${aws_instance.brokers_server.private_ip}:5672
+USER_SERVICE_URL=${aws_instance.user_server.private_ip}:50051
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ENVFILE
 

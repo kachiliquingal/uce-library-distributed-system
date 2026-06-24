@@ -67,9 +67,9 @@ services:
       - DB_HOST=${DB_HOST}
       - DB_PORT=3306
       - DB_NAME=${DB_NAME}
-      - USER_SERVICE_URL=user-service:50051
+      - USER_SERVICE_URL=${USER_SERVICE_URL}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
-      - RABBITMQ_URL=amqp://admin:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=${RABBITMQ_URL}
     networks:
       - microservices-network
 
