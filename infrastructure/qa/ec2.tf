@@ -377,11 +377,13 @@ chown -R 1000:1000 /home/ubuntu/.n8n
 EOF
   , "\r", "")
 
-  user_data_replace_on_change = true
-
   tags = {
     Name        = "${var.environment}-brokers-server"
     Environment = upper(var.environment)
+  }
+
+  lifecycle {
+    ignore_changes = [user_data, user_data_replace_on_change]
   }
 }
 
