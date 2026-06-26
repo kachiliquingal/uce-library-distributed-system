@@ -93,3 +93,22 @@ variable "db_user" {
   type        = string
   sensitive   = true
 }
+
+# --- Cross-Account VPC Peering (Cuenta B) ---
+
+variable "cuenta_b_aws_access_key_id" {
+  description = "AWS Access Key for Cuenta B (Production)"
+  type        = string
+}
+
+variable "cuenta_b_aws_secret_access_key" {
+  description = "AWS Secret Key for Cuenta B (Production)"
+  type        = string
+  sensitive   = true
+}
+
+variable "cuenta_b_aws_session_token" {
+  description = "AWS Session Token for Cuenta B (Production)"
+  type        = string
+  sensitive   = true
+}
