@@ -219,7 +219,7 @@ resource "aws_lb_listener_rule" "loan_routing" {
 
   condition {
     path_pattern {
-      values = ["/api/loan/*"]
+      values = ["/api/loans/*"]
     }
   }
 }
