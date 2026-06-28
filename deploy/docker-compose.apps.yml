@@ -73,6 +73,20 @@ services:
     networks:
       - microservices-network
 
+  notification-service:
+    image: kachiliquingal/uce-notification-service:${IMAGE_TAG}
+    container_name: notification-service
+    restart: always
+    command: sh -c "sleep 25 && node dist/index.js"
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    networks:
+      - microservices-network
+
   frontend:
     image: kachiliquingal/uce-frontend:${IMAGE_TAG}
     container_name: frontend
@@ -91,6 +105,7 @@ services:
       - CATALOG_SERVICE_URL=catalog-service:3002
       - USER_SERVICE_URL=user-service:3003
       - LOAN_SERVICE_URL=loan-service:3004
+      - NOTIFICATION_SERVICE_URL=notification-service:3005
       - FRONTEND_SERVICE_URL=frontend:80
     networks:
       - microservices-network

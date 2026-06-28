@@ -15,7 +15,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "turbo": "latest",
+    "typescript-eslint": "^8.62.0"
   },
   "author": "Alejandro Chiliquinga",
   "license": "ISC",
