@@ -26,3 +26,8 @@ output "database_public_ip" {
   description = "The public IP of the Database Server"
   value       = aws_instance.database_server.public_ip
 }
+
+output "notification_server_public_ip" {
+  description = "The public IP of the Notification Server (Cuenta B)"
+  value       = aws_instance.notification_server.public_ip
+}
