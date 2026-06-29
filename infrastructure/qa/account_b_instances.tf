@@ -45,6 +45,13 @@ ENVFILE
 
 cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d notification-service
+
+# Watchtower - Auto-updates Docker images every 60 seconds
+docker run -d \
+  --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart always containrrr/watchtower -i 60 notification-service
 EOF
   , "\r\n", "\n")
 
