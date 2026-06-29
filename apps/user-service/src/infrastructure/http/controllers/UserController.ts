@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { UserUseCases } from "../../../application/UserUseCases";
+import { logger } from "../../../utils/logger";
 
 export class UserController {
   constructor(private userUseCases: UserUseCases) {}
@@ -7,8 +8,10 @@ export class UserController {
   async createUser(req: Request, res: Response): Promise<void> {
     try {
       const user = await this.userUseCases.createUser(req.body);
+      logger.info(`[UserController] User service respondió correctamente: User created ${user.id}`);
       res.status(201).json(user);
     } catch (error: any) {
+      logger.error(`[UserController] Error creating user:`, error);
       if (error.message === "User already exists with this email") {
         res.status(409).json({ error: error.message });
       } else {
@@ -22,6 +25,7 @@ export class UserController {
       const users = await this.userUseCases.getAllUsers();
       res.status(200).json(users);
     } catch (error: any) {
+      logger.error(`[UserController] Error getting all users:`, error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -30,11 +34,14 @@ export class UserController {
     try {
       const user = await this.userUseCases.getUserById(req.params.id);
       if (!user) {
+        logger.warn(`[UserController] User not found: ${req.params.id}`);
         res.status(404).json({ error: "User not found" });
         return;
       }
+      logger.info(`[UserController] User service respondió correctamente con los datos del usuario ${req.params.id}`);
       res.status(200).json(user);
     } catch (error: any) {
+      logger.error(`[UserController] Error getting user by ID ${req.params.id}:`, error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
