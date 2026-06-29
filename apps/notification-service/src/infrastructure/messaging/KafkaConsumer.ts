@@ -31,35 +31,39 @@ export class KafkaConsumer {
           const value = JSON.parse(message.value.toString());
           logger.info(`[Kafka] Received event on topic ${topic}: ${JSON.stringify(value)}`);
 
+          const data = value.data || value; // Extract payload from nested 'data' property
+
           let userId = '';
           let subject = '';
           let body = '';
 
           switch (topic) {
             case 'user.registered':
-              userId = value.id;
+              userId = data.id || data.userId;
               subject = 'Welcome to UCE Library!';
-              body = `Hello ${value.name}, your registration is complete. Welcome!`;
+              body = `Hello ${data.firstName || data.name || 'User'}, your registration is complete. Welcome!`;
               break;
             case 'book.borrowed':
-              userId = value.userId;
+              userId = data.userId;
               subject = 'Book Borrowed Successfully';
-              body = `You have borrowed the book with ID: ${value.bookId}.`;
+              body = `You have borrowed the book with ISBN: ${data.isbn || data.bookId}.`;
               break;
             case 'book.returned':
-              userId = value.userId;
+              userId = data.userId;
               subject = 'Book Returned';
-              body = `Thank you for returning the book with ID: ${value.bookId}.`;
+              body = `Thank you for returning the book with ISBN: ${data.isbn || data.bookId}.`;
               break;
             case 'fine.created':
-              userId = value.userId;
+              userId = data.userId;
               subject = 'New Fine Issued';
-              body = `A fine of $${value.amount} has been applied to your account. Reason: ${value.reason}`;
+              body = `A fine of $${data.amount} has been applied to your account. Reason: ${data.reason}`;
               break;
           }
 
           if (userId && subject) {
             await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+          } else {
+            logger.warn(`[Kafka] Missing userId or subject. Skipping notification creation for topic ${topic}`);
           }
         },
       });
