@@ -328,6 +328,7 @@ resource "aws_security_group" "brokers_sg" {
     to_port         = 9092
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
@@ -336,6 +337,7 @@ resource "aws_security_group" "brokers_sg" {
     to_port         = 5672
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
