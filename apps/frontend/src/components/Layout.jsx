@@ -106,7 +106,7 @@ export const Layout = ({ children }) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header bar */}
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-end px-6 shadow-sm">
+        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-end px-6 shadow-sm relative z-[60]">
           <NotificationBell />
         </header>
         
