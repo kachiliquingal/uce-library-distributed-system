@@ -40,7 +40,7 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
-RABBITMQ_URL=amqp://guest:guest@${aws_instance.brokers_server.private_ip}:5672
+RABBITMQ_URL=amqp://admin:${var.rabbitmq_password}@${aws_instance.brokers_server.private_ip}:5672
 ENVFILE
 
 cd /home/ubuntu
@@ -54,6 +54,8 @@ docker run -d \
   --restart always containrrr/watchtower -i 60 notification-service
 EOF
   , "\r\n", "\n")
+
+  user_data_replace_on_change = true
 
   tags = {
     Name = "ec2-notification"
