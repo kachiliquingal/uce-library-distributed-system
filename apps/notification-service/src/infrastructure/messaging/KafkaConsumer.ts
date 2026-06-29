@@ -1,7 +1,7 @@
 import { Kafka } from 'kafkajs';
 import { logger } from '../../utils/logger';
 import { CreateNotificationUseCase } from '../../application/use-cases/CreateNotificationUseCase';
-import { SQLiteNotificationRepository } from '../database/SQLiteNotificationRepository';
+import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -11,7 +11,7 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: 'notification-group' });
-const repository = new SQLiteNotificationRepository();
+const repository = new PostgresNotificationRepository();
 const createNotificationUseCase = new CreateNotificationUseCase(repository);
 
 export class KafkaConsumer {

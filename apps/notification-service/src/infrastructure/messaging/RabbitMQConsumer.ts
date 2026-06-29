@@ -1,12 +1,12 @@
 import amqp from 'amqplib';
 import { logger } from '../../utils/logger';
 import { CreateNotificationUseCase } from '../../application/use-cases/CreateNotificationUseCase';
-import { SQLiteNotificationRepository } from '../database/SQLiteNotificationRepository';
+import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
 
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const queue = 'notifications.email';
 
-const repository = new SQLiteNotificationRepository();
+const repository = new PostgresNotificationRepository();
 const createNotificationUseCase = new CreateNotificationUseCase(repository);
 
 export class RabbitMQConsumer {
