@@ -1,4 +1,4 @@
-export type NotificationType = 'EMAIL' | 'PUSH' | 'SMS';
+export type NotificationType = 'EMAIL' | 'PUSH' | 'SMS' | 'SYSTEM';
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED';
 
 export interface Notification {

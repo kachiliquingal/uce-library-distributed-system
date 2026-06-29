@@ -62,6 +62,16 @@ export class KafkaConsumer {
 
           if (userId && subject) {
             await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+
+            // Emit admin notification
+            if (topic === 'book.borrowed' || topic === 'book.returned') {
+              const action = topic === 'book.borrowed' ? 'prestado' : 'devuelto';
+              const displayName = data.userName || userId;
+              const adminSubject = 'Actividad del Sistema';
+              const adminBody = `El usuario ${displayName} acaba de ${action} el libro con el isbn: ${data.isbn || data.bookId}.`;
+              
+              await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
+            }
           } else {
             logger.warn(`[Kafka] Missing userId or subject. Skipping notification creation for topic ${topic}`);
           }

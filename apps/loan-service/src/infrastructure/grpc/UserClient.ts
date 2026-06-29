@@ -21,14 +21,14 @@ const client = new userProto.UserService(
 );
 
 export class UserClient {
-  static async validateUser(userId: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+  static async validateUser(userId: string): Promise<{isValid: boolean, name?: string}> {
+    return new Promise((resolve) => {
       client.ValidateUser({ userId }, (error: any, response: any) => {
         if (error) {
           console.error('gRPC Error validating user:', error);
-          return resolve(false); // Fail gracefully or reject
+          return resolve({ isValid: false }); // Fail gracefully or reject
         }
-        resolve(response.isValid);
+        resolve({ isValid: response.isValid, name: response.name });
       });
     });
   }

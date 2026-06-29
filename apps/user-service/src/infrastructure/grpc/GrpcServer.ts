@@ -3,11 +3,15 @@ import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
 import { logger } from '../../utils/logger';
 
+import { UserUseCases } from '../../application/UserUseCases';
+
 export class GrpcServer {
   private server: grpc.Server;
+  private userUseCases: UserUseCases;
 
-  constructor() {
+  constructor(userUseCases: UserUseCases) {
     this.server = new grpc.Server();
+    this.userUseCases = userUseCases;
   }
 
   public start() {
@@ -45,13 +49,35 @@ export class GrpcServer {
     const userId = call.request.userId;
     logger.info(`[User gRPC] Received ValidateUser request for userId: ${userId}`);
     
-    // Simple mock logic for validation. Real scenario calls UserRepository.
-    const isValid = !!userId;
-    
-    callback(null, {
-      isValid: isValid,
-      role: isValid ? 'STUDENT' : '',
-    });
+    try {
+      const user = await this.userUseCases.getUserById(userId);
+      
+      if (user) {
+        logger.info(`[User gRPC] Successfully validated user: ${user.email} (ID: ${userId})`);
+        const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+        const mainRole = user.roles && user.roles.length > 0 ? user.roles[0].name : 'STUDENT';
+        
+        callback(null, {
+          isValid: true,
+          role: mainRole,
+          name: name
+        });
+      } else {
+        logger.warn(`[User gRPC] User validation failed for userId: ${userId} - Not Found`);
+        callback(null, {
+          isValid: false,
+          role: '',
+          name: ''
+        });
+      }
+    } catch (error: any) {
+      logger.error(`[User gRPC] Error validating user ${userId}:`, error);
+      callback(null, {
+        isValid: false,
+        role: '',
+        name: ''
+      });
+    }
   }
 
   private async getPermissions(call: any, callback: any) {
