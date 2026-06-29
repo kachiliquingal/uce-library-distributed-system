@@ -64,4 +64,13 @@ export class SQLiteNotificationRepository implements NotificationRepository {
       logger.error(`[SQLite] Error updating status for notification ${id}`, error);
     }
   }
+
+  async markAllAsRead(userId: string): Promise<void> {
+    try {
+      const stmt = db.prepare("UPDATE notifications SET status = 'READ' WHERE userId = ? AND status = 'SENT'");
+      stmt.run(userId);
+    } catch (error) {
+      logger.error(`[SQLite] Error marking all notifications as read for user ${userId}`, error);
+    }
+  }
 }
