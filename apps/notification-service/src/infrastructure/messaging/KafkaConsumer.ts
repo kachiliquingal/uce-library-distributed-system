@@ -39,22 +39,22 @@ export class KafkaConsumer {
 
           switch (topic) {
             case 'user.registered':
-              userId = data.id || data.userId;
+              userId = String(data.id || data.userId);
               subject = 'Welcome to UCE Library!';
               body = `Hello ${data.firstName || data.name || 'User'}, your registration is complete. Welcome!`;
               break;
             case 'book.borrowed':
-              userId = data.userId;
+              userId = String(data.userId);
               subject = 'Book Borrowed Successfully';
               body = `You have borrowed the book with ISBN: ${data.isbn || data.bookId}.`;
               break;
             case 'book.returned':
-              userId = data.userId;
+              userId = String(data.userId);
               subject = 'Book Returned';
               body = `Thank you for returning the book with ISBN: ${data.isbn || data.bookId}.`;
               break;
             case 'fine.created':
-              userId = data.userId;
+              userId = String(data.userId);
               subject = 'New Fine Issued';
               body = `A fine of $${data.amount} has been applied to your account. Reason: ${data.reason}`;
               break;
