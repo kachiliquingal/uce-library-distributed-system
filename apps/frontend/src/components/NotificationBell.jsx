@@ -15,7 +15,12 @@ export const NotificationBell = () => {
     
     // Auto refresh notifications every 30s
     const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    window.addEventListener('notification-update', fetchNotifications);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notification-update', fetchNotifications);
+    };
   }, [user]);
 
   useEffect(() => {

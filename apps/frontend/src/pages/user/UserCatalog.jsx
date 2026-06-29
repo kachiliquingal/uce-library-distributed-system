@@ -85,6 +85,7 @@ export const UserCatalog = () => {
                       const userId = user?.id || user?.userId;
                       await loanApi.borrowBook(userId, book.isbn, token);
                       toast.success(`Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
+                      window.dispatchEvent(new Event('notification-update'));
                       
                       // Actualizar el estado local para reflejar el cambio de inmediato
                       useCatalogStore.getState().fetchBooks();
