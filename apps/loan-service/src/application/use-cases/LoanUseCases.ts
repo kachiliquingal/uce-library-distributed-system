@@ -9,10 +9,13 @@ export class BorrowBookUseCase {
 
   async execute(userId: string, isbn: string): Promise<Loan> {
     // 1. Validar usuario vía gRPC
-    const isUserValid = await UserClient.validateUser(userId);
+    const { isValid: isUserValid, name: userName } = await UserClient.validateUser(userId);
     if (!isUserValid) {
+      logger.error(`[BorrowBookUseCase] User validation failed for user ${userId}`);
       throw new Error('User is not valid or does not exist');
     }
+
+    logger.info(`[BorrowBookUseCase] Comunicación con user-service exitosa para el usuario ${userId} (${userName})`);
 
     // 2. Idealmente, validar si el libro (isbn) existe y tiene stock vía Catalog/Inventory
     // Por ahora asumimos disponibilidad para hacer el "checkout automático"
@@ -30,12 +33,13 @@ export class BorrowBookUseCase {
     await KafkaProducer.emit('book.borrowed', 'BookBorrowed', {
       loanId: savedLoan.id,
       userId: savedLoan.userId,
+      userName: userName,
       isbn: savedLoan.isbn,
       borrowDate: savedLoan.borrowDate,
       dueDate: savedLoan.dueDate
     });
 
-    logger.info(`[INF] Préstamo creado exitosamente: loanId=${savedLoan.id}, userId=${userId}, isbn=${isbn}`);
+    logger.info(`[BorrowBookUseCase] Préstamo realizado correctamente para el usuario ${userId}: loanId=${savedLoan.id}, isbn=${isbn}`);
 
     return savedLoan;
   }
@@ -54,15 +58,17 @@ export class ReturnBookUseCase {
     const savedLoan = await this.loanRepository.save(loan);
 
     // Emitir evento Kafka
+    const { name: userName } = await UserClient.validateUser(savedLoan.userId);
     await KafkaProducer.emit('book.returned', 'BookReturned', {
       loanId: savedLoan.id,
       userId: savedLoan.userId,
+      userName: userName,
       isbn: savedLoan.isbn,
       returnDate: savedLoan.returnDate,
       status: savedLoan.status
     });
 
-    logger.info(`[INF] Préstamo devuelto exitosamente: loanId=${savedLoan.id}, isbn=${savedLoan.isbn}`);
+    logger.info(`[ReturnBookUseCase] Préstamo devuelto exitosamente para el usuario ${savedLoan.userId}: loanId=${savedLoan.id}, isbn=${savedLoan.isbn}`);
 
     // Si hay mora, emitir a RabbitMQ
     if (savedLoan.status === 'OVERDUE') {
