@@ -251,19 +251,21 @@ resource "aws_security_group" "brokers_sg" {
   description = "Allow inbound traffic for Brokers from internal network"
 
   ingress {
-    description     = "Kafka from Internal Services & API Gateway"
+    description     = "Kafka from Internal Services, API Gateway & Cuenta B"
     from_port       = 9092
     to_port         = 9092
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
-    description     = "RabbitMQ AMQP from Internal Services & API Gateway"
+    description     = "RabbitMQ AMQP from Internal Services, API Gateway & Cuenta B"
     from_port       = 5672
     to_port         = 5672
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {

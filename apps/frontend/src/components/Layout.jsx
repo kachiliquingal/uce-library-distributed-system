@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogOut, BookOpen, Clock, Users, Home } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import { NotificationBell } from './NotificationBell';
 
 export const Layout = ({ children }) => {
   const { user, logout } = useAuthStore();
@@ -104,7 +105,11 @@ export const Layout = ({ children }) => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header bar could go here if needed */}
+        {/* Header bar */}
+        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-end px-6 shadow-sm relative z-[60]">
+          <NotificationBell />
+        </header>
+        
         <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
           <div className="max-w-6xl mx-auto">
             {children}

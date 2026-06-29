@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 export enum LoanStatus {
   ACTIVE = 'ACTIVE',
   RETURNED = 'RETURNED',
@@ -33,7 +35,6 @@ export class Loan {
     const dueDate = new Date();
     dueDate.setDate(borrowDate.getDate() + 14); // 14 days loan period
     
-    const crypto = require('crypto');
     return new Loan(
       crypto.randomUUID(),
       userId,

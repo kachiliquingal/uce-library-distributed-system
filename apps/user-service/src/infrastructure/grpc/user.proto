@@ -14,6 +14,7 @@ message UserRequest {
 message UserResponse {
   bool isValid = 1;
   string role = 2;
+  string name = 3;
 }
 
 message PermissionsResponse {

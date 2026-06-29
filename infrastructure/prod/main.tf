@@ -50,3 +50,14 @@ data "aws_subnets" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
+
+# ------------------------------------------------------------------------------
+# Provider for Cuenta B (Cross-Account VPC Peering)
+# ------------------------------------------------------------------------------
+provider "aws" {
+  alias      = "cuenta_b"
+  region     = var.aws_region
+  access_key = var.cuenta_b_aws_access_key_id
+  secret_key = var.cuenta_b_aws_secret_access_key
+  token      = var.cuenta_b_aws_session_token
+}

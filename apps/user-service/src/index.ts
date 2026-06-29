@@ -38,6 +38,6 @@ app.listen(port, async () => {
   await kafkaConsumer.subscribe();
 
   // Start gRPC Server
-  const grpcServer = new GrpcServer();
+  const grpcServer = new GrpcServer(userUseCases);
   grpcServer.start();
 });

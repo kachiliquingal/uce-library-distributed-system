@@ -42,7 +42,7 @@ class MockLoanRepository implements ILoanRepository {
 }
 
 // Override static methods
-UserClient.validateUser = async (userId: string) => userId !== 'invalid';
+UserClient.validateUser = async (userId: string) => ({ isValid: userId !== 'invalid', name: 'Test User' });
 KafkaProducer.emit = async () => {};
 RabbitMQProducer.emit = () => {};
 

@@ -54,7 +54,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 auth-service
+  --restart always containrrr/watchtower -i 60 auth-service
 
 # Force recreation v2
 EOF
@@ -118,7 +118,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 catalog-service
+  --restart always containrrr/watchtower -i 60 catalog-service
 
 # Force recreation v2
 EOF
@@ -189,7 +189,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 user-service
+  --restart always containrrr/watchtower -i 60 user-service
 
 # Force recreation v3
 EOF
@@ -237,7 +237,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 uce-frontend
+  --restart always containrrr/watchtower -i 60 uce-frontend
 
   # Force recreation v2 to pull latest image
 EOF
@@ -281,6 +281,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e CATALOG_SERVICE_URL=${aws_instance.catalog_server.private_ip}:3002 \
   -e USER_SERVICE_URL=${aws_instance.user_server.private_ip}:3003 \
   -e LOAN_SERVICE_URL=${aws_instance.loan_server.private_ip}:3004 \
+  -e NOTIFICATION_SERVICE_URL=${aws_instance.notification_server.private_ip}:3005 \
   -e FRONTEND_SERVICE_URL=${aws_instance.frontend_server.private_ip}:80 \
   --restart always $IMAGE_NAME
 
@@ -289,7 +290,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 uce-api-gateway
+  --restart always containrrr/watchtower -i 60 uce-api-gateway
 
   # Force recreation to pick up new microservice IPs
 EOF
@@ -439,7 +440,7 @@ docker run -d \
   --name watchtower \
   -e DOCKER_API_VERSION=1.44 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower -i 60 loan-service
+  --restart always containrrr/watchtower -i 60 loan-service
 
 EOF
   , "\r", "")
