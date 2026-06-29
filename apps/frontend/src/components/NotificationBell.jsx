@@ -32,7 +32,8 @@ export const NotificationBell = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/notifications/user/${user.id}`);
+      const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
+      const res = await fetch(`/api/notifications/user/${targetUserId}`);
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -44,12 +45,31 @@ export const NotificationBell = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => n.status === 'SENT').length; // Assuming SENT means generated, could add READ status later
+  const markAsRead = async () => {
+    try {
+      const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
+      await fetch(`/api/notifications/user/${targetUserId}/read`, { method: 'PUT' });
+      // Update local state to reflect read status
+      setNotifications(prev => prev.map(n => ({ ...n, status: 'READ' })));
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
+  const handleToggle = () => {
+    const opening = !isOpen;
+    setIsOpen(opening);
+    if (opening && unreadCount > 0) {
+      markAsRead();
+    }
+  };
+
+  const unreadCount = notifications.filter(n => n.status === 'SENT').length;
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
       >
         <Bell className="h-6 w-6" />
@@ -63,7 +83,9 @@ export const NotificationBell = () => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl overflow-hidden z-50 border border-gray-100">
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="text-sm font-semibold text-gray-800">Notificaciones</h3>
+            <h3 className="text-sm font-semibold text-gray-800">
+              Notificaciones {user.role === 'ADMIN' && '(Admin)'}
+            </h3>
             <button onClick={fetchNotifications} className="text-xs text-indigo-600 hover:text-indigo-800">
               Actualizar
             </button>
