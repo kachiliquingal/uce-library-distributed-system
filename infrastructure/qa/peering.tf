@@ -50,14 +50,16 @@ resource "aws_route_table" "rt_b" {
   provider = aws.cuenta_b
   vpc_id   = aws_vpc.vpc_b.id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw_b.id
-  }
-
   tags = {
     Name = "CuentaB-Public-RT"
   }
+}
+
+resource "aws_route" "rt_b_igw" {
+  provider               = aws.cuenta_b
+  route_table_id         = aws_route_table.rt_b.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw_b.id
 }
 
 resource "aws_route_table_association" "rta_b" {
