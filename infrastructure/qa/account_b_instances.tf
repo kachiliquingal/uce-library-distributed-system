@@ -41,6 +41,10 @@ cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 RABBITMQ_URL=amqp://admin:${var.rabbitmq_password}@${aws_instance.brokers_server.private_ip}:5672
+DB_HOST=${aws_instance.database_server.private_ip}
+DB_USER=${var.db_user}
+DB_PASSWORD=${var.db_password}
+DB_NAME=auth_db
 ENVFILE
 
 cd /home/ubuntu

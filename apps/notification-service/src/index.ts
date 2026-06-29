@@ -3,6 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { notificationRouter } from './infrastructure/http/routes';
+import { initializeDB } from './infrastructure/database/db';
 import { KafkaConsumer } from './infrastructure/messaging/KafkaConsumer';
 import { RabbitMQConsumer } from './infrastructure/messaging/RabbitMQConsumer';
 import { logger } from './utils/logger';
@@ -44,6 +45,7 @@ const PORT = process.env.PORT || 3005;
 async function bootstrap() {
   try {
     // Database connection is initialized upon import in db.ts
+    await initializeDB();
     logger.info('[Notification Service] Initializing message consumers...');
     
     await KafkaConsumer.connect();
