@@ -1,10 +1,15 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { logger } from '../../utils/logger';
 
 const dbPath = process.env.NODE_ENV === 'test' 
   ? ':memory:' 
   : path.join(__dirname, '../../../data/notifications.db');
+
+if (dbPath !== ':memory:') {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
 
 export const db = new Database(dbPath);
 
