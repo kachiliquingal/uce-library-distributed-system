@@ -61,16 +61,26 @@ export class KafkaConsumer {
           }
 
           if (userId && subject) {
-            await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+            try {
+              await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+              logger.info(`[Kafka] User notification created for userId: ${userId} - Subject: ${subject}`);
+            } catch (err) {
+              logger.error(`[Kafka] Failed to create user notification for userId: ${userId}`, err);
+            }
 
             // Emit admin notification
             if (topic === 'book.borrowed' || topic === 'book.returned') {
-              const action = topic === 'book.borrowed' ? 'prestado' : 'devuelto';
-              const displayName = data.userName || userId;
-              const adminSubject = 'Actividad del Sistema';
-              const adminBody = `El usuario ${displayName} acaba de ${action} el libro con el isbn: ${data.isbn || data.bookId}.`;
-              
-              await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
+              try {
+                const action = topic === 'book.borrowed' ? 'prestado' : 'devuelto';
+                const displayName = data.userName || userId;
+                const adminSubject = 'Actividad del Sistema';
+                const adminBody = `El usuario ${displayName} acaba de ${action} el libro con el isbn: ${data.isbn || data.bookId}.`;
+                
+                await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
+                logger.info(`[Kafka] Admin notification created for action: ${action}`);
+              } catch (err) {
+                logger.error(`[Kafka] Failed to create admin notification`, err);
+              }
             }
           } else {
             logger.warn(`[Kafka] Missing userId or subject. Skipping notification creation for topic ${topic}`);
