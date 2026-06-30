@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -9,32 +9,7 @@ export const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const user = useAuthStore((state) => state.user);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    fetchNotifications();
-    
-    // Auto refresh notifications every 30s
-    const interval = setInterval(fetchNotifications, 30000);
-    window.addEventListener('notification-update', fetchNotifications);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('notification-update', fetchNotifications);
-    };
-  }, [user]);
-
-  useEffect(() => {
-    // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
@@ -48,7 +23,32 @@ export const NotificationBell = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchNotifications();
+    
+    // Auto refresh notifications every 30s
+    const interval = setInterval(fetchNotifications, 30000);
+    window.addEventListener('notification-update', fetchNotifications);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notification-update', fetchNotifications);
+    };
+  }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const markAsRead = async () => {
     try {
