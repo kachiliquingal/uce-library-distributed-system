@@ -2,6 +2,8 @@ import amqp from 'amqplib';
 import { logger } from '../../utils/logger';
 import { CreateNotificationUseCase } from '../../application/use-cases/CreateNotificationUseCase';
 import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
+import { MqttPublisher } from './MqttPublisher';
+import { EmailService } from '../email/EmailService';
 
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const queue = 'notifications.email';
@@ -26,7 +28,11 @@ export class RabbitMQConsumer {
             
             // Expected content: { userId, subject, body }
             if (content.userId && content.subject && content.body) {
-              await createNotificationUseCase.execute(content.userId, 'EMAIL', content.subject, content.body);
+              const notification = await createNotificationUseCase.execute(content.userId, 'EMAIL', content.subject, content.body);
+              
+              // Push real-time and email
+              MqttPublisher.publishNotification(content.userId, notification);
+              await EmailService.sendNotificationEmail(content.subject, content.body);
             }
             channel.ack(msg);
           } catch (err) {

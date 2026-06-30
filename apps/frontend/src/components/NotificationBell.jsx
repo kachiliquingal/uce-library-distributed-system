@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import mqtt from 'mqtt';
 
 export const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -29,12 +30,38 @@ export const NotificationBell = () => {
     if (!user?.id) return;
     fetchNotifications();
     
-    // Auto refresh notifications every 30s
-    const interval = setInterval(fetchNotifications, 30000);
+    const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
+    const brokerUrl = import.meta.env.VITE_MQTT_URL || 'ws://localhost:9001';
+    
+    const client = mqtt.connect(brokerUrl);
+
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker via WebSockets');
+      client.subscribe(`notifications/${targetUserId}`);
+    });
+
+    client.on('message', (topic, message) => {
+      console.log(`Received real-time MQTT message on ${topic}`);
+      fetchNotifications();
+      
+      import('react-hot-toast').then(module => {
+        const toast = module.default;
+        try {
+          const payload = JSON.parse(message.toString());
+          toast.success(`Nueva alerta: ${payload.subject || 'Tienes una nueva notificación'}`, {
+            duration: 5000,
+            icon: '🔔',
+          });
+        } catch (e) {
+          toast.success('Tienes una nueva notificación', { icon: '🔔' });
+        }
+      });
+    });
+
     window.addEventListener('notification-update', fetchNotifications);
     
     return () => {
-      clearInterval(interval);
+      client.end();
       window.removeEventListener('notification-update', fetchNotifications);
     };
   }, [user, fetchNotifications]);

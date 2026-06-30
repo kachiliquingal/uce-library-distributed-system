@@ -2,6 +2,8 @@ import { Kafka } from 'kafkajs';
 import { logger } from '../../utils/logger';
 import { CreateNotificationUseCase } from '../../application/use-cases/CreateNotificationUseCase';
 import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
+import { MqttPublisher } from './MqttPublisher';
+import { EmailService } from '../email/EmailService';
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -62,8 +64,12 @@ export class KafkaConsumer {
 
           if (userId && subject) {
             try {
-              await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+              const notification = await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
               logger.info(`[Kafka] User notification created for userId: ${userId} - Subject: ${subject}`);
+              
+              // Push real-time and email
+              MqttPublisher.publishNotification(userId, notification);
+              await EmailService.sendNotificationEmail(subject, body);
             } catch (err) {
               logger.error(`[Kafka] Failed to create user notification for userId: ${userId}`, err);
             }
@@ -76,8 +82,12 @@ export class KafkaConsumer {
                 const adminSubject = 'Actividad del Sistema';
                 const adminBody = `El usuario ${displayName} acaba de ${action} el libro con el isbn: ${data.isbn || data.bookId}.`;
                 
-                await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
+                const adminNotification = await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
                 logger.info(`[Kafka] Admin notification created for action: ${action}`);
+
+                // Push real-time and email to admin
+                MqttPublisher.publishNotification('ADMIN_NOTIFICATIONS', adminNotification);
+                await EmailService.sendNotificationEmail(adminSubject, adminBody);
               } catch (err) {
                 logger.error(`[Kafka] Failed to create admin notification`, err);
               }
