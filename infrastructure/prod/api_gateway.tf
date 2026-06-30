@@ -30,6 +30,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e LOAN_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e USER_SERVICE_URL=${aws_lb.main.dns_name}:80 \
   -e NOTIFICATION_SERVICE_URL=${aws_instance.notification_server.private_ip}:3005 \
+  -e BROKERS_IP=${aws_instance.brokers_server.private_ip} \
   --restart always $IMAGE_NAME
 
 # Watchtower - Auto-updates Docker images every 60 seconds

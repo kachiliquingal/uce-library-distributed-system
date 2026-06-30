@@ -49,6 +49,7 @@ EMAIL_USER=${var.email_user}
 EMAIL_APP_PASSWORD=${var.email_app_password}
 TEST_EMAIL_ADDRESS=${var.test_email_address}
 TEST_ADMIN_EMAIL_ADDRESS=${var.test_admin_email_address}
+MQTT_BROKER_URL=mqtt://${aws_instance.brokers_server.private_ip}:1883
 ENVFILE
 
 cd /home/ubuntu

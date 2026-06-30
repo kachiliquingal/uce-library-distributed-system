@@ -31,7 +31,8 @@ export const NotificationBell = () => {
     fetchNotifications();
     
     const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
-    const brokerUrl = import.meta.env.VITE_MQTT_URL || 'ws://localhost:9001';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const brokerUrl = import.meta.env.VITE_MQTT_URL || `${protocol}//${window.location.host}/mqtt`;
     
     const client = mqtt.connect(brokerUrl);
 
