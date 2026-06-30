@@ -16,7 +16,7 @@ export const AdminInventory = () => {
   const [editingBook, setEditingBook] = useState(null);
   
   // Form State
-  const [formData, setFormData] = useState({ title: '', author: '', isbn: '' });
+  const [formData, setFormData] = useState({ title: '', author: '', isbn: '', category: '', publishedYear: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -30,10 +30,10 @@ export const AdminInventory = () => {
   const handleOpenModal = (book = null) => {
     if (book) {
       setEditingBook(book);
-      setFormData({ title: book.title, author: book.author, isbn: book.isbn });
+      setFormData({ title: book.title, author: book.author, isbn: book.isbn, category: book.category || '', publishedYear: book.publishedYear || '' });
     } else {
       setEditingBook(null);
-      setFormData({ title: '', author: '', isbn: '' });
+      setFormData({ title: '', author: '', isbn: '', category: '', publishedYear: '' });
     }
     setIsModalOpen(true);
   };
@@ -41,7 +41,7 @@ export const AdminInventory = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingBook(null);
-    setFormData({ title: '', author: '', isbn: '' });
+    setFormData({ title: '', author: '', isbn: '', category: '', publishedYear: '' });
   };
 
   const handleChange = (e) => {
@@ -57,7 +57,7 @@ export const AdminInventory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.author || !formData.isbn) {
+    if (!formData.title || !formData.author || !formData.isbn || !formData.category || !formData.publishedYear) {
       toast.error('Todos los campos son obligatorios');
       return;
     }
@@ -71,14 +71,19 @@ export const AdminInventory = () => {
     let success = false;
 
     if (editingBook) {
-      // For updates, the backend doesn't allow changing the ISBN, but we send title and author
+      // For updates, the backend doesn't allow changing the ISBN, but we send other fields
       success = await updateBook(editingBook.id, {
         title: formData.title,
-        author: formData.author
+        author: formData.author,
+        category: formData.category,
+        publishedYear: parseInt(formData.publishedYear, 10)
       });
       if (success) toast.success('Libro actualizado exitosamente');
     } else {
-      success = await createBook(formData);
+      success = await createBook({
+        ...formData,
+        publishedYear: parseInt(formData.publishedYear, 10)
+      });
       if (success) toast.success('Libro creado exitosamente');
     }
 
@@ -275,6 +280,34 @@ export const AdminInventory = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none"
                   placeholder="Ej. Miguel de Cervantes"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none"
+                    placeholder="Ej. Ficción"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Año de Publicación</label>
+                  <input
+                    type="number"
+                    name="publishedYear"
+                    value={formData.publishedYear}
+                    onChange={handleChange}
+                    required
+                    min="1000"
+                    max={new Date().getFullYear()}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none"
+                    placeholder="Ej. 1967"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">ISBN</label>
