@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { LoginPage } from "./pages/LoginPage";
+import { LandingPage } from "./pages/LandingPage";
 import { UserCatalog } from "./pages/user/UserCatalog";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { Layout } from "./components/Layout";
@@ -51,7 +52,17 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
         <Routes>
-          {/* Public Route */}
+          {/* Public Routes */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <Navigate to={getHomePath()} replace />
+              ) : (
+                <LandingPage />
+              )
+            }
+          />
           <Route
             path="/login"
             element={
@@ -131,7 +142,7 @@ function App() {
           <Route
             path="*"
             element={
-              <Navigate to={isAuthenticated ? getHomePath() : "/login"} replace />
+              <Navigate to={isAuthenticated ? getHomePath() : "/"} replace />
             }
           />
         </Routes>
