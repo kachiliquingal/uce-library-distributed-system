@@ -35,7 +35,7 @@ export const useCatalogStore = create((set) => ({
   createBook: async (bookData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await catalogApi.post("/", bookData);
+      const response = await catalogApi.post("/books", bookData);
       set((state) => ({ 
         books: [...state.books, response.data],
         isLoading: false 
@@ -51,7 +51,7 @@ export const useCatalogStore = create((set) => ({
   updateBook: async (id, bookData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await catalogApi.put(`/${id}`, bookData);
+      const response = await catalogApi.put(`/books/${id}`, bookData);
       set((state) => ({
         books: state.books.map((book) => 
           book.id === id ? response.data : book
@@ -69,7 +69,7 @@ export const useCatalogStore = create((set) => ({
   deleteBook: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      await catalogApi.delete(`/${id}`);
+      await catalogApi.delete(`/books/${id}`);
       set((state) => ({
         books: state.books.filter((book) => book.id !== id),
         isLoading: false

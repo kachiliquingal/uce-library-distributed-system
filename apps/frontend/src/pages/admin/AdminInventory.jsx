@@ -62,6 +62,11 @@ export const AdminInventory = () => {
       return;
     }
 
+    if (!editingBook && formData.isbn.length !== 10 && formData.isbn.length !== 13) {
+      toast.error('El ISBN debe tener exactamente 10 o 13 dígitos');
+      return;
+    }
+
     setIsSubmitting(true);
     let success = false;
 
@@ -280,6 +285,7 @@ export const AdminInventory = () => {
                   onChange={handleChange}
                   required
                   disabled={!!editingBook}
+                  maxLength="13"
                   className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none ${editingBook ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'focus:ring-2 focus:ring-indigo-600'}`}
                   placeholder="Ej. 9781234567890 (Solo números)"
                 />
