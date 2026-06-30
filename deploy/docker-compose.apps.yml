@@ -89,6 +89,10 @@ services:
       - DB_NAME=${DB_NAME}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
       - RABBITMQ_URL=${RABBITMQ_URL}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_APP_PASSWORD=${EMAIL_APP_PASSWORD}
+      - TEST_EMAIL_ADDRESS=${TEST_EMAIL_ADDRESS}
+      - TEST_ADMIN_EMAIL_ADDRESS=${TEST_ADMIN_EMAIL_ADDRESS}
     networks:
       - microservices-network
 

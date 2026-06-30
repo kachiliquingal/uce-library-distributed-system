@@ -6,6 +6,8 @@ import { notificationRouter } from './infrastructure/http/routes';
 import { initializeDB } from './infrastructure/database/db';
 import { KafkaConsumer } from './infrastructure/messaging/KafkaConsumer';
 import { RabbitMQConsumer } from './infrastructure/messaging/RabbitMQConsumer';
+import { MqttPublisher } from './infrastructure/messaging/MqttPublisher';
+import { EmailService } from './infrastructure/email/EmailService';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -46,6 +48,10 @@ async function bootstrap() {
   try {
     // Database connection is initialized upon import in db.ts
     await initializeDB();
+    // Initialize Premium Notification Services
+    EmailService.initialize();
+    await MqttPublisher.connect();
+
     logger.info('[Notification Service] Initializing message consumers...');
     
     await KafkaConsumer.connect();

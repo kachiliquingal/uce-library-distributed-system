@@ -32,6 +32,10 @@ jobs:
       TF_VAR_cuenta_b_aws_access_key_id: ${{ github.ref == 'refs/heads/main' && secrets.PROD_B_AWS_ACCESS_KEY_ID || secrets.QA_B_AWS_ACCESS_KEY_ID }}
       TF_VAR_cuenta_b_aws_secret_access_key: ${{ github.ref == 'refs/heads/main' && secrets.PROD_B_AWS_SECRET_ACCESS_KEY || secrets.QA_B_AWS_SECRET_ACCESS_KEY }}
       TF_VAR_cuenta_b_aws_session_token: ${{ github.ref == 'refs/heads/main' && secrets.PROD_B_AWS_SESSION_TOKEN || secrets.QA_B_AWS_SESSION_TOKEN }}
+      TF_VAR_email_user: ${{ secrets.EMAIL_USER }}
+      TF_VAR_email_app_password: ${{ secrets.EMAIL_APP_PASSWORD }}
+      TF_VAR_test_email_address: ${{ secrets.TEST_EMAIL_ADDRESS }}
+      TF_VAR_test_admin_email_address: ${{ secrets.TEST_ADMIN_EMAIL_ADDRESS }}
 
     steps:
       - name: Checkout repository
