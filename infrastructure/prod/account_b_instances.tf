@@ -45,6 +45,10 @@ DB_HOST=${aws_instance.database_server.private_ip}
 DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
 DB_NAME=notification_db
+EMAIL_USER=${var.email_user}
+EMAIL_APP_PASSWORD=${var.email_app_password}
+TEST_EMAIL_ADDRESS=${var.test_email_address}
+TEST_ADMIN_EMAIL_ADDRESS=${var.test_admin_email_address}
 ENVFILE
 
 cd /home/ubuntu
