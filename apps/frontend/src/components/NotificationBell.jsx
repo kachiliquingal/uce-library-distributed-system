@@ -52,7 +52,8 @@ export const NotificationBell = () => {
             duration: 5000,
             icon: '🔔',
           });
-        } catch (e) {
+        } catch (error) {
+          console.error('Failed to parse MQTT message:', error);
           toast.success('Tienes una nueva notificación', { icon: '🔔' });
         }
       });
