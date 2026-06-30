@@ -37,6 +37,8 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_ERLANG_COOKIE: "secretcookie"
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
     volumes:
       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
