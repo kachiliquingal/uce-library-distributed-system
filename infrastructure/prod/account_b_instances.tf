@@ -44,7 +44,7 @@ RABBITMQ_URL=amqp://admin:${var.rabbitmq_password}@${aws_instance.brokers_server
 DB_HOST=${aws_instance.database_server.private_ip}
 DB_USER=${var.db_user}
 DB_PASSWORD=${var.db_password}
-DB_NAME=auth_db
+DB_NAME=notification_db
 ENVFILE
 
 cd /home/ubuntu

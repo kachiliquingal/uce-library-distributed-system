@@ -17,23 +17,23 @@ data "aws_caller_identity" "cuenta_b" {
 
 resource "aws_vpc" "vpc_b" {
   provider             = aws.cuenta_b
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = "10.1.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
-    Name = "CuentaB-VPC"
+    Name = "CuentaB-Prod-VPC"
   }
 }
 
 resource "aws_subnet" "subnet_b" {
   provider                = aws.cuenta_b
   vpc_id                  = aws_vpc.vpc_b.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "10.1.1.0/24"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "CuentaB-Subnet-Public"
+    Name = "CuentaB-Prod-Subnet-Public"
   }
 }
 
