@@ -93,6 +93,7 @@ services:
       - EMAIL_APP_PASSWORD=${EMAIL_APP_PASSWORD}
       - TEST_EMAIL_ADDRESS=${TEST_EMAIL_ADDRESS}
       - TEST_ADMIN_EMAIL_ADDRESS=${TEST_ADMIN_EMAIL_ADDRESS}
+      - MQTT_BROKER_URL=${MQTT_BROKER_URL}
     networks:
       - microservices-network
 
