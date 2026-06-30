@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, ArrowRight, Library, GraduationCap, Globe, Layers, Bell } from "lucide-react";
+import { BookOpen, ArrowRight, Library, Globe, Layers, Bell } from "lucide-react";
 
 export const LandingPage = () => {
   const navigate = useNavigate();

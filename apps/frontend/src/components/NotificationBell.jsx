@@ -21,6 +21,7 @@ export const NotificationBell = () => {
       clearInterval(interval);
       window.removeEventListener('notification-update', fetchNotifications);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
