@@ -7,6 +7,7 @@ import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { Layout } from "./components/Layout";
 import { UserLoans } from "./pages/user/UserLoans";
 import { AdminLoans } from "./pages/admin/AdminLoans";
+import { AdminInventory } from "./pages/admin/AdminInventory";
 
 // Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
@@ -101,6 +102,16 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <AdminLoans />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/inventory"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminInventory />
                 </Layout>
               </AdminRoute>
             }

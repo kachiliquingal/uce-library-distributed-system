@@ -31,4 +31,54 @@ export const useCatalogStore = create((set) => ({
       });
     }
   },
+
+  createBook: async (bookData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await catalogApi.post("/", bookData);
+      set((state) => ({ 
+        books: [...state.books, response.data],
+        isLoading: false 
+      }));
+      return true;
+    } catch (error) {
+      logger.error(error);
+      set({ error: error.response?.data?.error || "Error al crear el libro", isLoading: false });
+      return false;
+    }
+  },
+
+  updateBook: async (id, bookData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await catalogApi.put(`/${id}`, bookData);
+      set((state) => ({
+        books: state.books.map((book) => 
+          book.id === id ? response.data : book
+        ),
+        isLoading: false
+      }));
+      return true;
+    } catch (error) {
+      logger.error(error);
+      set({ error: error.response?.data?.error || "Error al actualizar el libro", isLoading: false });
+      return false;
+    }
+  },
+
+  deleteBook: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await catalogApi.delete(`/${id}`);
+      set((state) => ({
+        books: state.books.filter((book) => book.id !== id),
+        isLoading: false
+      }));
+      return true;
+    } catch (error) {
+      logger.error(error);
+      set({ error: error.response?.data?.error || "Error al eliminar el libro", isLoading: false });
+      return false;
+    }
+  },
 }));
