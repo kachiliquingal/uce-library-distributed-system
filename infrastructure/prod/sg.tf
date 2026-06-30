@@ -349,11 +349,20 @@ resource "aws_security_group" "brokers_sg" {
   }
 
   ingress {
-    description     = "MQTT from Internal Services & API Gateway"
+    description     = "MQTT from Internal Services & API Gateway & Cuenta B"
     from_port       = 1883
     to_port         = 1883
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
+  ingress {
+    description     = "MQTT over WebSockets from API Gateway"
+    from_port       = 9001
+    to_port         = 9001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   ingress {

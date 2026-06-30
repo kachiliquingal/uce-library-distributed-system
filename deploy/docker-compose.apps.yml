@@ -116,6 +116,7 @@ services:
       - LOAN_SERVICE_URL=loan-service:3004
       - NOTIFICATION_SERVICE_URL=notification-service:3005
       - FRONTEND_SERVICE_URL=frontend:80
+      - BROKERS_IP=${BROKERS_IP}
     networks:
       - microservices-network
 
