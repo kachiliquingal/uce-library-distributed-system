@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Button, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from '../../components/CheckoutForm';
@@ -71,84 +70,90 @@ const MyFines = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-        Mis Multas
-      </Typography>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold text-indigo-900 mb-6">Mis Multas</h1>
 
-      <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: 'primary.main' }}>
-            <TableRow>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID Multa</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Fecha</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Motivo</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Monto</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Estado</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {fines.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">No tienes multas registradas.</TableCell>
-              </TableRow>
-            ) : (
-              fines.map((fine) => (
-                <TableRow key={fine.id} hover>
-                  <TableCell>{fine.id.split('-')[0]}...</TableCell>
-                  <TableCell>{new Date(fine.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{fine.reason}</TableCell>
-                  <TableCell>${fine.amount.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={fine.status === 'PAID' ? 'PAGADA' : 'PENDIENTE'} 
-                      color={fine.status === 'PAID' ? 'success' : 'error'} 
-                      size="small"
-                      sx={{ fontWeight: 'bold' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {fine.status === 'UNPAID' && (
-                      <Button 
-                        variant="contained" 
-                        color="secondary" 
-                        size="small"
-                        onClick={() => handlePayClick(fine)}
-                      >
-                        Pagar Ahora
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-indigo-900">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">ID Multa</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Fecha</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Motivo</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Monto</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {fines.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 font-medium">No tienes multas registradas.</td>
+                </tr>
+              ) : (
+                fines.map((fine) => (
+                  <tr key={fine.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{fine.id.split('-')[0]}...</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(fine.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{fine.reason}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${fine.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full shadow-sm ${
+                        fine.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {fine.status === 'PAID' ? 'PAGADA' : 'PENDIENTE'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {fine.status === 'UNPAID' && (
+                        <button 
+                          onClick={() => handlePayClick(fine)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors"
+                        >
+                          Pagar Ahora
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Payment Dialog */}
-      <Dialog 
-        open={isPaymentDialogOpen} 
-        onClose={() => setIsPaymentDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ backgroundColor: 'primary.main', color: 'white', pb: 2 }}>
-          Pagar Multa
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {clientSecret && (
-            <Elements options={{ clientSecret }} stripe={stripePromise}>
-              <CheckoutForm 
-                onSuccess={handlePaymentSuccess} 
-                onCancel={() => setIsPaymentDialogOpen(false)} 
-              />
-            </Elements>
-          )}
-        </DialogContent>
-      </Dialog>
-    </Box>
+      {isPaymentDialogOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={() => setIsPaymentDialogOpen(false)}>
+              <div className="absolute inset-0 bg-gray-900 opacity-75"></div>
+            </div>
+
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+              <div className="bg-indigo-900 px-6 py-4">
+                <h3 className="text-xl leading-6 font-bold text-white">
+                  Pagar Multa Segura
+                </h3>
+              </div>
+              <div className="bg-white px-6 pt-5 pb-6 sm:p-6 sm:pb-4">
+                {clientSecret && (
+                  <Elements options={{ clientSecret }} stripe={stripePromise}>
+                    <CheckoutForm 
+                      onSuccess={handlePaymentSuccess} 
+                      onCancel={() => setIsPaymentDialogOpen(false)} 
+                    />
+                  </Elements>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

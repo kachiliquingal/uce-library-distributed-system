@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material';
 
 const CheckoutForm = ({ onSuccess, onCancel }) => {
   const stripe = useStripe();
@@ -28,7 +27,7 @@ const CheckoutForm = ({ onSuccess, onCancel }) => {
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: window.location.origin + '/fines', // We actually prevent default redirect and handle it manually if we could, but Stripe requires return_url for some methods.
+        return_url: window.location.origin + '/fines',
       },
       redirect: 'if_required',
     });
@@ -43,28 +42,49 @@ const CheckoutForm = ({ onSuccess, onCancel }) => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
+    <form onSubmit={handleSubmit} className="w-full mt-2">
       <PaymentElement />
+      
       {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
+        <div className="mt-4 bg-red-50 border-l-4 border-red-500 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                {error}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
-      <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-        <Button variant="outlined" onClick={onCancel} disabled={processing}>
-          Cancelar
-        </Button>
-        <Button 
-          type="submit" 
-          variant="contained" 
-          color="primary" 
-          disabled={!stripe || processing}
-          startIcon={processing ? <CircularProgress size={20} color="inherit" /> : null}
+      
+      <div className="mt-6 flex gap-3 justify-end">
+        <button 
+          type="button" 
+          onClick={onCancel} 
+          disabled={processing}
+          className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
-          {processing ? 'Procesando...' : 'Pagar Multa'}
-        </Button>
-      </Box>
-    </Box>
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          disabled={!stripe || processing}
+          className="inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+        >
+          {processing ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Procesando...
+            </>
+          ) : (
+            'Pagar Multa'
+          )}
+        </button>
+      </div>
+    </form>
   );
 };
 
