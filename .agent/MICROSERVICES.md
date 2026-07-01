@@ -117,7 +117,7 @@
 
 ---
 
-## MS-10: Search Service ❌ TODO — build 5th
+## MS-10: Search Service ✅ Done
 - **Account / Instance:** QA-B / ec2-search
 - **Purpose:** Full-text search across books, authors, ISBN, descriptions
 - **Tech:** Node.js / Express / TypeScript

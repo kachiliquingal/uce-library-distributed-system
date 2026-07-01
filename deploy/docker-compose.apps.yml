@@ -115,6 +115,20 @@ services:
     networks:
       - microservices-network
 
+  search-service:
+    image: kachiliquingal/uce-search-service:${IMAGE_TAG}
+    container_name: search-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "3007:3007"
+    environment:
+      - PORT=3007
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+    networks:
+      - microservices-network
+
   frontend:
     image: kachiliquingal/uce-frontend:${IMAGE_TAG}
     container_name: frontend
@@ -134,6 +148,8 @@ services:
       - USER_SERVICE_URL=user-service:3003
       - LOAN_SERVICE_URL=loan-service:3004
       - NOTIFICATION_SERVICE_URL=notification-service:3005
+      - FINE_SERVICE_URL=fine-service:3006
+      - SEARCH_SERVICE_URL=search-service:3007
       - FRONTEND_SERVICE_URL=frontend:80
       - BROKERS_IP=${BROKERS_IP}
     networks:
