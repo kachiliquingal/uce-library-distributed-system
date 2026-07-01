@@ -1,0 +1,7 @@
+{
+  "Parameters": {
+    "commands": [
+      "docker exec qa_postgres psql -U admin -d auth_db -t -c \"SELECT id FROM users WHERE username = 'qa.tester' LIMIT 1;\""
+    ]
+  }
+}
