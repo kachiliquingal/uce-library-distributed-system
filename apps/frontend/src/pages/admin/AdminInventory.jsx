@@ -20,7 +20,7 @@ export const AdminInventory = () => {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const { books, isLoading, fetchBooks, createBook, updateBook, deleteBook } = useCatalogStore();
+  const { books, suggestions, isLoading, fetchBooks, createBook, updateBook, deleteBook, fetchSuggestions, clearSuggestions } = useCatalogStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
@@ -29,10 +29,22 @@ export const AdminInventory = () => {
   const [formData, setFormData] = useState({ title: '', author: '', isbn: '', category: '', publishedYear: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   useEffect(() => {
     fetchBooks(debouncedSearchTerm);
     setPage(1);
   }, [debouncedSearchTerm, fetchBooks]);
+
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      fetchSuggestions(searchTerm);
+      setShowSuggestions(true);
+    } else {
+      clearSuggestions();
+      setShowSuggestions(false);
+    }
+  }, [searchTerm, fetchSuggestions, clearSuggestions]);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE) || 1;
   const displayBooks = books.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -132,11 +144,34 @@ export const AdminInventory = () => {
             </div>
             <input
               type="text"
-              placeholder="Buscar libros..."
+              placeholder="Buscar por título o autor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none"
+              onFocus={() => {
+                if (searchTerm.trim().length >= 2) setShowSuggestions(true);
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((suggestion, idx) => (
+                  <div
+                    key={idx}
+                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearchTerm(suggestion);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button 
             onClick={() => handleOpenModal()}

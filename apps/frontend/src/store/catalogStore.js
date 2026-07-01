@@ -1,25 +1,39 @@
 import { create } from "zustand";
-import { catalogApi } from "../api/client";
+import { catalogApi, searchApi } from "../api/client";
 import logger from "../utils/logger";
 
 export const useCatalogStore = create((set) => ({
   books: [],
+  suggestions: [],
   isLoading: false,
   error: null,
+
+  fetchSuggestions: async (prefix) => {
+    if (!prefix || prefix.trim().length < 2) {
+      set({ suggestions: [] });
+      return;
+    }
+    try {
+      const response = await searchApi.get("/suggestions", { params: { prefix } });
+      set({ suggestions: response.data?.data || [] });
+    } catch (error) {
+      logger.error("Error fetching suggestions", error);
+      set({ suggestions: [] });
+    }
+  },
+
+  clearSuggestions: () => set({ suggestions: [] }),
 
   fetchBooks: async (search = "") => {
     set({ isLoading: true, error: null });
     try {
-      const response = await catalogApi.get("/books");
-      let fetchedBooks = response.data;
-
-      if (search) {
-        const lowerSearch = search.toLowerCase();
-        fetchedBooks = fetchedBooks.filter(
-          (book) =>
-            book.title?.toLowerCase().includes(lowerSearch) ||
-            book.author?.toLowerCase().includes(lowerSearch),
-        );
+      let fetchedBooks = [];
+      if (search && search.trim() !== "") {
+        const response = await searchApi.get("/", { params: { q: search } });
+        fetchedBooks = response.data?.data?.hits || [];
+      } else {
+        const response = await catalogApi.get("/books");
+        fetchedBooks = response.data || [];
       }
 
       set({ books: fetchedBooks, isLoading: false });

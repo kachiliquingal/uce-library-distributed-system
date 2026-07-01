@@ -16,6 +16,11 @@ export const userApi = axios.create({
   baseURL: import.meta.env.VITE_USER_API_URL,
 });
 
+// Exclusive client for the Search Service
+export const searchApi = axios.create({
+  baseURL: import.meta.env.VITE_SEARCH_API_URL,
+});
+
 // Interceptor to automatically inject the JWT token into protected routes
 const addTokenInterceptor = (config) => {
   const token = localStorage.getItem("auth_token");
@@ -31,6 +36,7 @@ const errorInterceptor = (error) => {
 
 catalogApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 userApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
+searchApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 
 // Add Response Interceptors for Logging (Professor's Requirement)
 const responseLogger = (response) => {
@@ -46,4 +52,4 @@ const responseErrorLogger = (error) => {
 authApi.interceptors.response.use(responseLogger, responseErrorLogger);
 catalogApi.interceptors.response.use(responseLogger, responseErrorLogger);
 userApi.interceptors.response.use(responseLogger, responseErrorLogger);
-
+searchApi.interceptors.response.use(responseLogger, responseErrorLogger);
