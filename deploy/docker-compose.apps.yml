@@ -126,6 +126,7 @@ services:
       - PORT=3007
       - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - CATALOG_SERVICE_URL=${CATALOG_SERVICE_URL}
     networks:
       - microservices-network
 
