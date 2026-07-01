@@ -19,6 +19,24 @@ const getAllFinesUseCase = new GetAllFinesUseCase(repository);
 const createPaymentIntentUseCase = new CreatePaymentIntentUseCase(repository, stripe);
 const confirmPaymentUseCase = new ConfirmPaymentUseCase(repository);
 
+/**
+ * @swagger
+ * /api/fines/user/{userId}:
+ *   get:
+ *     summary: Get all fines for a specific user
+ *     tags: [Fines]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of user fines
+ *       500:
+ *         description: Internal server error
+ */
 fineRouter.get('/user/:userId', async (req, res) => {
   try {
     const fines = await getFinesByUserUseCase.execute(req.params.userId);
@@ -32,6 +50,33 @@ fineRouter.get('/user/:userId', async (req, res) => {
 import { CreateFineUseCase } from '../../application/use-cases/CreateFineUseCase';
 const createFineUseCase = new CreateFineUseCase(repository);
 
+/**
+ * @swagger
+ * /api/fines/mock:
+ *   post:
+ *     summary: Create a mock fine for testing purposes
+ *     tags: [Fines]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Fine created successfully
+ *       400:
+ *         description: Bad request
+ */
 fineRouter.post('/mock', async (req, res) => {
   try {
     const { userId, amount, reason } = req.body;
@@ -49,6 +94,18 @@ fineRouter.post('/mock', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/fines:
+ *   get:
+ *     summary: Get all fines in the system
+ *     tags: [Fines]
+ *     responses:
+ *       200:
+ *         description: List of all fines
+ *       500:
+ *         description: Internal server error
+ */
 fineRouter.get('/', async (req, res) => {
   try {
     const fines = await getAllFinesUseCase.execute();
@@ -59,6 +116,24 @@ fineRouter.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/fines/{id}/pay:
+ *   post:
+ *     summary: Create a Stripe PaymentIntent for a specific fine
+ *     tags: [Fines]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payment intent client secret
+ *       400:
+ *         description: Bad request
+ */
 fineRouter.post('/:id/pay', async (req, res) => {
   try {
     const clientSecret = await createPaymentIntentUseCase.execute(req.params.id);
