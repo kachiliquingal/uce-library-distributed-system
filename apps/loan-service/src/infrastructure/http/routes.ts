@@ -30,8 +30,8 @@ const getUseCase = new GetLoansUseCase(repository);
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { userId, isbn } = req.body;
-    const loan = await borrowUseCase.execute(userId, isbn);
+    const { userId, isbn, bookTitle, faculty } = req.body;
+    const loan = await borrowUseCase.execute(userId, isbn, bookTitle, faculty);
     res.status(201).json(loan);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

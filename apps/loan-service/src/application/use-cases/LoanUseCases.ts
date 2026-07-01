@@ -7,7 +7,7 @@ import { logger } from '../../utils/logger';
 export class BorrowBookUseCase {
   constructor(private readonly loanRepository: ILoanRepository) {}
 
-  async execute(userId: string, isbn: string): Promise<Loan> {
+  async execute(userId: string, isbn: string, bookTitle?: string, faculty?: string): Promise<Loan> {
     // 1. Validar usuario vía gRPC
     const { isValid: isUserValid, name: userName } = await UserClient.validateUser(userId);
     if (!isUserValid) {
@@ -35,6 +35,8 @@ export class BorrowBookUseCase {
       userId: savedLoan.userId,
       userName: userName,
       isbn: savedLoan.isbn,
+      bookTitle: bookTitle,
+      faculty: faculty,
       borrowDate: savedLoan.borrowDate,
       dueDate: savedLoan.dueDate
     });

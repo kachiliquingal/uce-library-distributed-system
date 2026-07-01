@@ -48,7 +48,9 @@ export const NotificationBell = () => {
       import('react-hot-toast').then(module => {
         const toast = module.default;
         try {
-          const payload = JSON.parse(message.toString());
+          const msgString = message.toString();
+          if (!msgString || msgString.trim() === '') return;
+          const payload = JSON.parse(msgString);
           toast.success(`Nueva alerta: ${payload.subject || 'Tienes una nueva notificación'}`, {
             duration: 5000,
             icon: '🔔',
