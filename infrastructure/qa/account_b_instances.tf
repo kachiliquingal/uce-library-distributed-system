@@ -18,7 +18,7 @@ resource "aws_instance" "notification_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."
+  echo "Waiting to release apt lock..."; # FORCE_UPDATE_1
   sleep 5
 done
 
@@ -87,7 +87,7 @@ resource "aws_instance" "fine_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."
+  echo "Waiting to release apt lock..."; # FORCE_UPDATE_1
   sleep 5
 done
 
