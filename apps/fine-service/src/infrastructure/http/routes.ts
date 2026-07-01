@@ -28,6 +28,26 @@ fineRouter.get('/user/:userId', async (req, res) => {
   }
 });
 
+import { CreateFineUseCase } from '../../application/use-cases/CreateFineUseCase';
+const createFineUseCase = new CreateFineUseCase(repository);
+
+fineRouter.post('/mock', async (req, res) => {
+  try {
+    const { userId, amount, reason } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+    const fine = await createFineUseCase.execute(
+      userId,
+      'mock-loan-' + Date.now(),
+      amount || 5.0,
+      reason || 'Mock fine for testing'
+    );
+    res.json(fine);
+  } catch (error: any) {
+    logger.error('Error creating mock fine', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 fineRouter.get('/', async (req, res) => {
   try {
     const fines = await getAllFinesUseCase.execute();
