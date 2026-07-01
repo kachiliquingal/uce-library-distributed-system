@@ -51,7 +51,7 @@ export class KafkaConsumer {
               {
                 const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
                 const fac = data.faculty ? ` de la Facultad de ${data.faculty}` : '';
-                const dateStr = data.borrowDate ? new Date(data.borrowDate).toLocaleString('es-EC') : 'hoy';
+                const dateStr = data.borrowDate ? new Date(data.borrowDate).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
                 body = `Has solicitado el préstamo del libro "${title}" el ${dateStr}. Por favor acércate a la Biblioteca Central${fac} para retirar tu libro.`;
               }
               break;
@@ -60,7 +60,7 @@ export class KafkaConsumer {
               subject = 'Book Returned';
               {
                 const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
-                const dateStr = data.returnDate ? new Date(data.returnDate).toLocaleString('es-EC') : 'hoy';
+                const dateStr = data.returnDate ? new Date(data.returnDate).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
                 body = `Gracias por devolver el libro "${title}" el ${dateStr}.`;
               }
               break;
@@ -92,7 +92,7 @@ export class KafkaConsumer {
                 
                 const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
                 const dateRaw = topic === 'book.borrowed' ? data.borrowDate : data.returnDate;
-                const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('es-EC') : 'hoy';
+                const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
 
                 const adminBody = `El usuario ${displayName} ha ${action} del libro "${title}" el ${dateStr}.`;
                 
