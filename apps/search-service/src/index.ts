@@ -44,7 +44,7 @@ app.get('/metrics', async (req, res) => {
 });
 
 // Swagger Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/search/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 async function bootstrap() {
   try {
@@ -64,7 +64,7 @@ async function bootstrap() {
     const syncHistoricalBooksUseCase = new SyncHistoricalBooksUseCase(searchRepository);
 
     // 3. Initialize Express Routes
-    app.use('/', createSearchRoutes(searchBooksUseCase, getSuggestionsUseCase));
+    app.use('/api/search', createSearchRoutes(searchBooksUseCase, getSuggestionsUseCase));
 
     // 4. Start HTTP Server
     app.listen(PORT, () => {
