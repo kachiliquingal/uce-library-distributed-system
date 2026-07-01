@@ -29,7 +29,7 @@ export class KafkaConsumer {
       logger.info(`[Kafka] Subscribed to topics: book.added, book.updated`);
 
       await this.consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
+        eachMessage: async ({ topic, partition: _partition, message }) => {
           if (!message.value) return;
 
           const payloadStr = message.value.toString();
