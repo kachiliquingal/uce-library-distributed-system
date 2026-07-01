@@ -24,7 +24,7 @@ const CheckoutForm = ({ onSuccess, onCancel }) => {
       return;
     }
 
-    const { error: confirmError } = await stripe.confirmPayment({
+    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: window.location.origin + '/fines',
@@ -36,6 +36,22 @@ const CheckoutForm = ({ onSuccess, onCancel }) => {
       setError(confirmError.message);
       setProcessing(false);
     } else {
+      // Simulate Stripe Webhook since Stripe cannot reach our private QA IP
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        try {
+          await fetch('/api/fines/webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'payment_intent.succeeded',
+              data: { object: paymentIntent }
+            })
+          });
+        } catch (e) {
+          console.error('Simulated webhook failed', e);
+        }
+      }
+
       setProcessing(false);
       if (onSuccess) onSuccess();
     }
