@@ -162,10 +162,11 @@ ENVFILE
 cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d
 
-# Ensure notification_db exists (Microservices Best Practice: Database per Service)
+# Ensure notification_db and fine_db exist (Microservices Best Practice: Database per Service)
 echo "Waiting for PostgreSQL to start..."
 sleep 15
 docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'notification_db'" | grep -q 1 || docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -c "CREATE DATABASE notification_db;"
+docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'fine_db'" | grep -q 1 || docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -c "CREATE DATABASE fine_db;"
 
 # Trigger recreation to pull loan-mysql
 EOF

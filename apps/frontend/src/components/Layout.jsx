@@ -76,6 +76,16 @@ export const Layout = ({ children }) => {
               >
                 <Users className="h-5 w-5" /> Gestión de Usuarios
               </NavLink>
+              <NavLink
+                to="/admin/fines"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive ? 'bg-indigo-700 font-semibold' : 'hover:bg-indigo-800 text-indigo-100'
+                  }`
+                }
+              >
+                <Archive className="h-5 w-5" /> Multas
+              </NavLink>
             </>
           ) : (
             <>
@@ -98,6 +108,16 @@ export const Layout = ({ children }) => {
                 }
               >
                 <Clock className="h-5 w-5" /> Mis Préstamos
+              </NavLink>
+              <NavLink
+                to="/fines"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive ? 'bg-indigo-700 font-semibold' : 'hover:bg-indigo-800 text-indigo-100'
+                  }`
+                }
+              >
+                <Archive className="h-5 w-5" /> Mis Multas
               </NavLink>
             </>
           )}
