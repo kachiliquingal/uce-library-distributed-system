@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from '../../components/CheckoutForm';
+import { useAuthStore } from '../../store/authStore';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_mock');
 
@@ -9,19 +10,19 @@ const MyFines = () => {
   const [fines, setFines] = useState([]);
   const [clientSecret, setClientSecret] = useState('');
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { user, token } = useAuthStore();
+  const currentUserId = user?.id || user?.userId;
 
   useEffect(() => {
     fetchFines();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUserId]);
 
   const fetchFines = async () => {
     try {
-      if (!user) return;
-      const token = localStorage.getItem('token');
+      if (!currentUserId) return;
       const API_URL = import.meta.env.VITE_API_URL || '';
-      const url = `${API_URL}/api/fines/user/${user.id}`;
+      const url = `${API_URL}/api/fines/user/${currentUserId}`;
 
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -37,7 +38,6 @@ const MyFines = () => {
 
   const handlePayClick = async (fine) => {
     try {
-      const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL || '';
       const url = `${API_URL}/api/fines/${fine.id}/pay`;
 
