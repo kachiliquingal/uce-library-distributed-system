@@ -66,8 +66,13 @@ export class KafkaConsumer {
               break;
             case 'fine.created':
               userId = String(data.userId);
-              subject = 'New Fine Issued';
-              body = `A fine of $${data.amount} has been applied to your account. Reason: ${data.reason}`;
+              subject = 'Notificación de Multa Generada';
+              body = `Se ha generado una multa de $${data.amount} en su cuenta. Motivo: ${data.reason}. Por favor, ingrese al sistema para regularizar su estado.`;
+              break;
+            case 'fine.paid':
+              userId = String(data.userId);
+              subject = 'Confirmación de Pago de Multa';
+              body = `Hemos recibido exitosamente su pago de $${data.amount} correspondiente a la multa generada. Gracias por regularizar su estado en UCE Library.`;
               break;
           }
 
@@ -84,20 +89,28 @@ export class KafkaConsumer {
             }
 
             // Emit admin notification
-            if (topic === 'book.borrowed' || topic === 'book.returned') {
+            if (topic === 'book.borrowed' || topic === 'book.returned' || topic === 'fine.created' || topic === 'fine.paid') {
               try {
-                const action = topic === 'book.borrowed' ? 'solicitado el préstamo' : 'devuelto';
+                let adminSubject = 'Actividad del Sistema';
+                let adminBody = '';
                 const displayName = data.userName || userId;
-                const adminSubject = 'Actividad del Sistema';
                 
-                const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
-                const dateRaw = topic === 'book.borrowed' ? data.borrowDate : data.returnDate;
-                const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
-
-                const adminBody = `El usuario ${displayName} ha ${action} del libro "${title}" el ${dateStr}.`;
+                if (topic === 'book.borrowed' || topic === 'book.returned') {
+                  const action = topic === 'book.borrowed' ? 'solicitado el préstamo' : 'devuelto';
+                  const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
+                  const dateRaw = topic === 'book.borrowed' ? data.borrowDate : data.returnDate;
+                  const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
+                  adminBody = `El usuario ${displayName} ha ${action} del libro "${title}" el ${dateStr}.`;
+                } else if (topic === 'fine.created') {
+                  adminSubject = 'Sistema de Multas: Nueva Multa';
+                  adminBody = `El usuario ${displayName} ha sido multado por un valor de $${data.amount} debido a: ${data.reason}.`;
+                } else if (topic === 'fine.paid') {
+                  adminSubject = 'Sistema de Multas: Multa Pagada';
+                  adminBody = `El usuario ${displayName} ha realizado el pago de su multa por un valor de $${data.amount} vía Stripe.`;
+                }
                 
                 const adminNotification = await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
-                logger.info(`[Kafka] Admin notification created for action: ${action}`);
+                logger.info(`[Kafka] Admin notification created for topic: ${topic}`);
 
                 // Push real-time and email to admin
                 MqttPublisher.publishNotification('ADMIN_NOTIFICATIONS', adminNotification);

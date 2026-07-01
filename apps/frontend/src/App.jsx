@@ -9,6 +9,8 @@ import { Layout } from "./components/Layout";
 import { UserLoans } from "./pages/user/UserLoans";
 import { AdminLoans } from "./pages/admin/AdminLoans";
 import { AdminInventory } from "./pages/admin/AdminInventory";
+import MyFines from "./pages/user/MyFines";
+import AdminFines from "./pages/admin/AdminFines";
 
 // Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
@@ -133,6 +135,26 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <div className="text-xl">Admin Users View Coming Soon...</div>
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/fines"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyFines />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/fines"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminFines />
                 </Layout>
               </AdminRoute>
             }

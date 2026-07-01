@@ -136,3 +136,15 @@ variable "test_admin_email_address" {
   type        = string
   sensitive   = true
 }
+
+variable "stripe_secret_key" {
+  description = "Stripe Secret Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "stripe_public_key" {
+  description = "Stripe Public Key"
+  type        = string
+  sensitive   = true
+}
