@@ -1,6 +1,6 @@
 {
   "name": "fine-service",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fine Service for UCE Library",
   "main": "dist/index.js",
   "scripts": {
