@@ -10,10 +10,8 @@ const AdminFines = () => {
   const fetchFines = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Using direct port for development, or api gateway in production
-      const url = import.meta.env.VITE_API_URL 
-        ? `${import.meta.env.VITE_API_URL}/api/fines`
-        : `http://localhost:3006/api/fines`;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const url = `${API_URL}/api/fines`;
 
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }

@@ -18,11 +18,10 @@ const MyFines = () => {
 
   const fetchFines = async () => {
     try {
+      if (!user) return;
       const token = localStorage.getItem('token');
-      // Using direct port for development, or api gateway in production
-      const url = import.meta.env.VITE_API_URL 
-        ? `${import.meta.env.VITE_API_URL}/api/fines/user/${user.id}`
-        : `http://localhost:3006/api/fines/user/${user.id}`;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const url = `${API_URL}/api/fines/user/${user.id}`;
 
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -39,9 +38,8 @@ const MyFines = () => {
   const handlePayClick = async (fine) => {
     try {
       const token = localStorage.getItem('token');
-      const url = import.meta.env.VITE_API_URL 
-        ? `${import.meta.env.VITE_API_URL}/api/fines/${fine.id}/pay`
-        : `http://localhost:3006/api/fines/${fine.id}/pay`;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const url = `${API_URL}/api/fines/${fine.id}/pay`;
 
       const response = await fetch(url, {
         method: 'POST',
