@@ -4,6 +4,16 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useCatalogStore } from '../../store/catalogStore';
 import toast from 'react-hot-toast';
 
+const FACULTIES = [
+  "Arquitectura", "Artes", "Ciencias", "Ciencias Administrativas",
+  "Ciencias Agrícolas", "Ciencias Biológicas", "Ciencias de la Discapacidad",
+  "Ciencias Económicas", "Ciencias Médicas", "Ciencias Psicológicas",
+  "Ciencias Químicas", "Comunicación Social", "Cultura Física",
+  "Derecho y Ciencias Políticas", "Filosofía y Letras", "Ingeniería",
+  "Ingeniería Química", "Medicina Veterinaria", "Odontología",
+  "Ciencias Sociales", "Turismo y Hospitalidad"
+];
+
 export const AdminInventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -283,16 +293,19 @@ export const AdminInventory = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría (Facultad)</label>
+                  <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none"
-                    placeholder="Ej. Ficción"
-                  />
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none bg-white"
+                  >
+                    <option value="" disabled>Seleccione una facultad</option>
+                    {FACULTIES.map(faculty => (
+                      <option key={faculty} value={faculty}>{faculty}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Año de Publicación</label>

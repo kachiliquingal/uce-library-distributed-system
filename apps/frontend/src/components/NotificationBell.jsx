@@ -141,7 +141,7 @@ export const NotificationBell = () => {
                         {new Date(notif.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-2">{notif.message}</p>
+                    <p className="text-sm text-gray-600 break-words mt-1">{notif.message}</p>
                   </div>
                 ))}
               </div>
