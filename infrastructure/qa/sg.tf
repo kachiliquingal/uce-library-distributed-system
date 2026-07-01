@@ -98,6 +98,14 @@ resource "aws_security_group" "catalog_sg" {
   }
 
   ingress {
+    description     = "Allow Catalog Service API traffic from Cuenta B (Search Service)"
+    from_port       = 3002
+    to_port         = 3002
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
+  ingress {
     description     = "Allow SSH administration from Bastion"
     from_port       = 22
     to_port         = 22
