@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway]
+        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway, fine-service, search-service]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -53,6 +53,8 @@ jobs:
         with:
           context: ./apps/frontend
           push: true
+          build-args: |
+            VITE_STRIPE_PUBLIC_KEY=${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
           tags: |
             kachiliquingal/uce-frontend:${{ env.TF_VAR_docker_image_tag }}
             kachiliquingal/uce-frontend:latest

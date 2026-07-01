@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
-export const AuthForm = ({ onSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
+export const AuthForm = ({ onSuccess, initialMode = "login" }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [validationError, setValidationError] = useState("");

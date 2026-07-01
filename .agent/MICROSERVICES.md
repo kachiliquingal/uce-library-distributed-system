@@ -34,7 +34,7 @@
 
 ---
 
-## MS-03: Loan Service ❌ TODO — build 2nd (after user-service)
+## MS-03: Loan Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-A / ec2-loan
 - **Purpose:** Core domain — book loans and returns
 - **Tech:** Node.js / Express / TypeScript
@@ -47,7 +47,7 @@
 
 ---
 
-## MS-04: Notification Service ❌ TODO — build 3rd
+## MS-04: Notification Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-notification
 - **Purpose:** Sends email and push notifications triggered by domain events
 - **Tech:** Node.js / Express / TypeScript
@@ -58,7 +58,7 @@
 
 ---
 
-## MS-05: User Service ❌ TODO — build 1st (loan-service depends on its gRPC)
+## MS-05: User Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-A / ec2-user
 - **Purpose:** Extended user profiles · RBAC roles (student / librarian / admin)
 - **Tech:** Node.js / Express / TypeScript
@@ -66,11 +66,11 @@
 - **Protocols:** REST (public) · gRPC server (consumed by loan-service and auth-service)
 - **Endpoints:** GET /users/:id · PUT /users/:id/roles · GET /users/:id/permissions
 - **Emits:** `user.updated`, `user.suspended` → Kafka
-- **Pattern:** Hexagonal
+- **Pattern:** Hexagonal ✅
 
 ---
 
-## MS-06: Fine Service ❌ TODO — build 4th
+## MS-06: Fine Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-fine
 - **Purpose:** Calculates and tracks overdue fines for late returns
 - **Tech:** Node.js / Express / TypeScript
@@ -117,7 +117,7 @@
 
 ---
 
-## MS-10: Search Service ❌ TODO — build 5th
+## MS-10: Search Service ✅ Done
 - **Account / Instance:** QA-B / ec2-search
 - **Purpose:** Full-text search across books, authors, ISBN, descriptions
 - **Tech:** Node.js / Express / TypeScript

@@ -59,6 +59,14 @@ resource "aws_security_group" "alb_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
+  ingress {
+    description     = "Allow HTTP traffic from Cuenta B (Search Service)"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -131,6 +139,14 @@ resource "aws_security_group" "catalog_sg" {
     to_port         = 3002
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  ingress {
+    description     = "Allow Catalog Service API traffic from Cuenta B (Search Service)"
+    from_port       = 3002
+    to_port         = 3002
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
@@ -328,6 +344,7 @@ resource "aws_security_group" "brokers_sg" {
     to_port         = 9092
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
@@ -336,6 +353,7 @@ resource "aws_security_group" "brokers_sg" {
     to_port         = 5672
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {
@@ -347,11 +365,20 @@ resource "aws_security_group" "brokers_sg" {
   }
 
   ingress {
-    description     = "MQTT from Internal Services & API Gateway"
+    description     = "MQTT from Internal Services & API Gateway & Cuenta B"
     from_port       = 1883
     to_port         = 1883
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
+  ingress {
+    description     = "MQTT over WebSockets from API Gateway"
+    from_port       = 9001
+    to_port         = 9001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
   ingress {

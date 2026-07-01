@@ -1,14 +1,14 @@
 export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const loanApi = {
-  borrowBook: async (userId, isbn, token) => {
+  borrowBook: async (userId, isbn, bookTitle, faculty, token) => {
     const res = await fetch(`${API_URL}/api/loans/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ userId, isbn })
+      body: JSON.stringify({ userId, isbn, bookTitle, faculty })
     });
     if (!res.ok) {
       const data = await res.json();

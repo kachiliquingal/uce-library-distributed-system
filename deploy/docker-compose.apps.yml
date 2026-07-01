@@ -82,8 +82,51 @@ services:
       - "3005:3005"
     environment:
       - PORT=3005
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
       - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
       - RABBITMQ_URL=${RABBITMQ_URL}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_APP_PASSWORD=${EMAIL_APP_PASSWORD}
+      - TEST_EMAIL_ADDRESS=${TEST_EMAIL_ADDRESS}
+      - TEST_ADMIN_EMAIL_ADDRESS=${TEST_ADMIN_EMAIL_ADDRESS}
+      - MQTT_BROKER_URL=${MQTT_BROKER_URL}
+
+  fine-service:
+    image: kachiliquingal/uce-fine-service:${IMAGE_TAG}
+    container_name: fine-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    networks:
+      - microservices-network
+
+  search-service:
+    image: kachiliquingal/uce-search-service:${IMAGE_TAG}
+    container_name: search-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "3007:3007"
+    environment:
+      - PORT=3007
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - CATALOG_SERVICE_URL=${CATALOG_SERVICE_URL}
     networks:
       - microservices-network
 
@@ -106,7 +149,10 @@ services:
       - USER_SERVICE_URL=user-service:3003
       - LOAN_SERVICE_URL=loan-service:3004
       - NOTIFICATION_SERVICE_URL=notification-service:3005
+      - FINE_SERVICE_URL=fine-service:3006
+      - SEARCH_SERVICE_URL=search-service:3007
       - FRONTEND_SERVICE_URL=frontend:80
+      - BROKERS_IP=${BROKERS_IP}
     networks:
       - microservices-network
 

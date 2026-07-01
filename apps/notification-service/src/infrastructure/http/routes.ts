@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { GetNotificationsUseCase } from '../../application/use-cases/GetNotificationsUseCase';
 import { MarkNotificationsAsReadUseCase } from '../../application/use-cases/MarkNotificationsAsReadUseCase';
-import { SQLiteNotificationRepository } from '../database/SQLiteNotificationRepository';
+import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
 import { logger } from '../../utils/logger';
 
 export const notificationRouter = Router();
-const repository = new SQLiteNotificationRepository();
+const repository = new PostgresNotificationRepository();
 const getNotificationsUseCase = new GetNotificationsUseCase(repository);
 const markNotificationsAsReadUseCase = new MarkNotificationsAsReadUseCase(repository);
 

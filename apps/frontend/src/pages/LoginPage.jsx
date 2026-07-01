@@ -1,8 +1,11 @@
 import { AuthForm } from "../components/auth/AuthForm";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialMode = queryParams.get("mode") || "login";
 
   const handleSuccess = () => {
     // If the state hasn't updated fast enough in the component, navigate to root and let App.jsx handle it
@@ -15,7 +18,7 @@ export const LoginPage = () => {
       <div className="absolute top-0 left-0 w-full h-1/3 bg-blue-600 rounded-b-[4rem] shadow-lg"></div>
 
       <div className="z-10 w-full flex justify-center">
-        <AuthForm onSuccess={handleSuccess} />
+        <AuthForm onSuccess={handleSuccess} initialMode={initialMode} />
       </div>
     </div>
   );
