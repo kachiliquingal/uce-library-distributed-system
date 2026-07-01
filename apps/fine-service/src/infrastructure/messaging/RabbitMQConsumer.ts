@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger';
 import { CreateFineUseCase } from '../../application/use-cases/CreateFineUseCase';
 import { PostgresFineRepository } from '../database/PostgresFineRepository';
 import { KafkaProducer } from './KafkaProducer';
+import { UserClient } from '../http/UserClient';
 
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const queue = 'fine.trigger';
@@ -35,9 +36,12 @@ export class RabbitMQConsumer {
               content.reason || 'Devolución tardía de libro'
             );
             
+            const userName = await UserClient.getUserName(fine.userId);
+            
             // Emit to Kafka so Notification Service can send email
             await KafkaProducer.emit('fine.created', {
               userId: fine.userId,
+              userName,
               amount: fine.amount,
               reason: fine.reason,
               fineId: fine.id

@@ -5,6 +5,7 @@ import { GetFinesByUserUseCase, GetAllFinesUseCase } from '../../application/use
 import { CreatePaymentIntentUseCase, ConfirmPaymentUseCase } from '../../application/use-cases/PaymentUseCases';
 import { KafkaProducer } from '../messaging/KafkaProducer';
 import { logger } from '../../utils/logger';
+import { UserClient } from './UserClient';
 
 export const fineRouter = Router();
 
@@ -89,12 +90,14 @@ fineRouter.post('/webhook', express.json(), async (req, res) => {
       const amount = paidFine ? paidFine.amount : (paymentIntent.amount / 100);
       
       if (userId) {
+        const userName = await UserClient.getUserName(userId);
         await KafkaProducer.emit('fine.paid', {
           userId,
+          userName,
           fineId,
           amount
         });
-        logger.info(`[Webhook] Emitted fine.paid event for userId=${userId}, fineId=${fineId}`);
+        logger.info(`[Webhook] Emitted fine.paid event for userId=${userId} (${userName}), fineId=${fineId}`);
       } else {
         logger.warn(`[Webhook] Could not determine userId for paymentIntent ${paymentIntent.id} - notification skipped`);
       }
