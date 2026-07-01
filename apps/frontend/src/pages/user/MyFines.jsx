@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from '../../components/CheckoutForm';
@@ -7,13 +7,13 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_t
 
 const MyFines = () => {
   const [fines, setFines] = useState([]);
-  const [selectedFine, setSelectedFine] = useState(null);
   const [clientSecret, setClientSecret] = useState('');
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchFines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchFines = async () => {
@@ -54,7 +54,6 @@ const MyFines = () => {
       if (response.ok) {
         const data = await response.json();
         setClientSecret(data.clientSecret);
-        setSelectedFine(fine);
         setIsPaymentDialogOpen(true);
       }
     } catch (error) {
@@ -65,7 +64,6 @@ const MyFines = () => {
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
     setClientSecret('');
-    setSelectedFine(null);
     fetchFines(); // Refresh the list
   };
 
