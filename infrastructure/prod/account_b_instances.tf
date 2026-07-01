@@ -179,6 +179,7 @@ cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 ELASTICSEARCH_URL=http://${aws_instance.database_server.private_ip}:9200
+CATALOG_SERVICE_URL=http://${aws_lb.main.dns_name}:80
 ENVFILE
 
 cd /home/ubuntu

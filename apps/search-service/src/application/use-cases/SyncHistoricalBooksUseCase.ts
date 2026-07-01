@@ -11,7 +11,7 @@ export class SyncHistoricalBooksUseCase {
       const catalogUrl = process.env.CATALOG_SERVICE_URL || 'http://catalog-service:3002';
       
       // Fetch all books (in a real scenario, this should be paginated if the DB is huge)
-      const response = await fetch(`${catalogUrl}/api/catalog?limit=1000`);
+      const response = await fetch(`${catalogUrl}/api/catalog/books?limit=5000`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch from catalog: ${response.statusText}`);
