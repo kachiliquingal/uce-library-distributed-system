@@ -32,7 +32,7 @@ export class RabbitMQConsumer {
               
               // Push real-time and email
               MqttPublisher.publishNotification(content.userId, notification);
-              await EmailService.sendNotificationEmail(content.subject, content.body);
+              await EmailService.sendNotificationEmail(content.subject, content.body, 'USER');
             }
             channel.ack(msg);
           } catch (err) {

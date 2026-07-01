@@ -23,7 +23,7 @@ export class EmailService {
     });
   }
 
-  public static async sendNotificationEmail(subject: string, message: string): Promise<void> {
+  public static async sendNotificationEmail(subject: string, message: string, recipientRole: 'USER' | 'ADMIN'): Promise<void> {
     try {
       const testUserEmail = process.env.TEST_EMAIL_ADDRESS;
       const testAdminEmail = process.env.TEST_ADMIN_EMAIL_ADDRESS;
@@ -34,7 +34,7 @@ export class EmailService {
       }
 
       // 1. Send to User
-      if (testUserEmail) {
+      if (recipientRole === 'USER' && testUserEmail) {
         const mailOptionsUser = {
           from: `"Biblioteca UCE" <${process.env.EMAIL_USER}>`,
           to: testUserEmail,
@@ -43,12 +43,12 @@ export class EmailService {
         };
         await this.transporter.sendMail(mailOptionsUser);
         logger.info(`[EmailService] Sent email to user test address: ${testUserEmail}`);
-      } else {
+      } else if (recipientRole === 'USER') {
         logger.warn('[EmailService] TEST_EMAIL_ADDRESS not defined in env');
       }
 
       // 2. Send to Admin
-      if (testAdminEmail) {
+      if (recipientRole === 'ADMIN' && testAdminEmail) {
         const mailOptionsAdmin = {
           from: `"Biblioteca UCE (Sistema)" <${process.env.EMAIL_USER}>`,
           to: testAdminEmail,
@@ -57,7 +57,7 @@ export class EmailService {
         };
         await this.transporter.sendMail(mailOptionsAdmin);
         logger.info(`[EmailService] Sent email to admin test address: ${testAdminEmail}`);
-      } else {
+      } else if (recipientRole === 'ADMIN') {
         logger.warn('[EmailService] TEST_ADMIN_EMAIL_ADDRESS not defined in env');
       }
 
