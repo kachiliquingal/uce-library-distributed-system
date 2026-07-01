@@ -36,6 +36,8 @@ jobs:
       TF_VAR_email_app_password: ${{ secrets.EMAIL_APP_PASSWORD }}
       TF_VAR_test_email_address: ${{ secrets.TEST_EMAIL_ADDRESS }}
       TF_VAR_test_admin_email_address: ${{ secrets.TEST_ADMIN_EMAIL_ADDRESS }}
+      TF_VAR_stripe_secret_key: ${{ secrets.STRIPE_SECRET_KEY }}
+      TF_VAR_stripe_public_key: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
 
     steps:
       - name: Checkout repository
