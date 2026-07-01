@@ -105,8 +105,8 @@ mkdir -p /data
 mount $DEVICE /data
 echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
-mkdir -p /data/postgres /data/mongo /data/neo4j
-chmod 777 /data/postgres /data/mongo /data/neo4j
+mkdir -p /data/postgres /data/mongo /data/neo4j /data/mysql /data/elasticsearch
+chmod 777 /data/postgres /data/mongo /data/neo4j /data/mysql /data/elasticsearch
 
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
