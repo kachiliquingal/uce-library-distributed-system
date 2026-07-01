@@ -59,6 +59,14 @@ resource "aws_security_group" "alb_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id]
   }
 
+  ingress {
+    description     = "Allow HTTP traffic from Cuenta B (Search Service)"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
