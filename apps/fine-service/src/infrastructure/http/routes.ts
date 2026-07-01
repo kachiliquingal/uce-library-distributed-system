@@ -79,16 +79,24 @@ fineRouter.post('/webhook', express.json(), async (req, res) => {
       await confirmPaymentUseCase.execute(paymentIntent.id);
       logger.info(`[Webhook] Payment successful for intent ${paymentIntent.id}`);
       
-      // Emit to Kafka so notification-service sends the success email
-      const fineId = paymentIntent.metadata?.fineId;
-      const userId = paymentIntent.metadata?.userId;
+      // Look up the fine from DB using the paymentIntentId (metadata may be
+      // missing when the webhook is simulated from the frontend client-side)
+      const allFines = await repository.findAll();
+      const paidFine = allFines.find(f => f.stripePaymentIntentId === paymentIntent.id);
+      
+      const fineId = paidFine?.id || paymentIntent.metadata?.fineId;
+      const userId = paidFine?.userId || paymentIntent.metadata?.userId;
+      const amount = paidFine ? paidFine.amount : (paymentIntent.amount / 100);
       
       if (userId) {
         await KafkaProducer.emit('fine.paid', {
           userId,
           fineId,
-          amount: paymentIntent.amount / 100
+          amount
         });
+        logger.info(`[Webhook] Emitted fine.paid event for userId=${userId}, fineId=${fineId}`);
+      } else {
+        logger.warn(`[Webhook] Could not determine userId for paymentIntent ${paymentIntent.id} - notification skipped`);
       }
       
     } catch (err) {
