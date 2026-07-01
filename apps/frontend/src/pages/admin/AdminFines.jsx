@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 
 const AdminFines = () => {
   const [fines, setFines] = useState([]);
+  const { token } = useAuthStore();
 
   useEffect(() => {
     fetchFines();
@@ -9,7 +11,6 @@ const AdminFines = () => {
 
   const fetchFines = async () => {
     try {
-      const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL || '';
       const url = `${API_URL}/api/fines`;
 
