@@ -139,3 +139,64 @@ EOF
     Environment = upper(var.environment)
   }
 }
+
+# ------------------------------------------------------------------------------
+# Search Service Instance (MS-10)
+# ------------------------------------------------------------------------------
+resource "aws_instance" "search_server" {
+  provider      = aws.cuenta_b
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+  key_name      = var.aws_key_name
+  subnet_id     = aws_subnet.subnet_b.id
+  iam_instance_profile = "LabInstanceProfile"
+
+  vpc_security_group_ids = [aws_security_group.peering_sg_b.id]
+
+  user_data = replace(<<EOF
+#!/bin/bash
+until apt-get update && apt-get install -y docker.io; do
+  echo "Waiting to release apt lock..."
+  sleep 5
+done
+
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ubuntu
+
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+systemctl restart docker
+sleep 5
+docker network create microservices-network || true
+
+cat << 'APPCOMPOSE' > /home/ubuntu/docker-compose.apps.yml
+${file("${path.module}/../../deploy/docker-compose.apps.yml")}
+APPCOMPOSE
+
+cat << 'ENVFILE' > /home/ubuntu/.env
+IMAGE_TAG=${var.docker_image_tag}
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
+ELASTICSEARCH_URL=http://${aws_instance.database_server.private_ip}:9200
+ENVFILE
+
+cd /home/ubuntu
+/usr/local/bin/docker-compose -f docker-compose.apps.yml --env-file .env up -d search-service
+
+# Watchtower - Auto-updates Docker images every 60 seconds
+docker run -d \
+  --name watchtower \
+  -e DOCKER_API_VERSION=1.44 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart always containrrr/watchtower -i 60 search-service
+EOF
+  , "\r\n", "\n")
+
+  user_data_replace_on_change = true
+
+  tags = {
+    Name        = "${var.environment}-ec2-search"
+    Environment = upper(var.environment)
+  }
+}
