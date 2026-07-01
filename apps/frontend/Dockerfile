@@ -8,6 +8,8 @@ RUN npm install || (sleep 5 && npm install)
 
 # Copy source code and build
 COPY . .
+ARG VITE_STRIPE_PUBLIC_KEY
+ENV VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
 RUN npm run build
 
 # Stage 2: Serve with Nginx
