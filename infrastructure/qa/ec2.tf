@@ -16,7 +16,7 @@ resource "aws_instance" "auth_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -84,7 +84,7 @@ resource "aws_instance" "catalog_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -155,7 +155,7 @@ swapon /swapfile
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -219,7 +219,7 @@ resource "aws_instance" "frontend_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -265,7 +265,7 @@ resource "aws_instance" "api_gateway_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io telnet; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -324,7 +324,7 @@ resource "aws_instance" "brokers_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
@@ -403,7 +403,7 @@ resource "aws_instance" "loan_server" {
   user_data = replace(<<EOF
 #!/bin/bash
 until apt-get update && apt-get install -y docker.io; do
-  echo "Waiting to release apt lock..."; # FORCE_UPDATE_2
+  echo "Waiting to release apt lock..."
   sleep 5
 done
 
