@@ -53,6 +53,8 @@ jobs:
         with:
           context: ./apps/frontend
           push: true
+          build-args: |
+            VITE_STRIPE_PUBLIC_KEY=${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
           tags: |
             kachiliquingal/uce-frontend:${{ env.TF_VAR_docker_image_tag }}
             kachiliquingal/uce-frontend:latest
