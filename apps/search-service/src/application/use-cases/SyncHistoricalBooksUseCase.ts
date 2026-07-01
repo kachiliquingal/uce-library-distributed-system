@@ -18,7 +18,7 @@ export class SyncHistoricalBooksUseCase {
       }
 
       const data = await response.json();
-      const books = data.data || [];
+      const books = Array.isArray(data) ? data : (data.data || []);
 
       logger.info(`[SyncHistoricalBooksUseCase] Fetched ${books.length} historical books from catalog.`);
 
