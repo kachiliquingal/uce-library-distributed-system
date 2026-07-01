@@ -73,7 +73,7 @@ const CheckoutForm = ({ onSuccess, onCancel }) => {
         </div>
       )}
       
-      <div className="mt-6 flex gap-3 justify-end">
+      <div className="mt-6 flex gap-3 justify-end relative" style={{ zIndex: 10 }}>
         <button 
           type="button" 
           onClick={onCancel} 
