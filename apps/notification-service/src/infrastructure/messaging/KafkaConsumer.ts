@@ -26,6 +26,7 @@ export class KafkaConsumer {
       await consumer.subscribe({ topic: 'book.borrowed', fromBeginning: true });
       await consumer.subscribe({ topic: 'book.returned', fromBeginning: true });
       await consumer.subscribe({ topic: 'fine.created', fromBeginning: true });
+      await consumer.subscribe({ topic: 'fine.paid', fromBeginning: true });
 
       await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
