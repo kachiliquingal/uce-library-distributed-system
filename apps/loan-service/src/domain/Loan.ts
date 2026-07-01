@@ -33,7 +33,7 @@ export class Loan {
   public static create(userId: string, isbn: string): Loan {
     const borrowDate = new Date();
     const dueDate = new Date();
-    dueDate.setDate(borrowDate.getDate() + 14); // 14 days loan period
+    dueDate.setDate(borrowDate.getDate() + 1); // 1 day loan period (for testing/project presentation)
     
     return new Loan(
       crypto.randomUUID(),
