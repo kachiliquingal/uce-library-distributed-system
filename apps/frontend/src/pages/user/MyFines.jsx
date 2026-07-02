@@ -21,9 +21,8 @@ const MyFines = () => {
   const fetchFines = async () => {
     try {
       if (!currentUserId) return;
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const url = `${API_URL}/api/fines/user/${currentUserId}`;
-
+      const FINE_API_URL = import.meta.env.VITE_FINE_API_URL || '/api/fines';
+      const url = `${FINE_API_URL}/user/${currentUserId}`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -38,9 +37,8 @@ const MyFines = () => {
 
   const handlePayClick = async (fine) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const url = `${API_URL}/api/fines/${fine.id}/pay`;
-
+      const FINE_API_URL = import.meta.env.VITE_FINE_API_URL || '/api/fines';
+      const url = `${FINE_API_URL}/${fine.id}/pay`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 

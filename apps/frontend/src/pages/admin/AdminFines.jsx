@@ -11,9 +11,8 @@ const AdminFines = () => {
 
   const fetchFines = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const url = `${API_URL}/api/fines`;
-
+      const FINE_API_URL = import.meta.env.VITE_FINE_API_URL || '/api/fines';
+      const url = `${FINE_API_URL}/`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
