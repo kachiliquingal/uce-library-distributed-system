@@ -1,6 +1,6 @@
 {
   "name": "catalog-service",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Catalog Service for UCLN",
   "main": "dist/index.js",
   "scripts": {

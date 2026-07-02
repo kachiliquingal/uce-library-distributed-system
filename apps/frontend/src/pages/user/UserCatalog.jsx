@@ -10,13 +10,25 @@ export const UserCatalog = () => {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  const { books, isLoading, fetchBooks } = useCatalogStore();
+  const { books, suggestions, isLoading, fetchBooks, fetchSuggestions, clearSuggestions } = useCatalogStore();
   const logout = useAuthStore(state => state.logout);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     fetchBooks(debouncedSearchTerm);
     setPage(1);
   }, [debouncedSearchTerm, fetchBooks]);
+
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      fetchSuggestions(searchTerm);
+      setShowSuggestions(true);
+    } else {
+      clearSuggestions();
+      setShowSuggestions(false);
+    }
+  }, [searchTerm, fetchSuggestions, clearSuggestions]);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE) || 1;
   const displayBooks = books.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -43,8 +55,32 @@ export const UserCatalog = () => {
               placeholder="Buscar por título o autor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => {
+                if (searchTerm.trim().length >= 2) setShowSuggestions(true);
+              }}
+              onBlur={() => {
+                // Pequeño retraso para permitir hacer click en la sugerencia
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((suggestion, idx) => (
+                  <div
+                    key={idx}
+                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700"
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Previene que el input pierda el foco antes del click
+                      setSearchTerm(suggestion);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button 
             onClick={logout}
@@ -83,7 +119,7 @@ export const UserCatalog = () => {
                       const user = useAuthStore.getState().user;
                       const token = useAuthStore.getState().token;
                       const userId = user?.id || user?.userId;
-                      await loanApi.borrowBook(userId, book.isbn, token);
+                      await loanApi.borrowBook(userId, book.isbn, book.title, book.category, token);
                       toast.success(`Préstamo exitoso de "${book.title}". Retíralo en biblioteca.`);
                       window.dispatchEvent(new Event('notification-update'));
                       

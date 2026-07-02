@@ -13,6 +13,7 @@ resource "aws_security_group" "database_sg" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   # Redis
@@ -104,8 +105,8 @@ mkdir -p /data
 mount $DEVICE /data
 echo "$DEVICE /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
-mkdir -p /data/postgres /data/mongo /data/neo4j
-chmod 777 /data/postgres /data/mongo /data/neo4j
+mkdir -p /data/postgres /data/mongo /data/neo4j /data/mysql /data/elasticsearch
+chmod 777 /data/postgres /data/mongo /data/neo4j /data/mysql /data/elasticsearch
 
 # Create 2GB Swap file to prevent Out Of Memory (OOM) crashes
 fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
@@ -143,6 +144,12 @@ ENVFILE
 
 cd /home/ubuntu
 /usr/local/bin/docker-compose -f docker-compose.db.yml --env-file .env up -d
+
+# Ensure notification_db and fine_db exist (Microservices Best Practice: Database per Service)
+echo "Waiting for PostgreSQL to start..."
+sleep 15
+docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'notification_db'" | grep -q 1 || docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -c "CREATE DATABASE notification_db;"
+docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'fine_db'" | grep -q 1 || docker exec -e PGPASSWORD=${var.db_password} $(docker-compose -f docker-compose.db.yml ps -q postgres) psql -U ${var.db_user} -d postgres -c "CREATE DATABASE fine_db;"
 
 EOF
   , "\r", "")

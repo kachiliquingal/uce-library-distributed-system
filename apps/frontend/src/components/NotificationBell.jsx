@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import mqtt from 'mqtt';
 
 export const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -9,32 +10,7 @@ export const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const user = useAuthStore((state) => state.user);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    fetchNotifications();
-    
-    // Auto refresh notifications every 30s
-    const interval = setInterval(fetchNotifications, 30000);
-    window.addEventListener('notification-update', fetchNotifications);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('notification-update', fetchNotifications);
-    };
-  }, [user]);
-
-  useEffect(() => {
-    // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
@@ -48,7 +24,62 @@ export const NotificationBell = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchNotifications();
+    
+    const targetUserId = user.role === 'ADMIN' ? 'ADMIN_NOTIFICATIONS' : user.id;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const brokerUrl = import.meta.env.VITE_MQTT_URL || `${protocol}//${window.location.host}/mqtt`;
+    
+    const client = mqtt.connect(brokerUrl);
+
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker via WebSockets');
+      client.subscribe(`notifications/${targetUserId}`);
+    });
+
+    client.on('message', (topic, message) => {
+      console.log(`Received real-time MQTT message on ${topic}`);
+      fetchNotifications();
+      
+      import('react-hot-toast').then(module => {
+        const toast = module.default;
+        try {
+          const msgString = message.toString();
+          if (!msgString || msgString.trim() === '') return;
+          const payload = JSON.parse(msgString);
+          toast.success(`Nueva alerta: ${payload.subject || 'Tienes una nueva notificación'}`, {
+            duration: 5000,
+            icon: '🔔',
+          });
+        } catch (error) {
+          console.error('Failed to parse MQTT message:', error);
+          toast.success('Tienes una nueva notificación', { icon: '🔔' });
+        }
+      });
+    });
+
+    window.addEventListener('notification-update', fetchNotifications);
+    
+    return () => {
+      client.end();
+      window.removeEventListener('notification-update', fetchNotifications);
+    };
+  }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const markAsRead = async () => {
     try {
@@ -110,7 +141,7 @@ export const NotificationBell = () => {
                         {new Date(notif.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-2">{notif.message}</p>
+                    <p className="text-sm text-gray-600 break-words mt-1">{notif.message}</p>
                   </div>
                 ))}
               </div>

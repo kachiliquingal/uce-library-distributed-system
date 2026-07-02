@@ -224,3 +224,50 @@ resource "aws_lb_listener_rule" "loan_routing" {
   }
 }
 
+resource "aws_lb_target_group" "search_tg" {
+  name        = "${var.environment}-search-tg"
+  port        = 3007
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    path                = "/health"
+    port                = "3007"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 30
+    matcher             = "200"
+  }
+
+  tags = {
+    Name        = "${var.environment}-search-tg"
+    Environment = upper(var.environment)
+  }
+}
+
+resource "aws_lb_listener_rule" "search_routing" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 600
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.search_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/search/*"]
+    }
+  }
+}
+
+resource "aws_lb_target_group_attachment" "search_attachment" {
+  target_group_arn = aws_lb_target_group.search_tg.arn
+  target_id        = aws_instance.search_server.private_ip
+  port             = 3007
+}
+

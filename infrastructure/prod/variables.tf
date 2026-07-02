@@ -112,3 +112,39 @@ variable "cuenta_b_aws_session_token" {
   type        = string
   sensitive   = true
 }
+
+variable "email_user" {
+  description = "Email User for Notification Service"
+  type        = string
+  sensitive   = true
+}
+
+variable "email_app_password" {
+  description = "Email App Password for Notification Service"
+  type        = string
+  sensitive   = true
+}
+
+variable "test_email_address" {
+  description = "Test Email Address for Notification Service"
+  type        = string
+  sensitive   = true
+}
+
+variable "test_admin_email_address" {
+  description = "Test Admin Email Address for Notification Service"
+  type        = string
+  sensitive   = true
+}
+
+variable "stripe_secret_key" {
+  description = "Stripe Secret Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "stripe_public_key" {
+  description = "Stripe Public Key"
+  type        = string
+  sensitive   = true
+}

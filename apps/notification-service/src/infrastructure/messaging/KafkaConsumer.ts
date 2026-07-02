@@ -1,7 +1,9 @@
 import { Kafka } from 'kafkajs';
 import { logger } from '../../utils/logger';
 import { CreateNotificationUseCase } from '../../application/use-cases/CreateNotificationUseCase';
-import { SQLiteNotificationRepository } from '../database/SQLiteNotificationRepository';
+import { PostgresNotificationRepository } from '../database/PostgresNotificationRepository';
+import { MqttPublisher } from './MqttPublisher';
+import { EmailService } from '../email/EmailService';
 
 const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(',') : ['localhost:9092'];
 
@@ -11,7 +13,7 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: 'notification-group' });
-const repository = new SQLiteNotificationRepository();
+const repository = new PostgresNotificationRepository();
 const createNotificationUseCase = new CreateNotificationUseCase(repository);
 
 export class KafkaConsumer {
@@ -24,6 +26,7 @@ export class KafkaConsumer {
       await consumer.subscribe({ topic: 'book.borrowed', fromBeginning: true });
       await consumer.subscribe({ topic: 'book.returned', fromBeginning: true });
       await consumer.subscribe({ topic: 'fine.created', fromBeginning: true });
+      await consumer.subscribe({ topic: 'fine.paid', fromBeginning: true });
 
       await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
@@ -46,38 +49,73 @@ export class KafkaConsumer {
             case 'book.borrowed':
               userId = String(data.userId);
               subject = 'Book Borrowed Successfully';
-              body = `You have borrowed the book with ISBN: ${data.isbn || data.bookId}.`;
+              {
+                const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
+                const fac = data.faculty ? ` de la Facultad de ${data.faculty}` : '';
+                const dateStr = data.borrowDate ? new Date(data.borrowDate).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
+                body = `Has solicitado el préstamo del libro "${title}" el ${dateStr}. Por favor acércate a la Biblioteca Central${fac} para retirar tu libro.`;
+              }
               break;
             case 'book.returned':
               userId = String(data.userId);
               subject = 'Book Returned';
-              body = `Thank you for returning the book with ISBN: ${data.isbn || data.bookId}.`;
+              {
+                const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
+                const dateStr = data.returnDate ? new Date(data.returnDate).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
+                body = `Gracias por devolver el libro "${title}" el ${dateStr}.`;
+              }
               break;
             case 'fine.created':
               userId = String(data.userId);
-              subject = 'New Fine Issued';
-              body = `A fine of $${data.amount} has been applied to your account. Reason: ${data.reason}`;
+              subject = 'Notificación de Multa Generada';
+              body = `Se ha generado una multa de $${data.amount} en su cuenta. Motivo: ${data.reason}. Por favor, ingrese al sistema para regularizar su estado.`;
+              break;
+            case 'fine.paid':
+              userId = String(data.userId);
+              subject = 'Confirmación de Pago de Multa';
+              body = `Hemos recibido exitosamente su pago de $${data.amount} correspondiente a la multa generada. Gracias por regularizar su estado en UCE Library.`;
               break;
           }
 
           if (userId && subject) {
             try {
-              await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
+              const notification = await createNotificationUseCase.execute(userId, 'EMAIL', subject, body);
               logger.info(`[Kafka] User notification created for userId: ${userId} - Subject: ${subject}`);
+              
+              // Push real-time and email
+              MqttPublisher.publishNotification(userId, notification);
+              await EmailService.sendNotificationEmail(subject, body, 'USER');
             } catch (err) {
               logger.error(`[Kafka] Failed to create user notification for userId: ${userId}`, err);
             }
 
             // Emit admin notification
-            if (topic === 'book.borrowed' || topic === 'book.returned') {
+            if (topic === 'book.borrowed' || topic === 'book.returned' || topic === 'fine.created' || topic === 'fine.paid') {
               try {
-                const action = topic === 'book.borrowed' ? 'prestado' : 'devuelto';
+                let adminSubject = 'Actividad del Sistema';
+                let adminBody = '';
                 const displayName = data.userName || userId;
-                const adminSubject = 'Actividad del Sistema';
-                const adminBody = `El usuario ${displayName} acaba de ${action} el libro con el isbn: ${data.isbn || data.bookId}.`;
                 
-                await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
-                logger.info(`[Kafka] Admin notification created for action: ${action}`);
+                if (topic === 'book.borrowed' || topic === 'book.returned') {
+                  const action = topic === 'book.borrowed' ? 'solicitado el préstamo' : 'devuelto';
+                  const title = data.bookTitle || `con ISBN: ${data.isbn || data.bookId}`;
+                  const dateRaw = topic === 'book.borrowed' ? data.borrowDate : data.returnDate;
+                  const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) : 'hoy';
+                  adminBody = `El usuario ${displayName} ha ${action} del libro "${title}" el ${dateStr}.`;
+                } else if (topic === 'fine.created') {
+                  adminSubject = 'Sistema de Multas: Nueva Multa';
+                  adminBody = `El usuario ${displayName} ha sido multado por un valor de $${data.amount} debido a: ${data.reason}.`;
+                } else if (topic === 'fine.paid') {
+                  adminSubject = 'Sistema de Multas: Multa Pagada';
+                  adminBody = `El usuario ${displayName} ha realizado el pago de su multa por un valor de $${data.amount} vía Stripe.`;
+                }
+                
+                const adminNotification = await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
+                logger.info(`[Kafka] Admin notification created for topic: ${topic}`);
+
+                // Push real-time and email to admin
+                MqttPublisher.publishNotification('ADMIN_NOTIFICATIONS', adminNotification);
+                await EmailService.sendNotificationEmail(adminSubject, adminBody, 'ADMIN');
               } catch (err) {
                 logger.error(`[Kafka] Failed to create admin notification`, err);
               }
