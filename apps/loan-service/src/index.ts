@@ -5,7 +5,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import { loanRouter } from './infrastructure/http/routes';
 import { AppDataSource } from './infrastructure/mysql/data-source';
 import { KafkaProducer, RabbitMQProducer } from './infrastructure/messaging/Producers';
-
+import { KafkaConsumer } from './infrastructure/messaging/KafkaConsumer';
 const app = express();
 
 import { logger } from './utils/logger';
@@ -48,6 +48,7 @@ async function bootstrap() {
     logger.info('[Loan Service] Connected to MySQL via TypeORM');
 
     await KafkaProducer.connect();
+    await KafkaConsumer.connect();
     await RabbitMQProducer.connect();
 
     app.listen(PORT, () => {

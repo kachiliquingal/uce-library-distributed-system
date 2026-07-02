@@ -161,6 +161,7 @@ fineRouter.post('/webhook', express.json(), async (req, res) => {
       const paidFine = allFines.find(f => f.stripePaymentIntentId === paymentIntent.id);
       
       const fineId = paidFine?.id || paymentIntent.metadata?.fineId;
+      const loanId = paidFine?.loanId || paymentIntent.metadata?.loanId;
       const userId = paidFine?.userId || paymentIntent.metadata?.userId;
       const amount = paidFine ? paidFine.amount : (paymentIntent.amount / 100);
       
@@ -170,9 +171,10 @@ fineRouter.post('/webhook', express.json(), async (req, res) => {
           userId,
           userName,
           fineId,
+          loanId,
           amount
         });
-        logger.info(`[Webhook] Emitted fine.paid event for userId=${userId} (${userName}), fineId=${fineId}`);
+        logger.info(`[Webhook] Emitted fine.paid event for userId=${userId} (${userName}), fineId=${fineId}, loanId=${loanId}`);
       } else {
         logger.warn(`[Webhook] Could not determine userId for paymentIntent ${paymentIntent.id} - notification skipped`);
       }
