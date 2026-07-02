@@ -266,8 +266,9 @@ resource "aws_lb_listener_rule" "search_routing" {
 }
 
 resource "aws_lb_target_group_attachment" "search_attachment" {
-  target_group_arn = aws_lb_target_group.search_tg.arn
-  target_id        = aws_instance.search_server.private_ip
-  port             = 3007
+  target_group_arn  = aws_lb_target_group.search_tg.arn
+  target_id         = aws_instance.search_server.private_ip
+  port              = 3007
+  availability_zone = "all"
 }
 
