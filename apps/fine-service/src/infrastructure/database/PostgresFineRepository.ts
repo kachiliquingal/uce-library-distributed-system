@@ -41,7 +41,7 @@ export class PostgresFineRepository implements FineRepository {
     await this.pool.query(
       `INSERT INTO fines (id, user_id, loan_id, amount, reason, status, stripe_payment_intent_id, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [fine.id, fine.userId, fine.loanId, fine.amount, fine.reason, fine.status, fine.stripePaymentIntentId, fine.createdAt]
+      [fine.id, fine.userId, fine.loanId, fine.amount, fine.reason, fine.status, fine.stripePaymentIntentId || null, fine.createdAt]
     );
   }
 
