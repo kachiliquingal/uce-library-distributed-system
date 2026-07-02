@@ -93,8 +93,8 @@ export const AdminInventory = () => {
     let success = false;
 
     if (editingBook) {
-      // For updates, the backend doesn't allow changing the ISBN, but we send other fields
-      success = await updateBook(editingBook.id, {
+      const bookId = editingBook._id || editingBook.id;
+      success = await updateBook(bookId, {
         title: formData.title,
         author: formData.author,
         category: formData.category,
@@ -223,7 +223,7 @@ export const AdminInventory = () => {
                 </tr>
               ) : (
                 displayBooks.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={book._id || book.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{book.title}</div>
                     </td>
@@ -248,9 +248,8 @@ export const AdminInventory = () => {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(book.id)}
-                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                          title="Eliminar"
+                          onClick={() => handleDelete(book._id || book.id)}
+                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"                          title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

@@ -1,8 +1,8 @@
-export const API_URL = import.meta.env.VITE_API_URL || '';
+export const LOAN_API_URL = import.meta.env.VITE_LOAN_API_URL || '/api/loans';
 
 export const loanApi = {
   borrowBook: async (userId, isbn, bookTitle, faculty, token) => {
-    const res = await fetch(`${API_URL}/api/loans/`, {
+    const res = await fetch(`${LOAN_API_URL}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,7 +18,7 @@ export const loanApi = {
   },
 
   returnBook: async (loanId, token) => {
-    const res = await fetch(`${API_URL}/api/loans/${loanId}/return`, {
+    const res = await fetch(`${LOAN_API_URL}/${loanId}/return`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`
@@ -32,7 +32,7 @@ export const loanApi = {
   },
 
   getUserLoans: async (userId, page = 1, limit = 10, token) => {
-    const res = await fetch(`${API_URL}/api/loans/user/${userId}?page=${page}&limit=${limit}`, {
+    const res = await fetch(`${LOAN_API_URL}/user/${userId}?page=${page}&limit=${limit}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -42,7 +42,7 @@ export const loanApi = {
   },
 
   getAllLoans: async (activeOnly = false, page = 1, limit = 10, token) => {
-    const res = await fetch(`${API_URL}/api/loans?activeOnly=${activeOnly}&page=${page}&limit=${limit}`, {
+    const res = await fetch(`${LOAN_API_URL}/?activeOnly=${activeOnly}&page=${page}&limit=${limit}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
