@@ -3,8 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './infrastructure/swagger/config';
-import { inventoryRouter } from './infrastructure/http/routes';
+import { inventoryRouter, manageStockUseCase } from './infrastructure/http/routes';
 import { logger } from './utils/logger';
+import { KafkaConsumer } from './infrastructure/messaging/KafkaConsumer';
 
 dotenv.config();
 
@@ -21,6 +22,10 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', service: 'inventory-service' });
 });
 
+const kafkaConsumer = new KafkaConsumer(manageStockUseCase);
+
 app.listen(PORT, async () => {
   logger.info(`[Inventory Service] Running on port ${PORT}`);
+  await kafkaConsumer.start();
 });
+

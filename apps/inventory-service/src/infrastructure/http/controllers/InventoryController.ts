@@ -67,4 +67,15 @@ export class InventoryController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  async syncLegacyLoans(req: Request, res: Response) {
+    try {
+      const isbns = req.body.isbns; // optional array of ISBNs
+      const results = await this.manageStockUseCase.syncLegacyLoans(isbns);
+      return res.status(200).json({ message: 'Legacy loans sync completed', results });
+    } catch (err: any) {
+      logger.error(`Error in syncLegacyLoans: ${err.message}`);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }

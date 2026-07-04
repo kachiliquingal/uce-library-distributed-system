@@ -9,7 +9,7 @@ export const inventoryRouter = Router();
 // Dependency Injection Initialization
 const repository = new CouchDBAdapter();
 const catalogClient = new CatalogGrpcClient();
-const manageStockUseCase = new ManageStockUseCase(repository, catalogClient);
+export const manageStockUseCase = new ManageStockUseCase(repository, catalogClient);
 const inventoryController = new InventoryController(manageStockUseCase);
 
 /**
@@ -24,6 +24,17 @@ const inventoryController = new InventoryController(manageStockUseCase);
 inventoryRouter.get('/', (req, res) => {
   res.status(200).json({ message: 'Inventory Service API' });
 });
+
+/**
+ * @swagger
+ * /sync-legacy-loans:
+ *   post:
+ *     summary: Sync legacy loans stock to 0
+ *     responses:
+ *       200:
+ *         description: Synced successfully
+ */
+inventoryRouter.post('/sync-legacy-loans', (req, res) => inventoryController.syncLegacyLoans(req, res));
 
 /**
  * @swagger
@@ -114,3 +125,4 @@ inventoryRouter.post('/', (req, res) => inventoryController.createStock(req, res
  *         description: Not found
  */
 inventoryRouter.put('/:isbn/stock', (req, res) => inventoryController.addStock(req, res));
+
