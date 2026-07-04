@@ -106,14 +106,16 @@
 
 ---
 
-## MS-09: Inventory Service ❌ TODO — build 6th
+## MS-09: Inventory Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-inventory
 - **Purpose:** Physical book stock — shelf location and copy count per ISBN
 - **Tech:** Node.js / Express / TypeScript
 - **DB:** CouchDB (offline-tolerant replication for barcode scanners)
 - **Protocols:** REST · gRPC client → catalog-service (validate ISBN before stock update)
-- **Endpoints:** GET /inventory/:isbn · PUT /inventory/:isbn/stock · GET /inventory/low-stock
-- **Pattern:** Hexagonal
+- **Endpoints:** GET /inventory/:isbn · PUT /inventory/:isbn/stock · GET /inventory/low-stock · POST /inventory/sync-legacy-loans
+- **Consumes:** `book.borrowed`, `book.returned` ← Kafka (real-time stock synchronization)
+- **Pattern:** Hexagonal ✅
+
 
 ---
 
