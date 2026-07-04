@@ -76,7 +76,11 @@ export const AdminInventory = () => {
 
   const handleOpenStockModal = async (book) => {
     setStockBook(book);
-    setStockForm({ initialCopies: '', shelfLocation: '', copiesToAdd: '' });
+    setStockForm({ 
+      initialCopies: '', 
+      shelfLocation: book.category ? `Biblioteca - ${book.category}` : '', 
+      copiesToAdd: '' 
+    });
     setIsStockModalOpen(true);
     const stock = await fetchPhysicalStock(book.isbn);
     setPhysicalStock(stock);
@@ -550,7 +554,10 @@ export const AdminInventory = () => {
                       value={stockForm.shelfLocation}
                       onChange={(e) => setStockForm({...stockForm, shelfLocation: e.target.value})}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 outline-none bg-white"
+                      disabled={!!stockBook?.category}
+                      className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-600 outline-none ${
+                        stockBook?.category ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : 'bg-white'
+                      }`}
                     >
                       <option value="" disabled>Seleccione una biblioteca</option>
                       {FACULTIES.map(faculty => (
