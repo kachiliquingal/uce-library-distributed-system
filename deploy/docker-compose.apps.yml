@@ -130,6 +130,20 @@ services:
     networks:
       - microservices-network
 
+  inventory-service:
+    image: kachiliquingal/uce-inventory-service:${IMAGE_TAG}
+    container_name: inventory-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "4009:4009"
+    environment:
+      - PORT=4009
+      - COUCHDB_URL=${COUCHDB_URL}
+      - CATALOG_GRPC_HOST=${CATALOG_GRPC_HOST}
+    networks:
+      - microservices-network
+
   frontend:
     image: kachiliquingal/uce-frontend:${IMAGE_TAG}
     container_name: frontend
@@ -151,6 +165,7 @@ services:
       - NOTIFICATION_SERVICE_URL=notification-service:3005
       - FINE_SERVICE_URL=fine-service:3006
       - SEARCH_SERVICE_URL=search-service:3007
+      - INVENTORY_SERVICE_URL=inventory-service:4009
       - FRONTEND_SERVICE_URL=frontend:80
       - BROKERS_IP=${BROKERS_IP}
     networks:
