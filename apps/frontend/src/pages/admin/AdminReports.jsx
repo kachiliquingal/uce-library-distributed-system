@@ -50,11 +50,15 @@ export const AdminReports = () => {
     setLoading(true);
     try {
       const response = await reportApi.get('/summary');
-      setSummaryData(response.data);
-      toast.success('Métricas de InfluxDB actualizadas');
+      if (response.data && Array.isArray(response.data.loansPerDay) && Array.isArray(response.data.topBooks)) {
+        setSummaryData(response.data);
+        toast.success('Métricas de InfluxDB actualizadas');
+      } else {
+        throw new Error('Respuesta de analítica no válida (formato incorrecto)');
+      }
     } catch (error) {
       console.error('Error fetching analytics summary:', error);
-      toast.error('Error al cargar datos de analítica');
+      toast.error('Error al cargar datos de analítica (mostrando respaldo)');
       // Set realistic fallback if offline/error
       setSummaryData({
         loansPerDay: [
@@ -131,8 +135,10 @@ export const AdminReports = () => {
     }
   };
 
-  // Find max loan count for scaling bar chart
-  const maxLoanCount = Math.max(...(summaryData.loansPerDay.map(d => d.count) || [1]), 1);
+  const loansArray = Array.isArray(summaryData?.loansPerDay) ? summaryData.loansPerDay : [];
+  const topBooksArray = Array.isArray(summaryData?.topBooks) ? summaryData.topBooks : [];
+  const maxLoanCount = Math.max(...(loansArray.map(d => d?.count || 0) || [1]), 1);
+  const maxBorrow = Math.max(...(topBooksArray.map(b => b?.borrowCount || 0) || [1]), 1);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -141,7 +147,7 @@ export const AdminReports = () => {
         <div>
           <div className="flex items-center gap-3">
             <BarChart3 className="h-8 w-8 text-indigo-300" />
-            <h1 className="text-3xl font-extrabold tracking-tight">Reportes y Analítica (MS-07)</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Reportes y Analítica</h1>
           </div>
           <p className="text-indigo-200 mt-1 text-sm flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
@@ -292,7 +298,7 @@ export const AdminReports = () => {
               </div>
               <div className="mt-4 flex items-baseline justify-between">
                 <span className="text-3xl font-extrabold text-gray-900">
-                  {summaryData.loansPerDay.reduce((acc, curr) => acc + curr.count, 0)}
+                  {loansArray.reduce((acc, curr) => acc + (curr?.count || 0), 0)}
                 </span>
                 <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
                   +12% vs sem. ant.
@@ -309,7 +315,7 @@ export const AdminReports = () => {
               </div>
               <div className="mt-4 flex items-baseline justify-between">
                 <span className="text-3xl font-extrabold text-gray-900">
-                  {summaryData.activeUsers}
+                  {summaryData?.activeUsers || 0}
                 </span>
                 <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
                   En línea
@@ -365,13 +371,13 @@ export const AdminReports = () => {
               </div>
 
               <div className="mt-8 flex items-end justify-between gap-3 h-64 pt-6 px-2">
-                {summaryData.loansPerDay.map((day, index) => {
-                  const heightPercentage = Math.round((day.count / maxLoanCount) * 100);
-                  const dateLabel = new Date(day.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+                {loansArray.map((day, index) => {
+                  const heightPercentage = Math.round(((day?.count || 0) / maxLoanCount) * 100);
+                  const dateLabel = day?.date ? new Date(day.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' }) : 'N/A';
                   return (
                     <div key={index} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
                       <div className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {day.count}
+                        {day?.count || 0}
                       </div>
                       <div 
                         className="w-full max-w-[48px] bg-gradient-to-t from-indigo-700 via-indigo-600 to-purple-500 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
@@ -395,17 +401,16 @@ export const AdminReports = () => {
               </div>
 
               <div className="mt-6 space-y-5">
-                {summaryData.topBooks.map((book, idx) => {
-                  const maxBorrow = Math.max(...summaryData.topBooks.map(b => b.borrowCount), 1);
-                  const widthPct = Math.round((book.borrowCount / maxBorrow) * 100);
+                {topBooksArray.map((book, idx) => {
+                  const widthPct = Math.round(((book?.borrowCount || 0) / maxBorrow) * 100);
                   return (
                     <div key={idx} className="space-y-1.5">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={book.title}>
-                          #{idx + 1}. {book.title}
+                        <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={book?.title || 'Sin título'}>
+                          #{idx + 1}. {book?.title || 'Sin título'}
                         </span>
                         <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md text-xs">
-                          {book.borrowCount} préstamos
+                          {book?.borrowCount || 0} préstamos
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
