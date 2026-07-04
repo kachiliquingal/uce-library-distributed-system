@@ -144,6 +144,23 @@ services:
     networks:
       - microservices-network
 
+  report-service:
+    image: kachiliquingal/uce-report-service:${IMAGE_TAG}
+    container_name: report-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "4007:4007"
+    environment:
+      - PORT=4007
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+    networks:
+      - microservices-network
+
   frontend:
     image: kachiliquingal/uce-frontend:${IMAGE_TAG}
     container_name: frontend
@@ -166,6 +183,7 @@ services:
       - FINE_SERVICE_URL=fine-service:3006
       - SEARCH_SERVICE_URL=search-service:3007
       - INVENTORY_SERVICE_URL=inventory-service:4009
+      - REPORT_SERVICE_URL=report-service:4007
       - FRONTEND_SERVICE_URL=frontend:80
       - BROKERS_IP=${BROKERS_IP}
     networks:
