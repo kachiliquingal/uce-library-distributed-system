@@ -9,6 +9,7 @@ import { Layout } from "./components/Layout";
 import { UserLoans } from "./pages/user/UserLoans";
 import { AdminLoans } from "./pages/admin/AdminLoans";
 import { AdminInventory } from "./pages/admin/AdminInventory";
+import { AdminReports } from "./pages/admin/AdminReports";
 import MyFines from "./pages/user/MyFines";
 import AdminFines from "./pages/admin/AdminFines";
 
@@ -125,6 +126,16 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <AdminInventory />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminReports />
                 </Layout>
               </AdminRoute>
             }

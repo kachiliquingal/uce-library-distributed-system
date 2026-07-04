@@ -33,6 +33,7 @@ docker run -d -p 80:80 --name uce-api-gateway \
   -e FINE_SERVICE_URL=${aws_instance.fine_server.private_ip}:3006 \
   -e NOTIFICATION_SERVICE_URL=${aws_instance.notification_server.private_ip}:3005 \
   -e INVENTORY_SERVICE_URL=${aws_instance.inventory_server.private_ip}:4009 \
+  -e REPORT_SERVICE_URL=${aws_instance.report_server.private_ip}:4007 \
   -e BROKERS_IP=${aws_instance.brokers_server.private_ip} \
   --restart always $IMAGE_NAME
 
