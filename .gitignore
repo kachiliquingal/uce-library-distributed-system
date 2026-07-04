@@ -150,3 +150,4 @@ vite.config.ts.timestamp-*
 .turbo
 # AWS Credentials
 .aws_creds.ps1
+.aws_creds_prod.ps1
