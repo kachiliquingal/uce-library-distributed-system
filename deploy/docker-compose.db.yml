@@ -83,6 +83,19 @@ services:
     networks:
       - microservices-network
 
+  couchdb:
+    image: couchdb:3.3
+    restart: always
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5984:5984"
+    volumes:
+      - /data/couchdb:/opt/couchdb/data
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true
