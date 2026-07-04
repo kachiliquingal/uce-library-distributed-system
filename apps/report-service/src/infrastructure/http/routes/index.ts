@@ -115,4 +115,40 @@ router.get('/fine-revenue', (req, res) => controller.getFineRevenueSummary(req, 
  */
 router.post('/record', (req, res) => controller.recordEvent(req, res));
 
+/**
+ * @swagger
+ * /export:
+ *   get:
+ *     summary: Export library reports in PDF or CSV format
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year]
+ *         description: Time period to export
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [loans, top-books, fines, summary]
+ *         description: Type of report
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [pdf, csv]
+ *         description: Export file format
+ *       - in: query
+ *         name: faculty
+ *         schema:
+ *           type: string
+ *         description: Faculty filter
+ *     responses:
+ *       200:
+ *         description: File stream (PDF or CSV)
+ */
+router.get('/export', (req, res) => controller.exportReport(req, res));
+
 export default router;

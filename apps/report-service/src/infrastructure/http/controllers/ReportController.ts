@@ -1,9 +1,15 @@
 import { Request, Response } from 'express';
 import { AnalyticsUseCase } from '../../../application/use-cases/AnalyticsUseCase';
+import { ExportReportUseCase } from '../../../application/use-cases/ExportReportUseCase';
+import { ExportOptions, ExportPeriod, ExportType, ExportFormat } from '../../../domain/ExportTypes';
 import { logger } from '../../../utils/logger';
 
 export class ReportController {
-  constructor(private analyticsUseCase: AnalyticsUseCase) {}
+  private exportUseCase: ExportReportUseCase;
+
+  constructor(private analyticsUseCase: AnalyticsUseCase) {
+    this.exportUseCase = new ExportReportUseCase(this.analyticsUseCase);
+  }
 
   async getLoansPerDay(req: Request, res: Response): Promise<void> {
     try {
@@ -84,4 +90,23 @@ export class ReportController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  async exportReport(req: Request, res: Response): Promise<void> {
+    try {
+      const options: ExportOptions = {
+        period: (req.query.period as ExportPeriod) || 'week',
+        type: (req.query.type as ExportType) || 'summary',
+        format: (req.query.format as ExportFormat) || 'pdf',
+        faculty: String(req.query.faculty || 'Todas las Facultades'),
+        requestedBy: String(req.query.requestedBy || 'Administrador UCE')
+      };
+      await this.exportUseCase.exportReport(res, options);
+    } catch (error) {
+      logger.error('Error in exportReport controller:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
+  }
 }
+

@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { reportApi } from '../../api/client';
-import { BarChart3, TrendingUp, Users, DollarSign, Activity, RefreshCw, Code, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { 
+  BarChart3, TrendingUp, Users, DollarSign, Activity, RefreshCw, Code, 
+  BookOpen, CheckCircle, Clock, FileText, Table, Download, Filter, 
+  Calendar, Building2, Layers 
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminReports = () => {
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'graphql'
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState({
@@ -12,6 +18,12 @@ export const AdminReports = () => {
     activeUsers: 0,
     fineRevenue: { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
   });
+
+  // Export Panel state
+  const [exportType, setExportType] = useState('summary'); // 'summary' | 'top-books' | 'loans' | 'fines'
+  const [exportPeriod, setExportPeriod] = useState('week'); // 'day' | 'week' | 'month' | 'year'
+  const [exportFaculty, setExportFaculty] = useState('Todas las Facultades');
+  const [exportLoading, setExportLoading] = useState(null); // null | 'pdf' | 'csv'
 
   // GraphQL Explorer state
   const [gqlQuery, setGqlQuery] = useState(`query GetLibraryAnalytics {
@@ -86,12 +98,45 @@ export const AdminReports = () => {
     }
   };
 
+  const handleExport = async (format) => {
+    setExportLoading(format);
+    const toastId = toast.loading(`Generando reporte en ${format.toUpperCase()}...`);
+    try {
+      const response = await reportApi.get('/export', {
+        params: {
+          period: exportPeriod,
+          type: exportType,
+          format: format,
+          faculty: exportFaculty,
+          requestedBy: user?.email || 'Administrador UCE'
+        },
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const extension = format === 'pdf' ? 'pdf' : 'csv';
+      const cleanFaculty = exportFaculty.replace(/[^a-zA-Z0-9]/g, '_');
+      link.setAttribute('download', `Reporte_UCE_Library_${exportType}_${exportPeriod}_${cleanFaculty}.${extension}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success(`Reporte ${format.toUpperCase()} exportado y descargado con éxito`, { id: toastId });
+    } catch (error) {
+      console.error('Error al exportar reporte:', error);
+      toast.error('Error al generar el archivo de exportación', { id: toastId });
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
   // Find max loan count for scaling bar chart
   const maxLoanCount = Math.max(...(summaryData.loansPerDay.map(d => d.count) || [1]), 1);
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Header */}
+      {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 p-6 rounded-2xl text-white shadow-xl">
         <div>
           <div className="flex items-center gap-3">
@@ -133,6 +178,109 @@ export const AdminReports = () => {
 
       {activeTab === 'dashboard' ? (
         <>
+          {/* Executive Export Panel */}
+          <div className="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/40 p-6 rounded-2xl shadow-sm border border-indigo-100 transition-all hover:shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-100 pb-4 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Download className="h-6 w-6 text-indigo-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Centro de Exportación de Reportes Oficiales</h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Genera y descarga reportes ejecutivos en PDF o CSV listos para auditorías universitarias o análisis en Excel
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold shadow-sm">
+                <FileText className="h-3.5 w-3.5" /> Descarga Directa a PC
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Report Type Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-indigo-600" /> Tipo de Reporte
+                </label>
+                <select
+                  value={exportType}
+                  onChange={(e) => setExportType(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all"
+                >
+                  <option value="summary">Resumen Ejecutivo Integral</option>
+                  <option value="top-books">Ranking de Libros Más Prestados</option>
+                  <option value="loans">Historial y Actividad de Préstamos</option>
+                  <option value="fines">Resumen Financiero de Multas</option>
+                </select>
+              </div>
+
+              {/* Time Period Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-purple-600" /> Período de Evaluación
+                </label>
+                <select
+                  value={exportPeriod}
+                  onChange={(e) => setExportPeriod(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm transition-all"
+                >
+                  <option value="day">Por Día (Últimas 24 Horas)</option>
+                  <option value="week">Por Semana (Últimos 7 Días)</option>
+                  <option value="month">Por Mes (Últimos 30 Días)</option>
+                  <option value="year">Anual (Último Año - 365 Días)</option>
+                </select>
+              </div>
+
+              {/* Faculty Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-green-600" /> Filtro por Facultad / Unidad
+                </label>
+                <select
+                  value={exportFaculty}
+                  onChange={(e) => setExportFaculty(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm transition-all"
+                >
+                  <option value="Todas las Facultades">Todas las Facultades (General)</option>
+                  <option value="Ingeniería y Ciencias Aplicadas">Ingeniería y Ciencias Aplicadas</option>
+                  <option value="Jurisprudencia y Ciencias Sociales">Jurisprudencia y Ciencias Sociales</option>
+                  <option value="Ciencias Médicas y de la Salud">Ciencias Médicas y de la Salud</option>
+                  <option value="Ciencias Económicas y Administrativas">Ciencias Económicas y Administrativas</option>
+                  <option value="Artes y Humanidades">Artes y Humanidades</option>
+                  <option value="Ciencias Químicas y Biológicas">Ciencias Químicas y Biológicas</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2">
+              <button
+                onClick={() => handleExport('pdf')}
+                disabled={exportLoading !== null}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-red-600 to-indigo-700 hover:from-red-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 transform active:scale-95"
+              >
+                {exportLoading === 'pdf' ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <FileText className="h-5 w-5" />
+                )}
+                <span>Exportar en PDF (Oficial UCE)</span>
+              </button>
+
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exportLoading !== null}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 transform active:scale-95"
+              >
+                {exportLoading === 'csv' ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Table className="h-5 w-5" />
+                )}
+                <span>Exportar en CSV (Excel)</span>
+              </button>
+            </div>
+          </div>
+
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
