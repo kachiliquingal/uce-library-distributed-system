@@ -121,6 +121,14 @@ resource "aws_security_group" "catalog_sg" {
     security_groups = [aws_security_group.internal_services_sg.id]
   }
 
+  ingress {
+    description     = "Allow gRPC from Cuenta B (Inventory Service)"
+    from_port       = 50052
+    to_port         = 50052
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
