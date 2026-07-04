@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { reportApi } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { 
   BarChart3, TrendingUp, Users, DollarSign, Activity, RefreshCw, Code, 
-  BookOpen, CheckCircle, Clock, FileText, Table, Download, Filter, 
+  BookOpen, CheckCircle, Clock, FileText, Table, Download, 
   Calendar, Building2, Layers 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
