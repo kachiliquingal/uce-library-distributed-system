@@ -25,6 +25,16 @@ resource "aws_security_group" "database_sg" {
     security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
   }
 
+  # CouchDB
+  ingress {
+    description     = "CouchDB from Internal Services, API Gateway & Cuenta B"
+    from_port       = 5984
+    to_port         = 5984
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api_gateway_sg.id, aws_security_group.internal_services_sg.id]
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
   # MongoDB
   ingress {
     description     = "MongoDB from Internal Services & API Gateway"
