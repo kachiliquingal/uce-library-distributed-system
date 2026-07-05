@@ -27,6 +27,8 @@ export class KafkaConsumer {
       await consumer.subscribe({ topic: 'book.returned', fromBeginning: true });
       await consumer.subscribe({ topic: 'fine.created', fromBeginning: true });
       await consumer.subscribe({ topic: 'fine.paid', fromBeginning: true });
+      await consumer.subscribe({ topic: 'reservation.created', fromBeginning: true });
+      await consumer.subscribe({ topic: 'reservation.expired', fromBeginning: true });
 
       await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
@@ -75,6 +77,16 @@ export class KafkaConsumer {
               subject = 'Confirmación de Pago de Multa';
               body = `Hemos recibido exitosamente su pago de $${data.amount} correspondiente a la multa generada. Gracias por regularizar su estado en UCE Library.`;
               break;
+            case 'reservation.created':
+              userId = String(data.userId);
+              subject = `Confirmación de Reserva: ${data.roomName || 'Sala de Estudio'}`;
+              body = data.message || `¡Tu reserva en la ${data.roomName} ha sido confirmada para el horario de ${data.startTime} a ${data.endTime}! Cuentas con un turno asignado de 5 minutos exactos.`;
+              break;
+            case 'reservation.expired':
+              userId = String(data.userId);
+              subject = `Turno Finalizado: ${data.roomName || 'Sala de Estudio'}`;
+              body = data.message || `Tu tiempo asignado de 5 minutos en la ${data.roomName} ha terminado. Por favor abandona la sala para el siguiente turno.`;
+              break;
           }
 
           if (userId && subject) {
@@ -90,7 +102,7 @@ export class KafkaConsumer {
             }
 
             // Emit admin notification
-            if (topic === 'book.borrowed' || topic === 'book.returned' || topic === 'fine.created' || topic === 'fine.paid') {
+            if (topic === 'book.borrowed' || topic === 'book.returned' || topic === 'fine.created' || topic === 'fine.paid' || topic === 'reservation.created' || topic === 'reservation.expired') {
               try {
                 let adminSubject = 'Actividad del Sistema';
                 let adminBody = '';
@@ -108,6 +120,12 @@ export class KafkaConsumer {
                 } else if (topic === 'fine.paid') {
                   adminSubject = 'Sistema de Multas: Multa Pagada';
                   adminBody = `El usuario ${displayName} ha realizado el pago de su multa por un valor de $${data.amount} vía Stripe.`;
+                } else if (topic === 'reservation.created') {
+                  adminSubject = 'Control de Salas: Nueva Reserva';
+                  adminBody = `El estudiante ${displayName} (${data.userEmail || userId}) ha reservado la "${data.roomName}" (${data.faculty}) para el horario de ${data.startTime} a ${data.endTime}.`;
+                } else if (topic === 'reservation.expired') {
+                  adminSubject = 'Control de Salas: Turno Liberado';
+                  adminBody = `El turno de 5 minutos del estudiante ${displayName} en la "${data.roomName}" (${data.faculty}) ha concluido. Sala liberada automáticamente.`;
                 }
                 
                 const adminNotification = await createNotificationUseCase.execute('ADMIN_NOTIFICATIONS', 'SYSTEM', adminSubject, adminBody);
