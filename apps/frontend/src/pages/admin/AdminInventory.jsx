@@ -45,14 +45,14 @@ export const AdminInventory = () => {
   }, [debouncedSearchTerm, fetchBooks]);
 
   useEffect(() => {
-    if (searchTerm.trim().length >= 2) {
-      fetchSuggestions(searchTerm);
+    if (debouncedSearchTerm.trim().length >= 2) {
+      fetchSuggestions(debouncedSearchTerm);
       setShowSuggestions(true);
     } else {
       clearSuggestions();
       setShowSuggestions(false);
     }
-  }, [searchTerm, fetchSuggestions, clearSuggestions]);
+  }, [debouncedSearchTerm, fetchSuggestions, clearSuggestions]);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE) || 1;
   const displayBooks = books.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
