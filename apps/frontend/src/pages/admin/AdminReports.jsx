@@ -50,33 +50,26 @@ export const AdminReports = () => {
     setLoading(true);
     try {
       const response = await reportApi.get('/summary');
-      if (response.data && Array.isArray(response.data.loansPerDay) && Array.isArray(response.data.topBooks)) {
-        setSummaryData(response.data);
-        toast.success('Métricas de InfluxDB actualizadas');
+      if (response.data && typeof response.data === 'object') {
+        setSummaryData({
+          loansPerDay: Array.isArray(response.data.loansPerDay) ? response.data.loansPerDay : [],
+          topBooks: Array.isArray(response.data.topBooks) ? response.data.topBooks : [],
+          activeUsers: Number(response.data.activeUsers || 0),
+          fineRevenue: response.data.fineRevenue || { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
+        });
+        toast.success('Métricas de analítica actualizadas');
       } else {
-        throw new Error('Respuesta de analítica no válida (formato incorrecto)');
+        throw new Error('Respuesta de analítica no válida');
       }
     } catch (error) {
       console.error('Error fetching analytics summary:', error);
-      toast.error('Error al cargar datos de analítica (mostrando respaldo)');
-      // Set realistic fallback if offline/error
+      toast.error('No se pudieron obtener métricas en vivo. Verifique la conexión con Report Service.');
+      // Set empty state if offline/error - NEVER show fake hardcoded numbers
       setSummaryData({
-        loansPerDay: [
-          { date: '2026-06-28', count: 5 },
-          { date: '2026-06-29', count: 8 },
-          { date: '2026-06-30', count: 12 },
-          { date: '2026-07-01', count: 7 },
-          { date: '2026-07-02', count: 15 },
-          { date: '2026-07-03', count: 10 },
-          { date: '2026-07-04', count: 14 }
-        ],
-        topBooks: [
-          { bookId: '978-0132350884', title: 'Clean Code: A Handbook of Agile Software Craftsmanship', borrowCount: 24 },
-          { bookId: '978-0135957059', title: 'The Pragmatic Programmer', borrowCount: 19 },
-          { bookId: '978-0201633610', title: 'Design Patterns', borrowCount: 15 }
-        ],
-        activeUsers: 48,
-        fineRevenue: { totalRevenue: 145.50, paidCount: 18, pendingCount: 4, pendingAmount: 32.00 }
+        loansPerDay: [],
+        topBooks: [],
+        activeUsers: 0,
+        fineRevenue: { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
       });
     } finally {
       setLoading(false);
@@ -340,8 +333,8 @@ export const AdminReports = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-bold text-gray-700">Sesiones Activas (30d)</span>
-                  <p className="text-[11px] text-gray-400 font-medium">Interacciones y consultas en portal</p>
+                  <span className="text-sm font-bold text-gray-700">Usuarios Activos (Lectores)</span>
+                  <p className="text-[11px] text-gray-400 font-medium">Lectores con historial de préstamos en el sistema</p>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
                   <Users className="h-6 w-6" />
@@ -349,10 +342,10 @@ export const AdminReports = () => {
               </div>
               <div className="mt-3 flex items-baseline justify-between">
                 <span className="text-3xl font-extrabold text-gray-900">
-                  {summaryData?.activeUsers || 48}
+                  {summaryData?.activeUsers || 0}
                 </span>
                 <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Lectores en línea
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Lectores registrados
                 </span>
               </div>
             </div>
@@ -399,29 +392,37 @@ export const AdminReports = () => {
               <div>
                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-indigo-600" />
-                  Préstamos Diarios (Serie Temporal InfluxDB)
+                  Préstamos Diarios (Ecosistema Distribuido)
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">Actividad registrada en los últimos 7 días</p>
               </div>
 
-              <div className="mt-8 flex items-end justify-between gap-3 h-64 pt-6 px-2">
-                {loansArray.map((day, index) => {
-                  const heightPercentage = Math.round(((day?.count || 0) / maxLoanCount) * 100);
-                  const dateLabel = day?.date ? new Date(day.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' }) : 'N/A';
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                      <div className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {day?.count || 0}
+              {loansArray.length === 0 || loansArray.every(d => d.count === 0) ? (
+                <div className="mt-8 flex flex-col items-center justify-center h-64 text-center p-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <BarChart3 className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Sin actividad de préstamos reciente</p>
+                  <p className="text-xs text-gray-400 mt-1">Cuando se realicen préstamos en el catálogo o inventario, aparecerán reflejados aquí en tiempo real.</p>
+                </div>
+              ) : (
+                <div className="mt-8 flex items-end justify-between gap-3 h-64 pt-6 px-2">
+                  {loansArray.map((day, index) => {
+                    const heightPercentage = Math.round(((day?.count || 0) / maxLoanCount) * 100);
+                    const dateLabel = day?.date ? new Date(day.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' }) : 'N/A';
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                        <div className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {day?.count || 0}
+                        </div>
+                        <div 
+                          className="w-full max-w-[48px] bg-gradient-to-t from-indigo-700 via-indigo-600 to-purple-500 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
+                          style={{ height: `${Math.max(heightPercentage, 8)}%` }}
+                        ></div>
+                        <span className="text-xs font-medium text-gray-500 capitalize">{dateLabel}</span>
                       </div>
-                      <div 
-                        className="w-full max-w-[48px] bg-gradient-to-t from-indigo-700 via-indigo-600 to-purple-500 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
-                        style={{ height: `${Math.max(heightPercentage, 8)}%` }}
-                      ></div>
-                      <span className="text-xs font-medium text-gray-500 capitalize">{dateLabel}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Top Borrowed Books */}
@@ -434,20 +435,27 @@ export const AdminReports = () => {
                 <p className="text-xs text-gray-500 mt-1">Ranking general en todo el ecosistema</p>
               </div>
 
-              <div className="mt-6 space-y-5">
-                {topBooksArray.map((book, idx) => {
-                  const widthPct = Math.round(((book?.borrowCount || 0) / maxBorrow) * 100);
-                  return (
-                    <div key={idx} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={book?.title || 'Sin título'}>
-                          #{idx + 1}. {book?.title || 'Sin título'}
-                        </span>
-                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md text-xs">
-                          {book?.borrowCount || 0} préstamos
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+              {topBooksArray.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center justify-center h-64 text-center p-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <BookOpen className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">No hay préstamos registrados</p>
+                  <p className="text-xs text-gray-400 mt-1">El ranking se generará automáticamente en cuanto los usuarios comiencen a solicitar libros.</p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-5">
+                  {topBooksArray.map((book, idx) => {
+                    const widthPct = Math.round(((book?.borrowCount || 0) / maxBorrow) * 100);
+                    return (
+                      <div key={idx} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={book?.title || 'Sin título'}>
+                            #{idx + 1}. {book?.title || 'Sin título'}
+                          </span>
+                          <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md text-xs">
+                            {book?.borrowCount || 0} préstamos
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                         <div
                           className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${widthPct}%` }}
@@ -457,6 +465,7 @@ export const AdminReports = () => {
                   );
                 })}
               </div>
+              )}
             </div>
           </div>
         </>
