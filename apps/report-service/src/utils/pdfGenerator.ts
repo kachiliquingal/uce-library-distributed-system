@@ -188,7 +188,7 @@ export class PdfGenerator {
     }
 
     // 4. Footer & Page Numbers
-    doc.autoPageBreak = false;
+    (doc as any).autoPageBreak = false;
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);

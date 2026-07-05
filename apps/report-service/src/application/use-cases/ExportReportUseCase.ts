@@ -22,7 +22,7 @@ export class ExportReportUseCase {
       const days = daysMap[options.period] || 7;
 
       // 2. Fetch data from AnalyticsUseCase
-      const [loansPerDay, rawTopBooks, activeUsers, fineRevenue] = await Promise.all([
+      let [loansPerDay, rawTopBooks, activeUsers, fineRevenue] = await Promise.all([
         this.analyticsUseCase.getLoansPerDay(days),
         this.analyticsUseCase.getTopBorrowedBooks(15),
         this.analyticsUseCase.getActiveUsersCount(days),
