@@ -248,6 +248,14 @@ resource "aws_security_group" "user_sg" {
   }
 
   ingress {
+    description     = "Allow User Service API traffic from Cuenta B (Report Service)"
+    from_port       = 3003
+    to_port         = 3003
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
+  }
+
+  ingress {
     description     = "Allow SSH administration from Bastion"
     from_port       = 22
     to_port         = 22
@@ -286,6 +294,14 @@ resource "aws_security_group" "loan_sg" {
     to_port         = 3004
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  ingress {
+    description     = "Allow Loan Service API traffic from Cuenta B (Report Service)"
+    from_port       = 3004
+    to_port         = 3004
+    protocol        = "tcp"
+    cidr_blocks     = [aws_vpc.vpc_b.cidr_block]
   }
 
   ingress {

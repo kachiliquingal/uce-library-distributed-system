@@ -8,7 +8,7 @@ resource "aws_security_group" "peering_sg_b" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = [data.aws_vpc.cuenta_a.cidr_block]
+    cidr_blocks = [data.aws_vpc.cuenta_a.cidr_block, aws_vpc.vpc_b.cidr_block]
   }
 
   egress {
