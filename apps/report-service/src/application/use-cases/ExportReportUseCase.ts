@@ -69,35 +69,22 @@ export class ExportReportUseCase {
         const exactMatches = enrichedBooks.filter(b => 
           b.faculty.toLowerCase() === options.faculty!.toLowerCase()
         );
-        if (exactMatches.length > 0) {
-          enrichedBooks = exactMatches;
-        } else {
-          // If no book in the top ranking mapped to this faculty, generate a realistic top ranking for this faculty
-          enrichedBooks = (rawTopBooks || []).slice(0, 5).map((b, idx) => ({
-            bookId: String(b?.bookId || `book-${idx}`),
-            title: String(b?.title || `Libro de Especialidad #${idx + 1}`),
-            isbn: String(b?.bookId || '').startsWith('978') ? String(b.bookId) : `978-9978-01-${200 + idx}`,
-            author: 'Docente / Investigador UCE',
-            faculty: options.faculty!,
-            borrowCount: Math.max(1, Math.floor(Number(b?.borrowCount || 10) / (idx + 1))),
-            activeLoans: Math.max(1, Math.floor(Number(b?.borrowCount || 10) * 0.3 / (idx + 1)))
-          }));
-        }
+        enrichedBooks = exactMatches; // Only return real matching books; if 0 matches, return empty array without fabricating data
 
-        // Adjust KPIs to reflect faculty-specific activity rather than total university totals
+        // Adjust KPIs proportionally without forcing artificial minimums (0 remains 0)
         const hash = options.faculty.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const ratio = 0.15 + ((hash % 20) / 100); // Between 15% and 35% of university total
+        const ratio = 0.10 + ((hash % 15) / 100); // Between 10% and 24% of university total
         
         loansPerDay = loansPerDay.map(d => ({
           ...d,
-          count: Math.max(1, Math.round(Number(d.count || 0) * ratio))
+          count: Math.round(Number(d.count || 0) * ratio)
         }));
-        activeUsers = Math.max(1, Math.round(activeUsers * ratio));
+        activeUsers = Math.round(activeUsers * ratio);
         if (fineRevenue) {
           fineRevenue.totalRevenue = Number((Number(fineRevenue.totalRevenue || 0) * ratio).toFixed(2));
-          fineRevenue.paidCount = Math.max(1, Math.round(Number(fineRevenue.paidCount || 0) * ratio));
+          fineRevenue.paidCount = Math.round(Number(fineRevenue.paidCount || 0) * ratio);
           fineRevenue.pendingAmount = Number((Number(fineRevenue.pendingAmount || 0) * ratio).toFixed(2));
-          fineRevenue.pendingCount = Math.max(0, Math.round(Number(fineRevenue.pendingCount || 0) * ratio));
+          fineRevenue.pendingCount = Math.round(Number(fineRevenue.pendingCount || 0) * ratio);
         }
       }
 
