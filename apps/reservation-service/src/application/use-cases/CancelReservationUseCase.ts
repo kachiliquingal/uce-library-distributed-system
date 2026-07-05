@@ -57,6 +57,7 @@ export class CancelReservationUseCase {
         status: 'AVAILABLE',
         updatedAt: new Date().toISOString()
       });
+      await this.repository.markOutboxPublished(outboxEvent.id);
     } catch {
       logger.debug('Instant publish fallback to outbox interval');
     }
