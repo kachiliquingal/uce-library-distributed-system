@@ -51,7 +51,7 @@ export class CsvGenerator {
       csvContent += ['Parámetro', 'Valor', 'Detalle'].map(quote).join(separator) + '\r\n';
       csvContent += ['Período Reportado', options.period.toUpperCase(), 'Filtro temporal aplicado'].map(quote).join(separator) + '\r\n';
       csvContent += ['Facultad Filtrada', options.faculty || 'Todas las Facultades', 'Alcance universitario'].map(quote).join(separator) + '\r\n';
-      csvContent += ['Sesiones Activas en Línea (30d)', summary?.activeUsers || 0, 'Interacciones, accesos y consultas registradas en el período'].map(quote).join(separator) + '\r\n\r\n';
+      csvContent += ['Usuarios Registrados en Biblioteca', summary?.activeUsers || 0, 'Total de lectores verificados en el sistema'].map(quote).join(separator) + '\r\n\r\n';
 
       csvContent += quote('--- TOP LIBROS MÁS PRESTADOS ---') + '\r\n';
       csvContent += ['Ranking', 'Título', 'Facultad', 'Préstamos'].map(quote).join(separator) + '\r\n';

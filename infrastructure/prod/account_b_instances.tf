@@ -308,6 +308,7 @@ KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 LOAN_SERVICE_INTERNAL_URL=${aws_instance.loan_server.private_ip}:3004
 FINE_SERVICE_INTERNAL_URL=${aws_instance.fine_server.private_ip}:3006
 CATALOG_SERVICE_INTERNAL_URL=${aws_instance.catalog_server.private_ip}:3002
+USER_SERVICE_URL=${aws_instance.user_server.private_ip}:3003
 PORT=4007
 ENVFILE
 

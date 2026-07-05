@@ -15,12 +15,15 @@ export class CrossServiceClient {
   private catalogServiceUrl: string;
   private timeout: number;
 
+  private userServiceUrl: string;
+
   constructor() {
-    this.loanServiceUrl = process.env.LOAN_SERVICE_INTERNAL_URL || process.env.LOAN_SERVICE_URL || '';
-    this.fineServiceUrl = process.env.FINE_SERVICE_INTERNAL_URL || process.env.FINE_SERVICE_URL || '';
-    this.catalogServiceUrl = process.env.CATALOG_SERVICE_INTERNAL_URL || process.env.CATALOG_SERVICE_URL || '';
+    this.loanServiceUrl = process.env.LOAN_SERVICE_INTERNAL_URL || process.env.LOAN_SERVICE_URL || 'loan-service:3004';
+    this.fineServiceUrl = process.env.FINE_SERVICE_INTERNAL_URL || process.env.FINE_SERVICE_URL || 'fine-service:3006';
+    this.catalogServiceUrl = process.env.CATALOG_SERVICE_INTERNAL_URL || process.env.CATALOG_SERVICE_URL || 'catalog-service:3002';
+    this.userServiceUrl = process.env.USER_SERVICE_URL || process.env.USER_SERVICE_INTERNAL_URL || 'user-service:3003';
     this.timeout = 8000; // 8 second timeout for inter-service calls
-    logger.info(`CrossServiceClient initialized: loan=[${this.loanServiceUrl}] fine=[${this.fineServiceUrl}] catalog=[${this.catalogServiceUrl}]`);
+    logger.info(`CrossServiceClient initialized: loan=[${this.loanServiceUrl}] fine=[${this.fineServiceUrl}] catalog=[${this.catalogServiceUrl}] user=[${this.userServiceUrl}]`);
   }
 
   /**
