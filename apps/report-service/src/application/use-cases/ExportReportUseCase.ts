@@ -22,12 +22,14 @@ export class ExportReportUseCase {
       const days = daysMap[options.period] || 7;
 
       // 2. Fetch data from AnalyticsUseCase
-      let [loansPerDay, rawTopBooks, activeUsers, fineRevenue] = await Promise.all([
+      const [rawLoansPerDay, rawTopBooks, rawActiveUsers, fineRevenue] = await Promise.all([
         this.analyticsUseCase.getLoansPerDay(days),
         this.analyticsUseCase.getTopBorrowedBooks(15),
         this.analyticsUseCase.getActiveUsersCount(days),
         this.analyticsUseCase.getFineRevenueSummary()
       ]);
+      let loansPerDay = rawLoansPerDay;
+      let activeUsers = rawActiveUsers;
 
       // 3. Enrich books with UCE faculties (Lista Oficial de las 21 Facultades de la Universidad Central del Ecuador)
       const facultyPool = [

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, CheckCircle, XCircle, AlertCircle, Search, Filter, RefreshCw } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Search, RefreshCw } from 'lucide-react';
 import { useReservationStore } from '../../store/reservationStore';
 import toast from 'react-hot-toast';
 

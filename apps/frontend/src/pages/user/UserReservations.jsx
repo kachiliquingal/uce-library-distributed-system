@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { useReservationStore } from '../../store/reservationStore';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';

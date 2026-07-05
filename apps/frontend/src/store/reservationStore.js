@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { reservationApi } from "../api/client";
 import logger from "../utils/logger";
 
-export const useReservationStore = create((set, get) => ({
+export const useReservationStore = create((set) => ({
   rooms: [],
   reservations: [],
   userReservations: [],
