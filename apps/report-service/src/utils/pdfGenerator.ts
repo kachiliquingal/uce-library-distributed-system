@@ -163,8 +163,8 @@ export class PdfGenerator {
 
       const totalLoans = (summary?.loansPerDay || []).reduce((acc: number, c: DailyLoanCount) => acc + Number(c?.count || 0), 0);
       drawKpi('Préstamos Totales', String(totalLoans), 'En el período filtrado', 50, currentY, '#4F46E5');
-      drawKpi('Sesiones Activas', String(summary?.activeUsers || 48), 'Interacciones 30d', 215, currentY, '#9333EA');
-      drawKpi('Ingresos Multas', `$${Number(summary?.fineRevenue?.totalRevenue || 145.50).toFixed(2)}`, `${summary?.fineRevenue?.paidCount || 18} cobros verificados`, 380, currentY, '#16A34A');
+      drawKpi('Usuarios Activos', String(summary?.activeUsers || 0), 'Lectores registrados', 215, currentY, '#9333EA');
+      drawKpi('Ingresos Multas', `$${Number(summary?.fineRevenue?.totalRevenue || 0).toFixed(2)}`, `${summary?.fineRevenue?.paidCount || 0} cobros verificados`, 380, currentY, '#16A34A');
 
       currentY += 100;
       doc.fillColor('#1E293B').fontSize(12).font('Helvetica-Bold').text('Top 5 Libros Más Destacados en la Universidad', 50, currentY);
