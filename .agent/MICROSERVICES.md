@@ -82,7 +82,7 @@
 
 ---
 
-## MS-07: Report Service ❌ TODO — build 7th
+## MS-07: Report Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-report
 - **Purpose:** Analytics — loans per day, top books, peak hours, fine revenue
 - **Tech:** Node.js / Express / TypeScript
@@ -90,7 +90,7 @@
 - **Protocols:** GraphQL (client-facing) · REST (health)
 - **GraphQL queries:** loansPerDay · topBorrowedBooks · activeUsersCount · fineRevenueSummary
 - **Consumes:** ALL domain events ← Kafka (read-only analytics consumer)
-- **Pattern:** Hexagonal + CQRS (only reads, never writes to other services)
+- **Pattern:** Hexagonal + CQRS (only reads, never writes to other services) ✅
 
 ---
 
