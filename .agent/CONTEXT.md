@@ -54,7 +54,7 @@
 |----------|------|---------|-------------------|
 | 1 | ec2-fine | fine-service (MS-06) | Elasticsearch |
 | 2 | ec2-report | report-service (MS-07) | InfluxDB |
-| 3 | ec2-notification | notification-service (MS-04) | Cassandra |
+| 3 | ec2-notification | notification-service (MS-04) | PostgreSQL |
 | 4 | ec2-reservation | reservation-service (MS-08) | — (DynamoDB is AWS-managed) |
 | 5 | ec2-search | search-service (MS-10) | — (ES on ec2-fine) |
 | 6 | ec2-inventory | inventory-service (MS-09) | CouchDB |

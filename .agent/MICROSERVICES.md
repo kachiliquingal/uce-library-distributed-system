@@ -51,7 +51,7 @@
 - **Account / Instance:** QA-B / ec2-notification
 - **Purpose:** Sends email and push notifications triggered by domain events
 - **Tech:** Node.js / Express / TypeScript
-- **DB:** Cassandra (notification history — high write throughput)
+- **DB:** PostgreSQL (notification history — high write throughput and chronological queries)
 - **Protocols:** REST health endpoint · Kafka consumer · RabbitMQ consumer
 - **Consumes:** `book.borrowed`, `book.returned`, `fine.created`, `user.registered` ← Kafka/RabbitMQ
 - **Pattern:** Hexagonal (purely event-driven — no other service calls this via REST)

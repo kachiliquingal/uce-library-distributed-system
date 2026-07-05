@@ -53,7 +53,7 @@ EBS volume at /mnt/ebs/elasticsearch. Watchtower configured.
 t2.small. Docker Compose: report-service + InfluxDB. EBS at /mnt/ebs/influxdb.
 
 ### [INFRA-10] Provision ec2-notification (QA Account B)
-t2.small. Docker Compose: notification-service + Cassandra. EBS at /mnt/ebs/cassandra.
+t2.small. Docker Compose: notification-service + PostgreSQL. EBS at /mnt/ebs/postgres.
 
 ### [INFRA-11] Provision ec2-reservation (QA Account B)
 t2.micro. Docker Compose: reservation-service only (DynamoDB is AWS-managed).
@@ -114,7 +114,7 @@ Swagger. Unit tests. Prometheus /metrics. README.
 PR deployed in QA + PROD.
 
 ### [MS-04] Build notification-service — Week 3
-Hexagonal. Cassandra.
+Hexagonal. PostgreSQL.
 Kafka consumer: book.borrowed · book.returned · fine.created · user.registered.
 RabbitMQ consumer: notifications.email.
 REST health endpoint only. No other service calls this via REST.
@@ -169,7 +169,7 @@ No database may be empty for evaluation. Minimum data:
 - 20 users with roles (auth / PostgreSQL + user / Neo4j)
 - 30 loan records — mix of active and returned (loan / MySQL)
 - 15 fine records — mix of pending and paid (fine / Elasticsearch)
-- 30 notification records (notification / Cassandra)
+- 30 notification records (notification / PostgreSQL)
 - 15 reservation records (reservation / DynamoDB)
 - Full inventory records matching all 50 book ISBNs (inventory / CouchDB)
 - Pre-populated Elasticsearch book index (search)

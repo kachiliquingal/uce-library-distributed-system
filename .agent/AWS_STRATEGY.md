@@ -43,7 +43,7 @@ With 2 accounts per environment:
 |---|--------------|------|----|------|
 | 1 | ec2-fine | fine-service (MS-06) | Elasticsearch | t2.medium |
 | 2 | ec2-report | report-service (MS-07) | InfluxDB | t2.small |
-| 3 | ec2-notification | notification-service (MS-04) | Cassandra | t2.small |
+| 3 | ec2-notification | notification-service (MS-04) | PostgreSQL | t2.small |
 | 4 | ec2-reservation | reservation-service (MS-08) | — (DynamoDB managed) | t2.micro |
 | 5 | ec2-search | search-service (MS-10) | — (ES on ec2-fine) | t2.micro |
 | 6 | ec2-inventory | inventory-service (MS-09) | CouchDB | t2.micro |
@@ -93,7 +93,7 @@ ec2-loan        /mnt/ebs/mysql/
 ec2-user        /mnt/ebs/neo4j/
 ec2-fine        /mnt/ebs/elasticsearch/
 ec2-report      /mnt/ebs/influxdb/
-ec2-notification /mnt/ebs/cassandra/
+ec2-notification /mnt/ebs/postgres/
 ec2-inventory   /mnt/ebs/couchdb/
 ```
 

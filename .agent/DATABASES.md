@@ -36,13 +36,10 @@
   replica provisioning, satisfying the spec's read-only/write-only node requirement.
   CQRS routes write commands to the primary and read queries to the replica.
 
-## DB-05: Cassandra ✅ IMPLEMENTED
+## DB-05: PostgreSQL ✅ IMPLEMENTED
 - **MS:** Notification service · ec2-notification (QA-B)
-- **Category:** Wide-column store (NoSQL)
-- **Justification:** Notification service ingests Kafka events at high throughput.
-  Cassandra's LSM-tree write path handles thousands of inserts per second without
-  lock contention. Its wide-column model partitions records by user_id sorted by
-  timestamp — making "last 50 notifications for user X" an O(1) partition scan.
+- **Category:** Relational RDBMS (JSONB + Indexed chronological queries)
+- **Justification:** Notification service ingests high-throughput event streams from Kafka and RabbitMQ. PostgreSQL provides robust ACID guarantees for tracking notification delivery statuses (PENDING, SENT, FAILED) and email audit logs. Using indexed relational queries on ("userId", "createdAt" DESC) ensures sub-millisecond retrieval of the chronological notification feed for any user, while avoiding the operational overhead and cluster complexity of wide-column stores for this workload.
 
 ## DB-06: Neo4j ✅ IMPLEMENTED
 - **MS:** User service · ec2-user (QA-A)
