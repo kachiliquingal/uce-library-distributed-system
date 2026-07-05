@@ -81,9 +81,9 @@ export class PdfGenerator {
         doc.fillColor('#334155').fontSize(9).font('Helvetica');
         let x = 58;
         doc.text(String(idx + 1), x, currentY + 7, { width: widths[0] }); x += widths[0];
-        doc.font('Helvetica-Bold').fillColor('#1E1B4B').text(book.title.slice(0, 45), x, currentY + 7, { width: widths[1] }); x += widths[1];
-        doc.font('Helvetica').fillColor('#475569').text(book.faculty || 'General', x, currentY + 7, { width: widths[2] }); x += widths[2];
-        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(book.borrowCount), x, currentY + 7, { width: widths[3] });
+        doc.font('Helvetica-Bold').fillColor('#1E1B4B').text(String(book?.title || 'Sin título').slice(0, 45), x, currentY + 7, { width: widths[1] }); x += widths[1];
+        doc.font('Helvetica').fillColor('#475569').text(String(book?.faculty || 'General'), x, currentY + 7, { width: widths[2] }); x += widths[2];
+        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(book?.borrowCount || 0), x, currentY + 7, { width: widths[3] });
         currentY += 24;
       });
     } else if (options.type === 'loans') {
@@ -99,14 +99,14 @@ export class PdfGenerator {
       let totalLoans = 0;
       loans.forEach((item, idx) => {
         checkPageBreak(28);
-        totalLoans += item.count;
+        totalLoans += Number(item?.count || 0);
         if (idx % 2 === 0) {
           doc.rect(50, currentY, doc.page.width - 100, 24).fill('#F1F5F9');
         }
         doc.fillColor('#334155').fontSize(9).font('Helvetica');
         let x = 58;
-        doc.text(item.date, x, currentY + 7, { width: widths[0] }); x += widths[0];
-        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(item.count), x, currentY + 7, { width: widths[1] }); x += widths[1];
+        doc.text(String(item?.date || 'N/A'), x, currentY + 7, { width: widths[0] }); x += widths[0];
+        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(item?.count || 0), x, currentY + 7, { width: widths[1] }); x += widths[1];
         doc.font('Helvetica').fillColor('#16A34A').text('Óptimo (Verificado)', x, currentY + 7, { width: widths[2] }); x += widths[2];
         doc.fillColor('#64748B').text('---', x, currentY + 7, { width: widths[3] });
         currentY += 24;
@@ -128,25 +128,25 @@ export class PdfGenerator {
       // Paid
       doc.rect(50, currentY, doc.page.width - 100, 30).fill('#F0FDF4');
       doc.fillColor('#166534').fontSize(10).font('Helvetica-Bold').text('Multas Cobradas / Ingresos Efectivos', 58, currentY + 10);
-      doc.text(String(fines.paidCount || 0), 278, currentY + 10);
-      doc.text(`$${(fines.totalRevenue || 0).toFixed(2)} USD`, 418, currentY + 10);
+      doc.text(String(fines?.paidCount || 0), 278, currentY + 10);
+      doc.text(`$${Number(fines?.totalRevenue || 0).toFixed(2)} USD`, 418, currentY + 10);
       currentY += 30;
 
       // Pending
       doc.rect(50, currentY, doc.page.width - 100, 30).fill('#FEFCE8');
       doc.fillColor('#854D0E').fontSize(10).font('Helvetica-Bold').text('Multas Pendientes / Por Cobrar', 58, currentY + 10);
-      doc.text(String(fines.pendingCount || 0), 278, currentY + 10);
-      doc.text(`$${(fines.pendingAmount || 0).toFixed(2)} USD`, 418, currentY + 10);
+      doc.text(String(fines?.pendingCount || 0), 278, currentY + 10);
+      doc.text(`$${Number(fines?.pendingAmount || 0).toFixed(2)} USD`, 418, currentY + 10);
       currentY += 30;
 
       // Total
       doc.rect(50, currentY, doc.page.width - 100, 35).fill('#312E81');
       doc.fillColor('#FFFFFF').fontSize(11).font('Helvetica-Bold').text('BALANCE GENERAL ACUMULADO', 58, currentY + 12);
-      doc.text(String((fines.paidCount || 0) + (fines.pendingCount || 0)), 278, currentY + 12);
-      doc.text(`$${((fines.totalRevenue || 0) + (fines.pendingAmount || 0)).toFixed(2)} USD`, 418, currentY + 12);
+      doc.text(String(Number(fines?.paidCount || 0) + Number(fines?.pendingCount || 0)), 278, currentY + 12);
+      doc.text(`$${(Number(fines?.totalRevenue || 0) + Number(fines?.pendingAmount || 0)).toFixed(2)} USD`, 418, currentY + 12);
     } else {
       // Full Summary
-      const summary = data as ReportSummaryData;
+      const summary = (data as ReportSummaryData) || {};
       doc.fillColor('#1E293B').fontSize(14).font('Helvetica-Bold').text('Resumen Ejecutivo Integral del Ecosistema', 50, currentY);
       currentY += 25;
 
@@ -159,16 +159,16 @@ export class PdfGenerator {
         doc.fillColor(color).fontSize(8).font('Helvetica').text(desc, x + 12, y + 55);
       };
 
-      const totalLoans = (summary.loansPerDay || []).reduce((acc: number, c: DailyLoanCount) => acc + c.count, 0);
+      const totalLoans = (summary?.loansPerDay || []).reduce((acc: number, c: DailyLoanCount) => acc + Number(c?.count || 0), 0);
       drawKpi('Préstamos Totales', String(totalLoans), 'En el período filtrado', 50, currentY, '#4F46E5');
-      drawKpi('Usuarios Activos', String(summary.activeUsers || 48), 'Comunidad en línea', 215, currentY, '#9333EA');
-      drawKpi('Ingresos Multas', `$${(summary.fineRevenue?.totalRevenue || 145.50).toFixed(2)}`, `${summary.fineRevenue?.paidCount || 18} cobros verificados`, 380, currentY, '#16A34A');
+      drawKpi('Sesiones Activas', String(summary?.activeUsers || 48), 'Interacciones 30d', 215, currentY, '#9333EA');
+      drawKpi('Ingresos Multas', `$${Number(summary?.fineRevenue?.totalRevenue || 145.50).toFixed(2)}`, `${summary?.fineRevenue?.paidCount || 18} cobros verificados`, 380, currentY, '#16A34A');
 
       currentY += 100;
       doc.fillColor('#1E293B').fontSize(12).font('Helvetica-Bold').text('Top 5 Libros Más Destacados en la Universidad', 50, currentY);
       currentY += 20;
 
-      const books: FacultyBookStat[] = summary.topBooks || [];
+      const books: FacultyBookStat[] = summary?.topBooks || [];
       const headers = ['#', 'Obra Literaria / Académica', 'Facultad', 'Préstamos'];
       const widths = [30, 240, 160, 60];
       currentY = drawTableHeader(headers, widths, currentY);
@@ -178,9 +178,9 @@ export class PdfGenerator {
         doc.fillColor('#334155').fontSize(9).font('Helvetica');
         let x = 58;
         doc.text(String(idx + 1), x, currentY + 7, { width: widths[0] }); x += widths[0];
-        doc.font('Helvetica-Bold').text(b.title.slice(0, 45), x, currentY + 7, { width: widths[1] }); x += widths[1];
-        doc.font('Helvetica').text(b.faculty || 'General', x, currentY + 7, { width: widths[2] }); x += widths[2];
-        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(b.borrowCount), x, currentY + 7, { width: widths[3] });
+        doc.font('Helvetica-Bold').text(String(b?.title || 'Sin título').slice(0, 45), x, currentY + 7, { width: widths[1] }); x += widths[1];
+        doc.font('Helvetica').text(String(b?.faculty || 'General'), x, currentY + 7, { width: widths[2] }); x += widths[2];
+        doc.font('Helvetica-Bold').fillColor('#4F46E5').text(String(b?.borrowCount || 0), x, currentY + 7, { width: widths[3] });
         currentY += 24;
       });
     }
