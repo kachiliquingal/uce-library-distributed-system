@@ -3,32 +3,32 @@ import logger from "../utils/logger";
 
 // Exclusive client for the Auth Service
 export const authApi = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_API_URL,
+  baseURL: import.meta.env.VITE_AUTH_API_URL || '/api/auth',
 });
 
 // Exclusive client for the Catalog Service
 export const catalogApi = axios.create({
-  baseURL: import.meta.env.VITE_CATALOG_API_URL,
+  baseURL: import.meta.env.VITE_CATALOG_API_URL || '/api/catalog',
 });
 
 // Exclusive client for the User Service
 export const userApi = axios.create({
-  baseURL: import.meta.env.VITE_USER_API_URL,
+  baseURL: import.meta.env.VITE_USER_API_URL || '/api/users',
 });
 
 // Exclusive client for the Search Service
 export const searchApi = axios.create({
-  baseURL: import.meta.env.VITE_SEARCH_API_URL,
+  baseURL: import.meta.env.VITE_SEARCH_API_URL || '/api/search',
 });
 
 // Exclusive client for the Inventory Service
 export const inventoryApi = axios.create({
-  baseURL: import.meta.env.VITE_INVENTORY_API_URL,
+  baseURL: import.meta.env.VITE_INVENTORY_API_URL || '/api/inventory',
 });
 
 // Exclusive client for the Report Service
 export const reportApi = axios.create({
-  baseURL: import.meta.env.VITE_REPORT_API_URL,
+  baseURL: import.meta.env.VITE_REPORT_API_URL || '/api/reports',
 });
 
 // Interceptor to automatically inject the JWT token into protected routes

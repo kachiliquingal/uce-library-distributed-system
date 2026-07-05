@@ -64,7 +64,7 @@ export const Layout = ({ children }) => {
                   }`
                 }
               >
-                <BarChart3 className="h-5 w-5" /> Reportes (MS-07)
+                <BarChart3 className="h-5 w-5" /> Reportes
               </NavLink>
               <NavLink
                 to="/admin/loans"
