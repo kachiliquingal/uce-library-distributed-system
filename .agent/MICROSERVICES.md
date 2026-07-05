@@ -51,7 +51,7 @@
 - **Account / Instance:** QA-B / ec2-notification
 - **Purpose:** Sends email and push notifications triggered by domain events
 - **Tech:** Node.js / Express / TypeScript
-- **DB:** Cassandra (notification history — high write throughput)
+- **DB:** PostgreSQL (notification history — high write throughput and chronological queries)
 - **Protocols:** REST health endpoint · Kafka consumer · RabbitMQ consumer
 - **Consumes:** `book.borrowed`, `book.returned`, `fine.created`, `user.registered` ← Kafka/RabbitMQ
 - **Pattern:** Hexagonal (purely event-driven — no other service calls this via REST)
@@ -94,7 +94,7 @@
 
 ---
 
-## MS-08: Reservation Service ❌ TODO — build 8th (independent)
+## MS-08: Reservation Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-reservation
 - **Purpose:** Real-time study room and equipment reservations
 - **Tech:** Node.js / Express / TypeScript
@@ -102,7 +102,7 @@
 - **Protocols:** REST · MQTT publisher (Mosquitto)
 - **Endpoints:** POST /reservations · DELETE /reservations/:id · GET /rooms/available?date=
 - **MQTT topics:** `library/rooms/<room_id>/status`
-- **Pattern:** Hexagonal
+- **Pattern:** Hexagonal ✅
 
 ---
 

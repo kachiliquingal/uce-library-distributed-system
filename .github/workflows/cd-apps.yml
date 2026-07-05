@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway, fine-service, search-service, inventory-service, report-service]
+        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway, fine-service, search-service, inventory-service, report-service, reservation-service]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

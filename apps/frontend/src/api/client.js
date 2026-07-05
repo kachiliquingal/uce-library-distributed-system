@@ -31,6 +31,11 @@ export const reportApi = axios.create({
   baseURL: import.meta.env.VITE_REPORT_API_URL || '/api/reports',
 });
 
+// Exclusive client for the Reservation Service (MS-08)
+export const reservationApi = axios.create({
+  baseURL: import.meta.env.VITE_RESERVATION_API_URL || '/api/reservations',
+});
+
 // Interceptor to automatically inject the JWT token into protected routes
 const addTokenInterceptor = (config) => {
   const token = localStorage.getItem("auth_token");
@@ -49,6 +54,7 @@ userApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 searchApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 inventoryApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 reportApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
+reservationApi.interceptors.request.use(addTokenInterceptor, errorInterceptor);
 
 // Add Response Interceptors for Logging (Professor's Requirement)
 const responseLogger = (response) => {
@@ -67,4 +73,5 @@ userApi.interceptors.response.use(responseLogger, responseErrorLogger);
 searchApi.interceptors.response.use(responseLogger, responseErrorLogger);
 inventoryApi.interceptors.response.use(responseLogger, responseErrorLogger);
 reportApi.interceptors.response.use(responseLogger, responseErrorLogger);
+reservationApi.interceptors.response.use(responseLogger, responseErrorLogger);
 
