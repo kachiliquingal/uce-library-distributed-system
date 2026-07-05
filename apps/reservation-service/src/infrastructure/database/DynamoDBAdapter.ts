@@ -33,14 +33,17 @@ export class DynamoDBAdapter implements IReservationRepository {
       const region = process.env.DYNAMODB_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
       const endpoint = process.env.DYNAMODB_ENDPOINT; // For local/testing if provided
 
+      const hasRealKeys = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_KEY_ID !== 'test' && process.env.AWS_ACCESS_KEY_ID !== '';
+      const credentials = hasRealKeys ? {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+        sessionToken: process.env.AWS_SESSION_TOKEN
+      } : (endpoint ? { accessKeyId: 'test', secretAccessKey: 'test' } : undefined);
+
       this.client = new DynamoDBClient({
         region,
         endpoint: endpoint ? endpoint : undefined,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'test',
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'test',
-          sessionToken: process.env.AWS_SESSION_TOKEN
-        }
+        credentials
       });
 
       this.docClient = DynamoDBDocumentClient.from(this.client, {
