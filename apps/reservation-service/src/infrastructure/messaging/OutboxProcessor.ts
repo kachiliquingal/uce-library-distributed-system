@@ -35,12 +35,7 @@ export class OutboxProcessor {
       for (const event of pendingEvents) {
         try {
           // Publish to Kafka
-          await this.broker.publishKafka(event.eventType, {
-            eventId: event.id,
-            type: event.eventType,
-            payload: event.payload,
-            timestamp: event.createdAt
-          });
+          await this.broker.publishKafka(event.eventType, event.payload);
 
           // Publish to MQTT if related to room status or reservation
           if (event.payload.roomId) {

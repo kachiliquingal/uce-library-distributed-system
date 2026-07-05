@@ -74,6 +74,7 @@ export class ReservationExpirationWorker {
             status: 'AVAILABLE',
             updatedAt: new Date().toISOString()
           });
+          await this.repository.markOutboxPublished(outboxEvent.id);
 
           logger.info(`✅ [Sala Liberada] Reserva ${res.id} completada. ${res.roomName} ahora está DISPONIBLE en tiempo real.`);
         } catch (err) {

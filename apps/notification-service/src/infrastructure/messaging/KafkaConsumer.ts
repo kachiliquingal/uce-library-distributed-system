@@ -36,7 +36,7 @@ export class KafkaConsumer {
           const value = JSON.parse(message.value.toString());
           logger.info(`[Kafka] Received event on topic ${topic}: ${JSON.stringify(value)}`);
 
-          const data = value.data || value; // Extract payload from nested 'data' property
+          const data = value.payload || value.data || value; // Extract payload from nested property if wrapped
 
           let userId = '';
           let subject = '';

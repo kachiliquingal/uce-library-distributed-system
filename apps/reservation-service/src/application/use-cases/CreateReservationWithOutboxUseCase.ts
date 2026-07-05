@@ -119,8 +119,9 @@ export class CreateReservationWithOutboxUseCase {
         status: 'RESERVED',
         updatedAt: new Date().toISOString()
       });
+      await this.repository.markOutboxPublished(outboxEvent.id);
     } catch {
-      logger.warn(`⚠️ No se pudo enviar mensaje MQTT en tiempo real para sala ${room.name}, la tabla outbox lo reintentará asincrónicamente.`);
+      logger.warn(`⚠️ No se pudo enviar mensaje en tiempo real para sala ${room.name}, la tabla outbox lo reintentará asincrónicamente.`);
     }
 
     logger.info(`🎉 Reserva ${reservation.id} creada exitosamente en ${room.name} por 5 minutos.`);
