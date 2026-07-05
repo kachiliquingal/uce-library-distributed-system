@@ -305,6 +305,9 @@ INFLUXDB_TOKEN=uce_library_admin_token_secret_123
 INFLUXDB_ORG=uce_library
 INFLUXDB_BUCKET=reports
 KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
+LOAN_SERVICE_INTERNAL_URL=${aws_instance.loan_server.private_ip}:3004
+FINE_SERVICE_INTERNAL_URL=${aws_instance.fine_server.private_ip}:3006
+CATALOG_SERVICE_INTERNAL_URL=${aws_instance.catalog_server.private_ip}:3002
 PORT=4007
 ENVFILE
 

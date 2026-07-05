@@ -1,14 +1,21 @@
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { IReportRepository } from '../../domain/IReportRepository';
 import { ReportMetric, DailyLoanCount, TopBorrowedBook, FineRevenueSummary } from '../../domain/ReportMetric';
+import { CrossServiceClient } from './CrossServiceClient';
 import { logger } from '../../utils/logger';
 
+/**
+ * Hybrid data adapter: queries REAL microservices first, falls back to InfluxDB for time-series.
+ * NEVER returns fake hardcoded data. Returns empty arrays/zeros when no data is available.
+ */
 export class InfluxDBAdapter implements IReportRepository {
   private influxDB: InfluxDB;
   private url: string;
   private token: string;
   private org: string;
   private bucket: string;
+  private crossService: CrossServiceClient;
+  private influxAvailable: boolean = true;
 
   constructor() {
     this.url = process.env.INFLUXDB_URL || 'http://localhost:8086';
@@ -17,7 +24,8 @@ export class InfluxDBAdapter implements IReportRepository {
     this.bucket = process.env.INFLUXDB_BUCKET || 'reports';
 
     this.influxDB = new InfluxDB({ url: this.url, token: this.token });
-    logger.info(`Initialized InfluxDB adapter for [${this.url}] org [${this.org}] bucket [${this.bucket}]`);
+    this.crossService = new CrossServiceClient();
+    logger.info(`InfluxDBAdapter initialized (hybrid): InfluxDB=[${this.url}] + CrossServiceClient`);
   }
 
   async saveMetric(metric: ReportMetric): Promise<void> {
@@ -54,174 +62,249 @@ export class InfluxDBAdapter implements IReportRepository {
     }
   }
 
-  async getLoansPerDay(days = 7): Promise<DailyLoanCount[]> {
-    try {
-      const queryApi = this.influxDB.getQueryApi(this.org);
-      const query = `
-        from(bucket: "${this.bucket}")
-          |> range(start: -${days}d)
-          |> filter(fn: (r) => r._measurement == "loans" and r._field == "count")
-          |> aggregateWindow(every: 1d, fn: sum, createEmpty: true)
-      `;
-      const results: DailyLoanCount[] = [];
-      await new Promise<void>((resolve) => {
-        queryApi.queryRows(query, {
-          next: (row, tableMeta) => {
-            const o = tableMeta.toObject(row);
-            if (o._time) {
-              results.push({
-                date: String(o._time).split('T')[0],
-                count: Number(o._value || 0)
-              });
-            }
-          },
-          error: (error) => {
-            logger.warn('InfluxDB getLoansPerDay query error or empty, using fallback:', error.message);
-            resolve();
-          },
-          complete: () => resolve()
-        });
-      });
+  /**
+   * Wraps an InfluxDB query in a timeout. Returns null if it takes too long.
+   */
+  private influxQueryWithTimeout<T>(queryFn: () => Promise<T>, timeoutMs = 5000): Promise<T | null> {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        logger.warn(`InfluxDB query timed out after ${timeoutMs}ms`);
+        this.influxAvailable = false;
+        resolve(null);
+      }, timeoutMs);
 
-      if (results.length > 0 && results.some(r => r.count > 0)) {
-        return results;
+      queryFn()
+        .then((result) => {
+          clearTimeout(timer);
+          resolve(result);
+        })
+        .catch((err) => {
+          clearTimeout(timer);
+          logger.warn('InfluxDB query error:', err?.message || err);
+          resolve(null);
+        });
+    });
+  }
+
+  async getLoansPerDay(days = 7): Promise<DailyLoanCount[]> {
+    // Strategy 1: Try CrossServiceClient (REAL data from loan-service)
+    try {
+      const realData = await this.crossService.getLoansPerDay(days);
+      if (realData && realData.length > 0) {
+        logger.info(`getLoansPerDay: Got ${realData.length} data points from loan-service (REAL)`);
+        return realData;
       }
-    } catch (error) {
-      logger.warn('InfluxDB query failed, returning realistic seed data:', error);
+    } catch (err) {
+      logger.warn('CrossService getLoansPerDay failed:', err);
     }
 
-    // Realistic fallback data so dashboard is informative out of the box
-    const fallback: DailyLoanCount[] = [];
+    // Strategy 2: Try InfluxDB (time-series data from Kafka events)
+    if (this.influxAvailable) {
+      const influxResult = await this.influxQueryWithTimeout(async () => {
+        const queryApi = this.influxDB.getQueryApi(this.org);
+        const query = `
+          from(bucket: "${this.bucket}")
+            |> range(start: -${days}d)
+            |> filter(fn: (r) => r._measurement == "loans" and r._field == "count")
+            |> aggregateWindow(every: 1d, fn: sum, createEmpty: true)
+        `;
+        const results: DailyLoanCount[] = [];
+        await new Promise<void>((resolve) => {
+          queryApi.queryRows(query, {
+            next: (row, tableMeta) => {
+              const o = tableMeta.toObject(row);
+              if (o._time) {
+                results.push({
+                  date: String(o._time).split('T')[0],
+                  count: Number(o._value || 0)
+                });
+              }
+            },
+            error: (error) => {
+              logger.warn('InfluxDB getLoansPerDay query error:', error?.message);
+              resolve();
+            },
+            complete: () => resolve()
+          });
+        });
+        return results;
+      });
+
+      if (influxResult && influxResult.length > 0 && influxResult.some(r => r.count > 0)) {
+        logger.info(`getLoansPerDay: Got ${influxResult.length} data points from InfluxDB`);
+        return influxResult;
+      }
+    }
+
+    // Strategy 3: Return empty array with date structure (NO fake data)
+    logger.info('getLoansPerDay: No real data available, returning empty date range');
+    const emptyData: DailyLoanCount[] = [];
     const today = new Date();
-    const seedCounts = [5, 8, 12, 7, 15, 10, 14, 9, 11, 13];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      fallback.push({
-        date: d.toISOString().split('T')[0],
-        count: seedCounts[i % seedCounts.length]
-      });
+      emptyData.push({ date: d.toISOString().split('T')[0], count: 0 });
     }
-    return fallback;
+    return emptyData;
   }
 
   async getTopBorrowedBooks(limit = 5): Promise<TopBorrowedBook[]> {
+    // Strategy 1: Try CrossServiceClient (REAL data)
     try {
-      const queryApi = this.influxDB.getQueryApi(this.org);
-      const query = `
-        from(bucket: "${this.bucket}")
-          |> range(start: -30d)
-          |> filter(fn: (r) => r._measurement == "loans" and r._field == "count")
-          |> group(columns: ["bookId", "title"])
-          |> sum()
-          |> sort(columns: ["_value"], desc: true)
-          |> limit(n: ${limit})
-      `;
-      const results: TopBorrowedBook[] = [];
-      await new Promise<void>((resolve) => {
-        queryApi.queryRows(query, {
-          next: (row, tableMeta) => {
-            const o = tableMeta.toObject(row);
-            results.push({
-              bookId: String(o.bookId || 'unknown'),
-              title: String(o.title || `Libro #${o.bookId}`),
-              borrowCount: Number(o._value || 1)
-            });
-          },
-          error: () => resolve(),
-          complete: () => resolve()
-        });
-      });
-
-      if (results.length > 0) return results;
-    } catch {
-      logger.warn('InfluxDB getTopBorrowedBooks query error, using fallback');
+      const realData = await this.crossService.getTopBorrowedBooks(limit);
+      if (realData && realData.length > 0) {
+        logger.info(`getTopBorrowedBooks: Got ${realData.length} books from loan-service (REAL)`);
+        return realData;
+      }
+    } catch (err) {
+      logger.warn('CrossService getTopBorrowedBooks failed:', err);
     }
 
-    // Realistic fallback top books
-    return [
-      { bookId: '978-0132350884', title: 'Clean Code: A Handbook of Agile Software Craftsmanship', borrowCount: 24 },
-      { bookId: '978-0135957059', title: 'The Pragmatic Programmer: Your Journey to Mastery', borrowCount: 19 },
-      { bookId: '978-0201633610', title: 'Design Patterns: Elements of Reusable Object-Oriented Software', borrowCount: 15 },
-      { bookId: '978-0131103627', title: 'The C Programming Language (2nd Edition)', borrowCount: 12 },
-      { bookId: '978-1449373320', title: 'Designing Data-Intensive Applications', borrowCount: 11 }
-    ].slice(0, limit);
+    // Strategy 2: Try InfluxDB
+    if (this.influxAvailable) {
+      const influxResult = await this.influxQueryWithTimeout(async () => {
+        const queryApi = this.influxDB.getQueryApi(this.org);
+        const query = `
+          from(bucket: "${this.bucket}")
+            |> range(start: -30d)
+            |> filter(fn: (r) => r._measurement == "loans" and r._field == "count")
+            |> group(columns: ["bookId", "title"])
+            |> sum()
+            |> sort(columns: ["_value"], desc: true)
+            |> limit(n: ${limit})
+        `;
+        const results: TopBorrowedBook[] = [];
+        await new Promise<void>((resolve) => {
+          queryApi.queryRows(query, {
+            next: (row, tableMeta) => {
+              const o = tableMeta.toObject(row);
+              results.push({
+                bookId: String(o.bookId || 'unknown'),
+                title: String(o.title || `Libro #${o.bookId}`),
+                borrowCount: Number(o._value || 1)
+              });
+            },
+            error: () => resolve(),
+            complete: () => resolve()
+          });
+        });
+        return results;
+      });
+
+      if (influxResult && influxResult.length > 0) {
+        return influxResult;
+      }
+    }
+
+    // Strategy 3: Return empty array (NO fake data)
+    logger.info('getTopBorrowedBooks: No real data available');
+    return [];
   }
 
   async getActiveUsersCount(_days = 30): Promise<number> {
+    // Strategy 1: Try CrossServiceClient (REAL unique users from loan-service)
     try {
-      const queryApi = this.influxDB.getQueryApi(this.org);
-      const query = `
-        from(bucket: "${this.bucket}")
-          |> range(start: -30d)
-          |> filter(fn: (r) => r._measurement == "user_activity")
-          |> group(columns: ["userId"])
-          |> count()
-          |> group()
-          |> count()
-      `;
-      let count = 0;
-      await new Promise<void>((resolve) => {
-        queryApi.queryRows(query, {
-          next: (row, tableMeta) => {
-            const o = tableMeta.toObject(row);
-            count = Number(o._value || 0);
-          },
-          error: () => resolve(),
-          complete: () => resolve()
-        });
-      });
-      if (count > 0) return count;
-    } catch {
-      logger.warn('InfluxDB getActiveUsersCount error, using fallback');
+      const realCount = await this.crossService.getActiveUsersCount();
+      if (realCount !== null && realCount > 0) {
+        logger.info(`getActiveUsersCount: Got ${realCount} real unique users from loan-service`);
+        return realCount;
+      }
+    } catch (err) {
+      logger.warn('CrossService getActiveUsersCount failed:', err);
     }
 
-    return 48; // Active users count
+    // Strategy 2: Try InfluxDB
+    if (this.influxAvailable) {
+      const influxResult = await this.influxQueryWithTimeout(async () => {
+        const queryApi = this.influxDB.getQueryApi(this.org);
+        const query = `
+          from(bucket: "${this.bucket}")
+            |> range(start: -30d)
+            |> filter(fn: (r) => r._measurement == "user_activity")
+            |> group(columns: ["userId"])
+            |> count()
+            |> group()
+            |> count()
+        `;
+        let count = 0;
+        await new Promise<void>((resolve) => {
+          queryApi.queryRows(query, {
+            next: (row, tableMeta) => {
+              const o = tableMeta.toObject(row);
+              count = Number(o._value || 0);
+            },
+            error: () => resolve(),
+            complete: () => resolve()
+          });
+        });
+        return count;
+      });
+
+      if (influxResult !== null && influxResult > 0) {
+        return influxResult;
+      }
+    }
+
+    // Strategy 3: Return 0 (NO fake data)
+    return 0;
   }
 
   async getFineRevenueSummary(): Promise<FineRevenueSummary> {
+    // Strategy 1: Try CrossServiceClient (REAL fine data from fine-service)
     try {
-      const queryApi = this.influxDB.getQueryApi(this.org);
-      const query = `
-        from(bucket: "${this.bucket}")
-          |> range(start: -365d)
-          |> filter(fn: (r) => r._measurement == "fines")
-      `;
-      let totalRevenue = 0;
-      let paidCount = 0;
-      let pendingCount = 0;
-      let pendingAmount = 0;
-
-      await new Promise<void>((resolve) => {
-        queryApi.queryRows(query, {
-          next: (row, tableMeta) => {
-            const o = tableMeta.toObject(row);
-            const amount = Number(o._value || 0);
-            if (o.status === 'PAID') {
-              totalRevenue += amount;
-              paidCount += 1;
-            } else {
-              pendingAmount += amount;
-              pendingCount += 1;
-            }
-          },
-          error: () => resolve(),
-          complete: () => resolve()
-        });
-      });
-
-      if (paidCount > 0 || pendingCount > 0) {
-        return { totalRevenue, paidCount, pendingCount, pendingAmount };
+      const realData = await this.crossService.getFineRevenueSummary();
+      if (realData !== null) {
+        logger.info(`getFineRevenueSummary: Got real fine data - paid=${realData.paidCount}, pending=${realData.pendingCount}`);
+        return realData;
       }
-    } catch {
-      logger.warn('InfluxDB getFineRevenueSummary error, using fallback');
+    } catch (err) {
+      logger.warn('CrossService getFineRevenueSummary failed:', err);
     }
 
-    return {
-      totalRevenue: 145.50,
-      paidCount: 18,
-      pendingCount: 4,
-      pendingAmount: 32.00
-    };
+    // Strategy 2: Try InfluxDB
+    if (this.influxAvailable) {
+      const influxResult = await this.influxQueryWithTimeout(async () => {
+        const queryApi = this.influxDB.getQueryApi(this.org);
+        const query = `
+          from(bucket: "${this.bucket}")
+            |> range(start: -365d)
+            |> filter(fn: (r) => r._measurement == "fines")
+        `;
+        let totalRevenue = 0;
+        let paidCount = 0;
+        let pendingCount = 0;
+        let pendingAmount = 0;
+
+        await new Promise<void>((resolve) => {
+          queryApi.queryRows(query, {
+            next: (row, tableMeta) => {
+              const o = tableMeta.toObject(row);
+              const amount = Number(o._value || 0);
+              if (o.status === 'PAID') {
+                totalRevenue += amount;
+                paidCount += 1;
+              } else {
+                pendingAmount += amount;
+                pendingCount += 1;
+              }
+            },
+            error: () => resolve(),
+            complete: () => resolve()
+          });
+        });
+
+        if (paidCount > 0 || pendingCount > 0) {
+          return { totalRevenue, paidCount, pendingCount, pendingAmount };
+        }
+        return null;
+      });
+
+      if (influxResult) {
+        return influxResult;
+      }
+    }
+
+    // Strategy 3: Return zeros (NO fake data)
+    return { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 };
   }
 }

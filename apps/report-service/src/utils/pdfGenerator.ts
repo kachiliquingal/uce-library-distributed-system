@@ -13,6 +13,8 @@ export class PdfGenerator {
 
     doc.pipe(res);
 
+    try {
+
     // 1. Executive Header Banner
     doc.rect(0, 0, doc.page.width, 95).fill('#312E81'); // Dark Indigo
     doc.fillColor('#FFFFFF').fontSize(18).font('Helvetica-Bold').text('UNIVERSIDAD CENTRAL DEL ECUADOR', 50, 25);
@@ -33,7 +35,7 @@ export class PdfGenerator {
     
     doc.fillColor('#1E293B').fontSize(11).font('Helvetica-Bold').text('PARÁMETROS DEL REPORTE', 65, 128);
     doc.font('Helvetica').fontSize(9).fillColor('#475569');
-    doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}`, 65, 146);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}`, 65, 146);
     doc.text(`Período Evaluado: ${periodLabel}`, 65, 161);
     doc.text(`Facultad / Unidad: ${facultyLabel}`, 300, 146);
     doc.text(`Solicitado por: ${options.requestedBy || 'Administrador General UCE'}`, 300, 161);
@@ -192,7 +194,7 @@ export class PdfGenerator {
       doc.moveTo(50, doc.page.height - 50).lineTo(doc.page.width - 50, doc.page.height - 50).stroke('#CBD5E1');
       doc.fillColor('#64748B').fontSize(8).font('Helvetica');
       doc.text(
-        'Documento Oficial generado por Report Service (MS-07) - UCE Library Distributed System',
+        'Documento Oficial - Sistema Integrado de Bibliotecas UCE',
         50,
         doc.page.height - 40
       );
@@ -202,6 +204,12 @@ export class PdfGenerator {
         doc.page.height - 40,
         { align: 'right', width: doc.page.width - 50 }
       );
+    }
+
+    } catch (pdfError) {
+      // Safety net: if ANYTHING crashes during PDF generation, log it
+      // but still end the document so the stream closes properly
+      console.error('PDF generation error:', pdfError);
     }
 
     doc.end();
