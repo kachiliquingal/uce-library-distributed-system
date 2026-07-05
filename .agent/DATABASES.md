@@ -28,7 +28,7 @@
   request without hitting PostgreSQL. TTL-based expiration is native — ideal for session
   blacklisting. The INCR + EXPIRE pattern implements rate limiting in O(1).
 
-## DB-04: MySQL
+## DB-04: MySQL ✅ IMPLEMENTED
 - **MS:** Loan service · ec2-loan (QA-A)
 - **Category:** Relational RDBMS with replica support
 - **Justification:** Loan transactions require strict ACID — a book cannot be borrowed
@@ -36,7 +36,7 @@
   replica provisioning, satisfying the spec's read-only/write-only node requirement.
   CQRS routes write commands to the primary and read queries to the replica.
 
-## DB-05: Cassandra
+## DB-05: Cassandra ✅ IMPLEMENTED
 - **MS:** Notification service · ec2-notification (QA-B)
 - **Category:** Wide-column store (NoSQL)
 - **Justification:** Notification service ingests Kafka events at high throughput.
@@ -44,7 +44,7 @@
   lock contention. Its wide-column model partitions records by user_id sorted by
   timestamp — making "last 50 notifications for user X" an O(1) partition scan.
 
-## DB-06: Neo4j
+## DB-06: Neo4j ✅ IMPLEMENTED
 - **MS:** User service · ec2-user (QA-A)
 - **Category:** Graph database
 - **Justification:** RBAC is inherently graph-shaped:
@@ -53,7 +53,7 @@
   In Neo4j these are first-class Cypher queries with complexity proportional to
   relationships traversed, not total row count.
 
-## DB-07: Elasticsearch
+## DB-07: Elasticsearch ✅ IMPLEMENTED
 - **MS:** Fine service (index: fines) + Search service (index: books) · ec2-fine (QA-B)
 - **Category:** Search engine / inverted index
 - **Justification:** Full-text search using SQL LIKE is O(n). Elasticsearch's inverted
@@ -61,7 +61,7 @@
   aggregation pipeline powers fine reporting dashboards. Sharing one cluster across
   two MS via separate indices significantly reduces AWS cost.
 
-## DB-08: InfluxDB
+## DB-08: InfluxDB ✅ IMPLEMENTED
 - **MS:** Report service · ec2-report (QA-B)
 - **Category:** Time-series database
 - **Justification:** Loan counts, active users, and fine revenue are time-series data —
@@ -69,7 +69,7 @@
   InfluxDB provides native O(log n) range scans, automatic downsampling, and retention
   policies without schema tuning.
 
-## DB-09: DynamoDB
+## DB-09: DynamoDB ✅ IMPLEMENTED
 - **MS:** Reservation service · ec2-reservation (QA-B) — AWS-managed, no EC2 storage
 - **Category:** Managed key-value / document store
 - **Justification:** Reservations are always looked up by composite key (room_id, date).
@@ -77,7 +77,7 @@
   reads at any scale. As an AWS-managed service it requires no EC2 instance. Native TTL
   auto-expires past reservations without cron jobs.
 
-## DB-10: CouchDB
+## DB-10: CouchDB ✅ IMPLEMENTED
 - **MS:** Inventory service · ec2-inventory (QA-B)
 - **Category:** Document store with built-in master-master replication
 - **Justification:** Physical inventory may be updated by barcode scanners in areas with

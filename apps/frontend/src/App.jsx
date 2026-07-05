@@ -12,6 +12,8 @@ import { AdminInventory } from "./pages/admin/AdminInventory";
 import { AdminReports } from "./pages/admin/AdminReports";
 import MyFines from "./pages/user/MyFines";
 import AdminFines from "./pages/admin/AdminFines";
+import { UserReservations } from "./pages/user/UserReservations";
+import { AdminReservations } from "./pages/admin/AdminReservations";
 
 // Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
@@ -89,6 +91,16 @@ function App() {
             }
           />
           <Route
+            path="/reservations"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UserReservations />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/my-loans"
             element={
               <ProtectedRoute>
@@ -106,6 +118,16 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <AdminDashboard />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/reservations"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminReservations />
                 </Layout>
               </AdminRoute>
             }

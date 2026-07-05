@@ -152,7 +152,7 @@ REST health endpoint.
 Swagger for REST. Unit tests. Prometheus /metrics. README.
 PR deployed in QA + PROD.
 
-### [MS-08] Build reservation-service — Week 8
+### [MS-08] Build reservation-service — Week 8 ✅ DONE
 Hexagonal. DynamoDB (AWS-managed).
 MQTT publisher: library/rooms/<room_id>/status.
 REST: POST /reservations · DELETE /reservations/:id · GET /rooms/available?date=.

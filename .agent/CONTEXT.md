@@ -12,8 +12,8 @@
 |------|--------|
 | QA environment | ✅ Stable and automated |
 | PROD environment | 🔄 In progress — ELB + ASG pending |
-| Microservices completed | 9 / 10 |
-| Databases implemented | 9 / 10 |
+| Microservices completed | 10 / 10 |
+| Databases implemented | 10 / 10 |
 | Message brokers | ✅ Implemented — Kafka, RabbitMQ |
 | Monitoring | ✅ Implemented — Prometheus, Grafana |
 | CI/CD pipelines | ✅ ci.yml · cd-apps.yml · deploy-infra.yml |
@@ -107,7 +107,7 @@ uce-library/                         ← monorepo root (Turborepo)
 │   ├── user-service/                ✅ MS-05
 │   ├── fine-service/                ✅ MS-06
 │   ├── report-service/              ✅ MS-07
-│   ├── reservation-service/         ❌ MS-08 — TODO
+│   ├── reservation-service/         ✅ MS-08
 │   ├── inventory-service/           ✅ MS-09
 │   ├── search-service/              ✅ MS-10
 │   ├── api-gateway/                 ✅ Nginx — NOT a microservice
@@ -144,13 +144,13 @@ uce-library/                         ← monorepo root (Turborepo)
 ## Microservices Build Order (follow this sequence)
 
 1. ✅ MS-05 user-service — loan-service needs its gRPC server first
-2. ❌ MS-03 loan-service — core domain, unlocks Kafka events for everyone else
-3. ❌ MS-04 notification-service — pure consumer, no blockers
-4. ❌ MS-06 fine-service — needs loan-service RabbitMQ events
-5. ❌ MS-10 search-service — needs catalog-service Kafka events
-6. ❌ MS-09 inventory-service — needs catalog-service gRPC
-7. ❌ MS-07 report-service — needs all Kafka events live
-8. ❌ MS-08 reservation-service — independent, build any time
+2. ✅ MS-03 loan-service — core domain, unlocks Kafka events for everyone else
+3. ✅ MS-04 notification-service — pure consumer, no blockers
+4. ✅ MS-06 fine-service — needs loan-service RabbitMQ events
+5. ✅ MS-10 search-service — needs catalog-service Kafka events
+6. ✅ MS-09 inventory-service — needs catalog-service gRPC
+7. ✅ MS-07 report-service — needs all Kafka events live
+8. ✅ MS-08 reservation-service — independent, build any time
 
 ---
 
