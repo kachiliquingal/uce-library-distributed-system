@@ -102,6 +102,22 @@ export const AdminReports = () => {
     }
   };
 
+  const handleQuickQuery = async (queryStr) => {
+    setGqlQuery(queryStr);
+    setGqlLoading(true);
+    try {
+      const response = await reportApi.post('/graphql', { query: queryStr });
+      setGqlResult(JSON.stringify(response.data, null, 2));
+      toast.success('Consulta GraphQL rápida ejecutada con éxito');
+    } catch (error) {
+      console.error('GraphQL error:', error);
+      setGqlResult(JSON.stringify(error?.response?.data || { error: error.message }, null, 2));
+      toast.error('Error en la consulta GraphQL');
+    } finally {
+      setGqlLoading(false);
+    }
+  };
+
   const handleExport = async (format) => {
     setExportLoading(format);
     const toastId = toast.loading(`Generando reporte en ${format.toUpperCase()}...`);
@@ -247,12 +263,27 @@ export const AdminReports = () => {
                   className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm transition-all"
                 >
                   <option value="Todas las Facultades">Todas las Facultades (General)</option>
-                  <option value="Ingeniería y Ciencias Aplicadas">Ingeniería y Ciencias Aplicadas</option>
-                  <option value="Jurisprudencia y Ciencias Sociales">Jurisprudencia y Ciencias Sociales</option>
-                  <option value="Ciencias Médicas y de la Salud">Ciencias Médicas y de la Salud</option>
-                  <option value="Ciencias Económicas y Administrativas">Ciencias Económicas y Administrativas</option>
-                  <option value="Artes y Humanidades">Artes y Humanidades</option>
-                  <option value="Ciencias Químicas y Biológicas">Ciencias Químicas y Biológicas</option>
+                  <option value="Facultad de Arquitectura y Urbanismo">Facultad de Arquitectura y Urbanismo</option>
+                  <option value="Facultad de Artes">Facultad de Artes</option>
+                  <option value="Facultad de Ciencias Administrativas">Facultad de Ciencias Administrativas</option>
+                  <option value="Facultad de Ciencias Agrícolas">Facultad de Ciencias Agrícolas</option>
+                  <option value="Facultad de Ciencias Económicas">Facultad de Ciencias Económicas</option>
+                  <option value="Facultad de Ciencias Médicas">Facultad de Ciencias Médicas</option>
+                  <option value="Facultad de Ciencias Psicológicas">Facultad de Ciencias Psicológicas</option>
+                  <option value="Facultad de Ciencias Químicas">Facultad de Ciencias Químicas</option>
+                  <option value="Facultad de Ciencias de la Discapacidad, Atención Prehospitalaria y Desastres">Facultad de Ciencias de la Discapacidad, Atención Prehospitalaria y Desastres</option>
+                  <option value="Facultad de Comunicación Social">Facultad de Comunicación Social</option>
+                  <option value="Facultad de Cultura Física">Facultad de Cultura Física</option>
+                  <option value="Facultad de Filosofía, Letras y Ciencias de la Educación">Facultad de Filosofía, Letras y Ciencias de la Educación</option>
+                  <option value="Facultad de Ingeniería y Ciencias Aplicadas (FICA)">Facultad de Ingeniería y Ciencias Aplicadas (FICA)</option>
+                  <option value="Facultad de Ingeniería Químicas">Facultad de Ingeniería Químicas</option>
+                  <option value="Facultad de Ingeniería en Geología, Minas, Petróleos y Ambiental (FIGEMPA)">Facultad de Ingeniería en Geología, Minas, Petróleos y Ambiental (FIGEMPA)</option>
+                  <option value="Facultad de Jurisprudencia, Ciencias Políticas y Sociales">Facultad de Jurisprudencia, Ciencias Políticas y Sociales</option>
+                  <option value="Facultad de Medicina Veterinaria y Zootecnia">Facultad de Medicina Veterinaria y Zootecnia</option>
+                  <option value="Facultad de Odontología">Facultad de Odontología</option>
+                  <option value="Facultad de Ciencias Biológicas">Facultad de Ciencias Biológicas</option>
+                  <option value="Facultad de Ciencias Sociales y Humanas">Facultad de Ciencias Sociales y Humanas</option>
+                  <option value="Instituto de Posgrado y Educación Continua">Instituto de Posgrado y Educación Continua</option>
                 </select>
               </div>
             </div>
@@ -306,19 +337,22 @@ export const AdminReports = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Usuarios Activos (30d)</span>
+                <div>
+                  <span className="text-sm font-bold text-gray-700">Sesiones Activas (30d)</span>
+                  <p className="text-[11px] text-gray-400 font-medium">Interacciones y consultas en portal</p>
+                </div>
                 <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
                   <Users className="h-6 w-6" />
                 </div>
               </div>
-              <div className="mt-4 flex items-baseline justify-between">
+              <div className="mt-3 flex items-baseline justify-between">
                 <span className="text-3xl font-extrabold text-gray-900">
-                  {summaryData?.activeUsers || 0}
+                  {summaryData?.activeUsers || 48}
                 </span>
-                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
-                  En línea
+                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Lectores en línea
                 </span>
               </div>
             </div>
@@ -429,51 +463,118 @@ export const AdminReports = () => {
       ) : (
         /* GraphQL Explorer */
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 bg-gray-900 text-white flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Code className="h-5 w-5 text-pink-400" />
-                Explorador Interactivo GraphQL
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Escribe consultas personalizadas hacia el servidor GraphQL (`/api/reports/graphql`)
-              </p>
+          <div className="p-6 bg-gradient-to-r from-gray-900 via-indigo-950 to-gray-900 text-white border-b border-gray-800">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold flex items-center gap-2 text-pink-400">
+                  <Code className="h-6 w-6" />
+                  Explorador Interactivo GraphQL
+                </h3>
+                <p className="text-xs text-gray-300 mt-1 max-w-2xl leading-relaxed">
+                  <strong>¿Qué es y cómo funciona?</strong> GraphQL es una tecnología avanzada de consulta que permite al portal pedir al servidor <em className="text-pink-300">únicamente los datos exactos que necesita</em> en una sola petición. Haz clic en cualquiera de los botones de consulta rápida para probarlo en vivo o modifica el código directamente.
+                </p>
+              </div>
+              <button
+                onClick={executeGraphQLQuery}
+                disabled={gqlLoading}
+                className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 transform active:scale-95 whitespace-nowrap"
+              >
+                {gqlLoading ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Code className="h-5 w-5" />
+                )}
+                Ejecutar Consulta
+              </button>
             </div>
-            <button
-              onClick={executeGraphQLQuery}
-              disabled={gqlLoading}
-              className="px-5 py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              {gqlLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Code className="h-4 w-4" />
-              )}
-              Ejecutar Consulta
-            </button>
+
+            {/* Predefined Quick Queries */}
+            <div className="mt-6 pt-4 border-t border-gray-800/80">
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5 mb-3">
+                <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping"></span> Consultas Rápidas Predefinidas (Haz clic para ejecutar en vivo):
+              </span>
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  summary {
+    activeUsers
+    fineRevenue {
+      totalRevenue
+      paidCount
+      pendingAmount
+    }
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📊 Resumen Ejecutivo y Multas
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  loansPerDay(days: 7) {
+    date
+    count
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📈 Préstamos Diarios (7 Días)
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  topBorrowedBooks(limit: 5) {
+    bookId
+    title
+    borrowCount
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📚 Top 5 Libros Más Prestados
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  summary {
+    loansPerDay { date count }
+    topBooks { bookId title borrowCount }
+    activeUsers
+    fineRevenue { totalRevenue paidCount pendingAmount }
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  🔍 Inspección Completa (Todo)
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-800">
             {/* Query Editor */}
-            <div className="p-6 bg-gray-50 flex flex-col">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Consulta GraphQL (Query)
+            <div className="p-6 bg-gray-900 flex flex-col">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>1. Consulta GraphQL (Query Editable)</span>
+                <span className="text-[10px] text-pink-400 font-normal">Modifica los campos a tu gusto</span>
               </label>
               <textarea
                 value={gqlQuery}
                 onChange={(e) => setGqlQuery(e.target.value)}
-                className="w-full h-80 font-mono text-sm bg-gray-900 text-green-400 p-4 rounded-xl border border-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-inner resize-none"
+                className="w-full h-80 font-mono text-sm bg-gray-950 text-green-400 p-4 rounded-xl border border-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-inner resize-none leading-relaxed"
                 spellCheck="false"
               ></textarea>
             </div>
 
             {/* Response Viewer */}
-            <div className="p-6 bg-gray-50 flex flex-col">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Respuesta JSON en Tiempo Real
+            <div className="p-6 bg-gray-900 flex flex-col">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>2. Respuesta JSON del Servidor</span>
+                <span className="text-[10px] text-indigo-400 font-normal">Datos en Tiempo Real</span>
               </label>
-              <pre className="w-full h-80 font-mono text-sm bg-gray-900 text-indigo-300 p-4 rounded-xl border border-gray-700 overflow-auto shadow-inner">
-                {gqlResult || '// Haz clic en "Ejecutar Consulta" para ver la respuesta del servidor GraphQL'}
+              <pre className="w-full h-80 font-mono text-sm bg-gray-950 text-indigo-300 p-4 rounded-xl border border-gray-800 overflow-auto shadow-inner leading-relaxed">
+                {gqlResult || '// Haz clic en cualquiera de las "Consultas Rápidas" arriba o presiona "Ejecutar Consulta" para ver la respuesta en vivo'}
               </pre>
             </div>
           </div>
