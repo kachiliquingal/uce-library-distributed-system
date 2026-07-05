@@ -188,6 +188,7 @@ export class PdfGenerator {
     }
 
     // 4. Footer & Page Numbers
+    (doc as any).autoPageBreak = false;
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
@@ -196,13 +197,14 @@ export class PdfGenerator {
       doc.text(
         'Documento Oficial - Sistema Integrado de Bibliotecas UCE',
         50,
-        doc.page.height - 40
+        doc.page.height - 40,
+        { lineBreak: false }
       );
       doc.text(
         `Página ${i + 1} de ${range.count}`,
         0,
         doc.page.height - 40,
-        { align: 'right', width: doc.page.width - 50 }
+        { align: 'right', width: doc.page.width - 50, lineBreak: false }
       );
     }
 
