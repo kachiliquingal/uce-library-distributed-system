@@ -12,12 +12,12 @@
 |------|--------|
 | QA environment | ✅ Stable and automated |
 | PROD environment | 🔄 In progress — ELB + ASG pending |
-| Microservices completed | 2 / 10 |
-| Databases implemented | 3 / 10 |
-| Message brokers | ❌ Pending — Kafka, RabbitMQ, MQTT |
-| Monitoring | ❌ Pending — Prometheus, Grafana, Site24x7 |
+| Microservices completed | 9 / 10 |
+| Databases implemented | 9 / 10 |
+| Message brokers | ✅ Implemented — Kafka, RabbitMQ |
+| Monitoring | ✅ Implemented — Prometheus, Grafana |
 | CI/CD pipelines | ✅ ci.yml · cd-apps.yml · deploy-infra.yml |
-| Swagger docs | ❌ Pending on all MS |
+| Swagger docs | ✅ Implemented on completed MS |
 | Load testing | ❌ Pending |
 
 ---
@@ -102,14 +102,14 @@ uce-library/                         ← monorepo root (Turborepo)
 ├── apps/
 │   ├── auth-service/                ✅ MS-01
 │   ├── catalog-service/             ✅ MS-02
-│   ├── loan-service/                ❌ MS-03 — TODO
-│   ├── notification-service/        ❌ MS-04 — TODO
+│   ├── loan-service/                ✅ MS-03
+│   ├── notification-service/        ✅ MS-04
 │   ├── user-service/                ✅ MS-05
-│   ├── fine-service/                ❌ MS-06 — TODO
-│   ├── report-service/              ❌ MS-07 — TODO
+│   ├── fine-service/                ✅ MS-06
+│   ├── report-service/              ✅ MS-07
 │   ├── reservation-service/         ❌ MS-08 — TODO
-│   ├── inventory-service/           ❌ MS-09 — TODO
-│   ├── search-service/              ❌ MS-10 — TODO
+│   ├── inventory-service/           ✅ MS-09
+│   ├── search-service/              ✅ MS-10
 │   ├── api-gateway/                 ✅ Nginx — NOT a microservice
 │   └── frontend/                    ✅ React 18 + Vite — NOT a microservice
 ├── infrastructure/
