@@ -1,8 +1,11 @@
 import { SearchRepository } from '../../domain/repositories/SearchRepository';
 import { SearchableBook } from '../../domain/entities/SearchableBook';
 import { logger } from '../../utils/logger';
+import { CircuitBreaker } from '../../utils/CircuitBreaker';
 
 export class SyncHistoricalBooksUseCase {
+  private breaker = new CircuitBreaker({ name: 'CatalogSyncHttpClient', failureThreshold: 3, resetTimeoutMs: 15000 });
+
   constructor(private readonly searchRepository: SearchRepository) {}
 
   async execute(): Promise<void> {
@@ -10,17 +13,23 @@ export class SyncHistoricalBooksUseCase {
     try {
       const catalogUrl = process.env.CATALOG_SERVICE_URL || 'http://catalog-service:3002';
       
-      // Fetch all books (in a real scenario, this should be paginated if the DB is huge)
-      const response = await fetch(`${catalogUrl}/api/catalog/books?limit=5000`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch from catalog: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const books = Array.isArray(data) ? data : (data.data || []);
+      const books = await this.breaker.execute(
+        async () => {
+          const response = await fetch(`${catalogUrl}/api/catalog/books?limit=5000`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch from catalog: ${response.statusText}`);
+          }
+          const data = await response.json();
+          return Array.isArray(data) ? data : (data.data || []);
+        },
+        () => {
+          logger.warn('[SyncHistoricalBooksUseCase] Circuit breaker open or fetch failed. Returning empty book list fallback.');
+          return [];
+        }
+      );
 
       logger.info(`[SyncHistoricalBooksUseCase] Fetched ${books.length} historical books from catalog.`);
+
 
       let syncedCount = 0;
       for (const book of books) {
