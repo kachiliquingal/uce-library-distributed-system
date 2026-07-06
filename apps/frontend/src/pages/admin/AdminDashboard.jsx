@@ -17,6 +17,7 @@ export const AdminDashboard = () => {
   const { user } = useAuthStore();
 
   const [activeLoansCount, setActiveLoansCount] = useState(0);
+  const [loans, setLoans] = useState([]);
   const [topBooks, setTopBooks] = useState([]);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export const AdminDashboard = () => {
         const loansRes = await loanApi.getAllLoans(false, 1, 1000, token);
         const allLoans = loansRes.data || [];
         
+        setLoans(allLoans);
         setActiveLoansCount(allLoans.filter(l => l.status === 'ACTIVE').length);
 
         // Compute Top 5
@@ -237,17 +239,48 @@ export const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl shadow-sm p-6 text-white">
-              <h3 className="text-lg font-semibold mb-2">Actividad de Préstamos</h3>
-              <p className="text-indigo-100 text-sm mb-4">
-                El módulo de reportería y filtros por facultad estará disponible próximamente.
-              </p>
-              <div className="flex gap-2">
-                {['Día', 'Semana', 'Mes', 'Año'].map(t => (
-                  <span key={t} className="px-2 py-1 bg-white/10 rounded text-xs font-medium backdrop-blur-sm">
-                    {t}
+            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl shadow-sm p-6 text-white flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">Resumen Operativo de Préstamos</h3>
+                  <span className="px-2.5 py-0.5 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                    En Vivo
                   </span>
-                ))}
+                </div>
+                <p className="text-indigo-100 text-sm mb-6">
+                  Métricas clave de circulación literaria y disponibilidad del catálogo en tiempo real.
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+                    <p className="text-xs text-indigo-200 uppercase font-medium">Préstamos Totales</p>
+                    <p className="text-2xl font-bold mt-1">{loans.length}</p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+                    <p className="text-xs text-indigo-200 uppercase font-medium">Devueltos / Completados</p>
+                    <p className="text-2xl font-bold mt-1 text-green-300">
+                      {loans.filter(l => l.status === 'RETURNED').length}
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+                    <p className="text-xs text-indigo-200 uppercase font-medium">En Curso (Activos)</p>
+                    <p className="text-2xl font-bold mt-1 text-yellow-300">
+                      {activeLoansCount}
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+                    <p className="text-xs text-indigo-200 uppercase font-medium">Disponibilidad Fondo</p>
+                    <p className="text-2xl font-bold mt-1 text-cyan-300">
+                      {stats.totalBooks ? Math.round((stats.availableBooks / stats.totalBooks) * 100) : 100}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-indigo-200">
+                <span>Sincronizado vía Kafka & Outbox</span>
+                <span>Tasa de Eficiencia: {loans.length ? Math.round((loans.filter(l => l.status === 'RETURNED').length / loans.length) * 100) : 100}%</span>
               </div>
             </div>
           </div>

@@ -14,6 +14,7 @@ import MyFines from "./pages/user/MyFines";
 import AdminFines from "./pages/admin/AdminFines";
 import { UserReservations } from "./pages/user/UserReservations";
 import { AdminReservations } from "./pages/admin/AdminReservations";
+import { AdminUsers } from "./pages/admin/AdminUsers";
 
 // Protected Route for any authenticated user
 const ProtectedRoute = ({ children }) => {
@@ -167,7 +168,7 @@ function App() {
             element={
               <AdminRoute>
                 <Layout>
-                  <div className="text-xl">Admin Users View Coming Soon...</div>
+                  <AdminUsers />
                 </Layout>
               </AdminRoute>
             }
