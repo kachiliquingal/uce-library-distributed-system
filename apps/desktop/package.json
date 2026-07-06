@@ -1,7 +1,7 @@
 {
   "name": "uce-desktop-app",
   "version": "1.0.0",
-  "description": "UCE Library - Kiosco de Consulta y Gestión de Escritorio (Electron)",
+  "description": "UCE Library - Estación Digital de Consulta y Gestión de Escritorio (Electron)",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

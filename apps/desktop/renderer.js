@@ -80,7 +80,7 @@ loginForm.addEventListener('submit', async (e) => {
   } catch (error) {
     alert(`❌ Error de Inicio de Sesión:\n${error.message}\n\nVerifica que la URL del servidor (${apiUrl}) y tus credenciales sean correctas.`);
   } finally {
-    btnLogin.textContent = 'Iniciar Sesión en Kiosco';
+    btnLogin.textContent = 'Acceder al Sistema';
     btnLogin.disabled = false;
   }
 });

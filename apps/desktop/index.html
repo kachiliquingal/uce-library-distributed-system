@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UCE Library - Kiosco & Terminal de Gestión de Escritorio</title>
+  <title>UCE Library - Estación Digital & Terminal de Gestión Bibliotecaria</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <div class="logo-circle">📚</div>
       <div>
         <div class="app-title">UCE Library</div>
-        <div class="app-subtitle">Terminal de Escritorio & Kiosco Rápido</div>
+        <div class="app-subtitle">Terminal de Escritorio & Estación de Consulta</div>
       </div>
     </div>
     <div class="header-right" id="header-user-panel" style="display: none;">
@@ -28,7 +28,7 @@
     <div class="login-card">
       <div class="login-header-box">
         <span class="login-icon-big">🏛️</span>
-        <h2>Acceso al Kiosco UCE</h2>
+        <h2>Estación Digital UCE</h2>
         <p>Sistema Distribuido de Gestión Bibliotecaria</p>
       </div>
 
@@ -43,7 +43,7 @@
           <input type="password" id="input-password" class="form-control" placeholder="••••••••" value="user123" required>
         </div>
 
-        <button type="submit" class="btn-primary" id="btn-login">Iniciar Sesión en Kiosco</button>
+        <button type="submit" class="btn-primary" id="btn-login">Acceder al Sistema</button>
       </form>
 
       <div class="settings-accordion">
@@ -62,7 +62,7 @@
   <main id="dashboard-view">
     <!-- NAVIGATION TABS -->
     <nav class="nav-tabs">
-      <button class="tab-btn active" data-target="tab-kiosk">🔍 Kiosco de Libros</button>
+      <button class="tab-btn active" data-target="tab-kiosk">🔍 Catálogo Digital</button>
       <button class="tab-btn" data-target="tab-loans">📖 Préstamos Activos</button>
       <button class="tab-btn" data-target="tab-fines">⚠️ Multas & Alertas</button>
     </nav>
@@ -74,7 +74,7 @@
       <section id="tab-kiosk" class="tab-pane active">
         <div class="section-header">
           <div>
-            <h1 class="section-title">Kiosco Rápido de Catálogo</h1>
+            <h1 class="section-title">Estación de Consulta Digital</h1>
             <p class="section-subtitle">Consulta disponibilidad y stock de libros en las bibliotecas de la UCE en tiempo real</p>
           </div>
           <button class="btn-refresh" id="btn-refresh-kiosk">🔄 Actualizar Catálogo</button>

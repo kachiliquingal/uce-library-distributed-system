@@ -7,7 +7,7 @@ function createWindow() {
     height: 780,
     minWidth: 900,
     minHeight: 600,
-    title: 'UCE Library - Kiosco & Terminal de Gestión de Escritorio',
+    title: 'UCE Library - Estación Digital & Terminal de Gestión Bibliotecaria',
     backgroundColor: '#0f172a',
     webPreferences: {
       nodeIntegration: true,
