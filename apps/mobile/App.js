@@ -20,7 +20,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('user@test.com');
   const [password, setPassword] = useState('user123');
-  const [apiUrl, setApiUrl] = useState('http://kleberchiliqingaqa1.distribuidauce.org');
+  const [apiUrl, setApiUrl] = useState('https://kleberchiliquingaqa1.distribuidauce.org');
   const [showSettings, setShowSettings] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -233,7 +233,7 @@ export default function App() {
                   value={apiUrl}
                   onChangeText={setApiUrl}
                   autoCapitalize="none"
-                  placeholder="http://kleberchiliqingaqa1.distribuidauce.org"
+                  placeholder="https://kleberchiliquingaqa1.distribuidauce.org"
                   placeholderTextColor="#64748b"
                 />
               </View>
