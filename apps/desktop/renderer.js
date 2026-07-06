@@ -120,13 +120,13 @@ tabButtons.forEach(btn => {
   });
 });
 
-// KIOSK: FETCH BOOKS
+// KIOSK: FETCH BOOKS & PHYSICAL INVENTORY STOCK
 async function fetchBooks(query = '') {
   kioskBooksGrid.innerHTML = `
     <div class="empty-state" style="grid-column: 1 / -1;">
       <div class="empty-icon">⏳</div>
-      <div class="empty-title">Consultando Catálogo...</div>
-      <div class="empty-subtitle">Conectando con el microservicio de catálogo en ${apiUrl}</div>
+      <div class="empty-title">Consultando Catálogo e Inventario Físico...</div>
+      <div class="empty-subtitle">Conectando con microservicios en ${apiUrl}</div>
     </div>
   `;
 
@@ -140,12 +140,30 @@ async function fetchBooks(query = '') {
       headers: currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {}
     });
 
-    if (!response.ok) throw new Error('Error al consultar libros');
+    if (!response.ok) throw new Error('Error al consultar libros del catálogo');
 
     const result = await response.json();
     let books = Array.isArray(result) ? result : (result.data?.hits || result.books || []);
 
-    renderBooks(books);
+    // Consultar stock físico real para cada libro en el inventory-service
+    const booksWithRealStock = await Promise.all(books.map(async (book) => {
+      if (!book.isbn) return { ...book, realStock: book.available !== false ? 1 : 0 };
+      try {
+        const stockRes = await fetch(`${apiUrl}/api/inventory/${book.isbn}`, {
+          headers: currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {}
+        });
+        if (stockRes.ok) {
+          const stockData = await stockRes.json();
+          const copies = stockData.availableCopies !== undefined ? stockData.availableCopies : (stockData.totalCopies !== undefined ? stockData.totalCopies : 1);
+          return { ...book, realStock: copies };
+        }
+      } catch (err) {
+        console.warn(`No se pudo obtener stock para ISBN ${book.isbn}:`, err);
+      }
+      return { ...book, realStock: book.available !== false ? 1 : 0 };
+    }));
+
+    renderBooks(booksWithRealStock);
   } catch (error) {
     kioskBooksGrid.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
@@ -170,8 +188,8 @@ function renderBooks(books) {
   }
 
   kioskBooksGrid.innerHTML = books.map(book => {
-    const stock = book.availableCopies ?? book.stock ?? 3;
-    const isZero = stock === 0;
+    const stock = book.realStock !== undefined ? book.realStock : (book.available !== false ? 1 : 0);
+    const isZero = stock <= 0;
     const stockClass = isZero ? 'stock-zero' : '';
     const stockText = isZero ? 'Agotado (0 disp.)' : `✔ Disponible (${stock} ejemp.)`;
     const faculty = book.category || book.faculty || 'Biblioteca Central UCE';
@@ -207,23 +225,32 @@ btnRefreshKiosk.addEventListener('click', () => {
   fetchBooks();
 });
 
-// LOANS: FETCH USER LOANS
+// LOANS: FETCH LOANS (USER OR ADMIN)
 async function fetchLoans() {
   if (!currentUser?.id) return;
 
   loansTableBody.innerHTML = `
-    <tr><td colSpan="5" style="text-align: center; padding: 30px; color: #94a3b8;">⏳ Cargando préstamos activos desde AWS...</td></tr>
+    <tr><td colSpan="5" style="text-align: center; padding: 30px; color: #94a3b8;">⏳ Cargando préstamos desde AWS...</td></tr>
   `;
 
   try {
-    const response = await fetch(`${apiUrl}/api/loans/user/${currentUser.id}`, {
+    const isAdminOrLibrarian = currentUser.role === 'ADMIN' || currentUser.role === 'LIBRARIAN';
+    const url = isAdminOrLibrarian
+      ? `${apiUrl}/api/loans/?activeOnly=false&page=1&limit=50`
+      : `${apiUrl}/api/loans/user/${currentUser.id}?page=1&limit=50`;
+
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${currentUser.token}` }
     });
 
-    if (!response.ok) throw new Error('Error obteniendo préstamos');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || errData.message || `HTTP ${response.status}: Error al consultar préstamos`);
+    }
 
-    const loans = await response.json();
-    renderLoans(loans);
+    const result = await response.json();
+    const loansList = Array.isArray(result) ? result : (result.data || result.loans || []);
+    renderLoans(loansList);
   } catch (error) {
     loansTableBody.innerHTML = `
       <tr><td colSpan="5" style="text-align: center; padding: 30px; color: #f87171;">❌ Error: ${error.message}</td></tr>
@@ -238,8 +265,8 @@ function renderLoans(loans) {
         <td colSpan="5">
           <div class="empty-state">
             <div class="empty-icon">📖</div>
-            <div class="empty-title">Sin Préstamos Activos</div>
-            <div class="empty-subtitle">Actualmente no tienes ningún libro retirado en las facultades de la UCE.</div>
+            <div class="empty-title">Sin Préstamos Registrados</div>
+            <div class="empty-subtitle">Actualmente no hay libros retirados en esta consulta.</div>
           </div>
         </td>
       </tr>
@@ -277,7 +304,7 @@ function renderLoans(loans) {
 
 btnRefreshLoans.addEventListener('click', fetchLoans);
 
-// FINES: FETCH USER FINES
+// FINES: FETCH FINES (USER OR ADMIN)
 async function fetchFines() {
   if (!currentUser?.id) return;
 
@@ -286,14 +313,23 @@ async function fetchFines() {
   `;
 
   try {
-    const response = await fetch(`${apiUrl}/api/fines/user/${currentUser.id}`, {
+    const isAdminOrLibrarian = currentUser.role === 'ADMIN' || currentUser.role === 'LIBRARIAN';
+    const url = isAdminOrLibrarian
+      ? `${apiUrl}/api/fines/?page=1&limit=50`
+      : `${apiUrl}/api/fines/user/${currentUser.id}?page=1&limit=50`;
+
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${currentUser.token}` }
     });
 
-    if (!response.ok) throw new Error('Error obteniendo multas');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || errData.message || `HTTP ${response.status}: Error al consultar multas`);
+    }
 
-    const fines = await response.json();
-    renderFines(fines);
+    const result = await response.json();
+    const finesList = Array.isArray(result) ? result : (result.data || result.fines || []);
+    renderFines(finesList);
   } catch (error) {
     finesTableBody.innerHTML = `
       <tr><td colSpan="5" style="text-align: center; padding: 30px; color: #f87171;">❌ Error: ${error.message}</td></tr>
@@ -309,7 +345,7 @@ function renderFines(fines) {
           <div class="empty-state">
             <div class="empty-icon">🎉</div>
             <div class="empty-title">¡Todo al Día!</div>
-            <div class="empty-subtitle">No tienes ninguna multa ni recargo pendiente en las bibliotecas UCE.</div>
+            <div class="empty-subtitle">No hay ninguna multa ni recargo pendiente en esta consulta.</div>
           </div>
         </td>
       </tr>
