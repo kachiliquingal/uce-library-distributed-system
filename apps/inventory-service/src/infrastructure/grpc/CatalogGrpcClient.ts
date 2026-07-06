@@ -3,9 +3,11 @@ import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
 import { ICatalogGrpcClient } from '../../domain/ICatalogGrpcClient';
 import { logger } from '../../utils/logger';
+import { CircuitBreaker } from '../../utils/CircuitBreaker';
 
 export class CatalogGrpcClient implements ICatalogGrpcClient {
   private client: any;
+  private breaker = new CircuitBreaker({ name: 'CatalogGrpcClient', failureThreshold: 3, resetTimeoutMs: 15000 });
 
   constructor() {
     const PROTO_PATH = path.join(__dirname, 'catalog.proto');
@@ -29,15 +31,18 @@ export class CatalogGrpcClient implements ICatalogGrpcClient {
   }
 
   validateIsbn(isbn: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      this.client.ValidateISBN({ isbn }, (err: any, response: any) => {
-        if (err) {
-          logger.error(`gRPC Error connecting to CatalogService: ${err.message}`);
-          // Fallback or explicit rejection depending on business rule
-          return reject(err);
-        }
-        resolve(response.isValid);
-      });
-    });
+    return this.breaker.execute(
+      () => new Promise((resolve, reject) => {
+        this.client.ValidateISBN({ isbn }, (err: any, response: any) => {
+          if (err) {
+            logger.error(`gRPC Error connecting to CatalogService: ${err.message}`);
+            return reject(err);
+          }
+          resolve(response.isValid);
+        });
+      }),
+      () => false
+    );
   }
 }
+

@@ -1,6 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
+import { CircuitBreaker } from '../../utils/CircuitBreaker';
 
 // Load proto locally since we copied it into the service
 const PROTO_PATH = path.join(__dirname, 'user.proto');
@@ -20,16 +21,22 @@ const client = new userProto.UserService(
   grpc.credentials.createInsecure()
 );
 
+const breaker = new CircuitBreaker({ name: 'UserGrpcClient', failureThreshold: 3, resetTimeoutMs: 15000 });
+
 export class UserClient {
   static async validateUser(userId: string): Promise<{isValid: boolean, name?: string}> {
-    return new Promise((resolve) => {
-      client.ValidateUser({ userId }, (error: any, response: any) => {
-        if (error) {
-          console.error('gRPC Error validating user:', error);
-          return resolve({ isValid: false }); // Fail gracefully or reject
-        }
-        resolve({ isValid: response.isValid, name: response.name });
-      });
-    });
+    return breaker.execute(
+      () => new Promise((resolve, reject) => {
+        client.ValidateUser({ userId }, (error: any, response: any) => {
+          if (error) {
+            console.error('gRPC Error validating user:', error);
+            return reject(error);
+          }
+          resolve({ isValid: response.isValid, name: response.name });
+        });
+      }),
+      () => ({ isValid: false })
+    );
   }
 }
+
