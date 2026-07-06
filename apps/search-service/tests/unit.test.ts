@@ -5,22 +5,18 @@ import { SearchRepository } from "../src/domain/repositories/SearchRepository";
 import { SearchableBook } from "../src/domain/entities/SearchableBook";
 import { SearchResult } from "../src/domain/value-objects/SearchResult";
 
-// --- In-Memory Mock ---
-
 class MockSearchRepository implements SearchRepository {
   public books: SearchableBook[] = [];
 
   async indexBook(book: SearchableBook): Promise<void> {
     this.books.push(book);
   }
-
   async updateBook(isbn: string, bookData: Partial<SearchableBook>): Promise<void> {
     const index = this.books.findIndex(b => b.isbn === isbn);
     if (index !== -1) {
       this.books[index] = { ...this.books[index], ...bookData };
     }
   }
-
   async search(query: string, page: number, limit: number): Promise<SearchResult> {
     const hits = this.books.filter(b => 
       b.title.toLowerCase().includes(query.toLowerCase()) || 
@@ -33,7 +29,6 @@ class MockSearchRepository implements SearchRepository {
       limit
     };
   }
-
   async suggest(prefix: string): Promise<string[]> {
     const suggestions = this.books
       .filter(b => b.title.toLowerCase().startsWith(prefix.toLowerCase()))
@@ -42,38 +37,6 @@ class MockSearchRepository implements SearchRepository {
   }
 }
 
-// --- Test Runner ---
-
-let passed = 0;
-let failed = 0;
-
-function assert(condition: boolean, message: string): void {
-  if (condition) {
-    console.log(`  ✅ ${message}`);
-    passed++;
-  } else {
-    console.error(`  ❌ ${message}`);
-    failed++;
-  }
-}
-
-async function assertThrows(fn: () => Promise<unknown>, expectedMessage: string, testName: string): Promise<void> {
-  try {
-    await fn();
-    console.error(`  ❌ ${testName} (expected error but none was thrown)`);
-    failed++;
-  } catch (error: any) {
-    if (error.message === expectedMessage) {
-      console.log(`  ✅ ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ ${testName} (expected: "${expectedMessage}", got: "${error.message}")`);
-      failed++;
-    }
-  }
-}
-
-// --- Sample Data ---
 const sampleBook = {
   isbn: "123-456",
   title: "Clean Code",
@@ -83,84 +46,46 @@ const sampleBook = {
   publishedYear: 2008
 };
 
-// --- Tests ---
+describe("Search Service Unit Tests", () => {
+  test("SearchBooksUseCase Tests", async () => {
+    const repo = new MockSearchRepository();
+    const indexBook = new IndexBookUseCase(repo);
+    const searchBooks = new SearchBooksUseCase(repo);
 
-async function testSearchBooksUseCase(): Promise<void> {
-  console.log("\n📋 SearchBooksUseCase Tests:");
-  
-  const repo = new MockSearchRepository();
-  const indexBook = new IndexBookUseCase(repo);
-  const searchBooks = new SearchBooksUseCase(repo);
+    await indexBook.execute(sampleBook);
 
-  await indexBook.execute(sampleBook);
+    await expect(searchBooks.execute("")).rejects.toThrow("Search query cannot be empty");
 
-  // Test 1: Empty Query
-  await assertThrows(
-    () => searchBooks.execute(""),
-    "Search query cannot be empty",
-    "Should throw if query is empty"
-  );
+    const result = await searchBooks.execute("Clean");
+    expect(result.hits.length).toBe(1);
+    expect(result.hits[0].title).toBe("Clean Code");
+  });
 
-  // Test 2: Valid Search
-  const result = await searchBooks.execute("Clean");
-  assert(result.hits.length === 1, "Should return matching books");
-  assert(result.hits[0].title === "Clean Code", "Should match the correct book");
-}
+  test("GetSuggestionsUseCase Tests", async () => {
+    const repo = new MockSearchRepository();
+    const indexBook = new IndexBookUseCase(repo);
+    const getSuggestions = new GetSuggestionsUseCase(repo);
 
-async function testGetSuggestionsUseCase(): Promise<void> {
-  console.log("\n📋 GetSuggestionsUseCase Tests:");
-  
-  const repo = new MockSearchRepository();
-  const indexBook = new IndexBookUseCase(repo);
-  const getSuggestions = new GetSuggestionsUseCase(repo);
+    await indexBook.execute(sampleBook);
+    await indexBook.execute({ ...sampleBook, isbn: "222", title: "Clean Architecture" });
 
-  await indexBook.execute(sampleBook);
-  await indexBook.execute({ ...sampleBook, isbn: "222", title: "Clean Architecture" });
+    const resultEmpty = await getSuggestions.execute("");
+    expect(resultEmpty.length).toBe(0);
 
-  // Test 1: Empty Prefix
-  const resultEmpty = await getSuggestions.execute("");
-  assert(resultEmpty.length === 0, "Should return empty for short prefix");
+    const suggestions = await getSuggestions.execute("Cle");
+    expect(suggestions.length).toBe(2);
+    expect(suggestions.includes("Clean Code")).toBe(true);
+    expect(suggestions.includes("Clean Architecture")).toBe(true);
+  });
 
-  // Test 2: Valid Prefix
-  const suggestions = await getSuggestions.execute("Cle");
-  assert(suggestions.length === 2, "Should return matching suggestions");
-  assert(suggestions.includes("Clean Code") && suggestions.includes("Clean Architecture"), "Should return correct suggestions");
-}
+  test("IndexBookUseCase Tests", async () => {
+    const repo = new MockSearchRepository();
+    const indexBook = new IndexBookUseCase(repo);
 
-async function testIndexBookUseCase(): Promise<void> {
-  console.log("\n📋 IndexBookUseCase Tests:");
-  
-  const repo = new MockSearchRepository();
-  const indexBook = new IndexBookUseCase(repo);
+    await expect(indexBook.execute({ title: "No ISBN" })).rejects.toThrow("Invalid book data for indexing");
 
-  // Test 1: Invalid Data
-  await assertThrows(
-    () => indexBook.execute({ title: "No ISBN" }),
-    "Invalid book data for indexing",
-    "Should throw if ISBN is missing"
-  );
-
-  // Test 2: Valid Data
-  await indexBook.execute(sampleBook);
-  assert(repo.books.length === 1, "Should index the book");
-  assert(repo.books[0].indexedAt !== undefined, "Should add indexedAt timestamp");
-}
-
-// --- Main ---
-
-async function main(): Promise<void> {
-  console.log("🧪 Search Service - Unit Tests\n" + "=".repeat(40));
-
-  await testSearchBooksUseCase();
-  await testGetSuggestionsUseCase();
-  await testIndexBookUseCase();
-
-  console.log("\n" + "=".repeat(40));
-  console.log(`📊 Results: ${passed} passed, ${failed} failed`);
-
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-main();
+    await indexBook.execute(sampleBook);
+    expect(repo.books.length).toBe(1);
+    expect(repo.books[0].indexedAt).toBeDefined();
+  });
+});
