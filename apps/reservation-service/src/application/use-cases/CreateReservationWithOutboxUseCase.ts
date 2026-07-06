@@ -98,7 +98,7 @@ export class CreateReservationWithOutboxUseCase {
         endTime: reservation.endTime,
         durationMinutes: reservation.durationMinutes,
         roomStatus: 'RESERVED',
-        message: `¡Tu reserva en la ${room.name} ha sido confirmada! Cuentas con un turno asignado de 5 minutos exactos.`
+        message: `¡Tu reserva en la ${room.name} (${room.faculty}) ha sido confirmada para el horario de ${reservation.startTime} a ${reservation.endTime}! Cuentas con un turno asignado de 5 minutos exactos.`
       },
       status: 'PENDING',
       createdAt: new Date().toISOString()

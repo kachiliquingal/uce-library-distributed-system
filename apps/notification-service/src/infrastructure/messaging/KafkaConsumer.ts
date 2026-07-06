@@ -80,12 +80,21 @@ export class KafkaConsumer {
             case 'reservation.created':
               userId = String(data.userId);
               subject = `Confirmación de Reserva: ${data.roomName || 'Sala de Estudio'}`;
-              body = data.message || `¡Tu reserva en la ${data.roomName} ha sido confirmada para el horario de ${data.startTime} a ${data.endTime}! Cuentas con un turno asignado de 5 minutos exactos.`;
+              {
+                const roomStr = data.roomName || 'Sala de Estudio';
+                const facStr = data.faculty ? ` (${data.faculty})` : '';
+                const timeStr = (data.startTime && data.endTime) ? ` para el horario de ${data.startTime} a ${data.endTime}` : '';
+                body = `¡Tu reserva en la ${roomStr}${facStr} ha sido confirmada${timeStr}! Cuentas con un turno asignado de 5 minutos exactos.`;
+              }
               break;
             case 'reservation.expired':
               userId = String(data.userId);
               subject = `Turno Finalizado: ${data.roomName || 'Sala de Estudio'}`;
-              body = data.message || `Tu tiempo asignado de 5 minutos en la ${data.roomName} ha terminado. Por favor abandona la sala para el siguiente turno.`;
+              {
+                const roomStr = data.roomName || 'Sala de Estudio';
+                const facStr = data.faculty ? ` (${data.faculty})` : '';
+                body = `Tu tiempo asignado de 5 minutos en la ${roomStr}${facStr} ha terminado. Por favor abandona la sala para el siguiente turno.`;
+              }
               break;
           }
 
