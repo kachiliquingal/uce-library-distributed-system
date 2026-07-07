@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCE Library - Estación Digital & Terminal de Gestión Bibliotecaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- HEADER / NAVBAR -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-circle">📚</div>
+      <div>
+        <div class="app-title">UCE Library</div>
+        <div class="app-subtitle">Terminal de Escritorio & Estación de Consulta</div>
+      </div>
+    </div>
+    <div class="header-right" id="header-user-panel" style="display: none;">
+      <span class="user-info-badge" id="user-display-name">👤 Usuario</span>
+      <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <!-- LOGIN VIEW -->
+  <main id="login-view">
+    <div class="login-card">
+      <div class="login-header-box">
+        <span class="login-icon-big">🏛️</span>
+        <h2>Estación Digital UCE</h2>
+        <p>Sistema Distribuido de Gestión Bibliotecaria</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="input-email">Correo Institucional / Usuario</label>
+          <input type="email" id="input-email" class="form-control" placeholder="ejemplo@uce.edu.ec" value="user@test.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-password">Contraseña</label>
+          <input type="password" id="input-password" class="form-control" placeholder="••••••••" value="user123" required>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btn-login">Acceder al Sistema</button>
+      </form>
+
+      <div class="settings-accordion">
+        <button type="button" class="settings-toggle-btn" id="btn-toggle-settings">▼ Configurar Servidor API / Gateway</button>
+        <div class="settings-content" id="settings-content">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="input-api-url" style="color: #94a3b8; font-size: 11px;">URL del Servidor Backend (AWS ALB / Gateway):</label>
+            <input type="text" id="input-api-url" class="form-control" style="font-size: 13px; padding: 10px;" value="https://kleberchiliquingaqa1.distribuidauce.org">
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MAIN DASHBOARD VIEW -->
+  <main id="dashboard-view">
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-target="tab-kiosk">🔍 Catálogo Digital</button>
+      <button class="tab-btn" data-target="tab-loans">📖 Préstamos Activos</button>
+      <button class="tab-btn" data-target="tab-fines">⚠️ Multas & Alertas</button>
+    </nav>
+
+    <!-- TABS CONTENT AREA -->
+    <div class="tab-content">
+      
+      <!-- TAB 1: KIOSK BOOK SEARCH -->
+      <section id="tab-kiosk" class="tab-pane active">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Estación de Consulta Digital</h1>
+            <p class="section-subtitle">Consulta disponibilidad y stock de libros en las bibliotecas de la UCE en tiempo real</p>
+          </div>
+          <button class="btn-refresh" id="btn-refresh-kiosk">🔄 Actualizar Catálogo</button>
+        </div>
+
+        <div class="search-bar-container">
+          <input type="text" id="kiosk-search-input" class="search-input" placeholder="Buscar por título, autor, facultad o palabra clave...">
+          <button class="btn-search" id="btn-search-kiosk">Buscar Libro</button>
+        </div>
+
+        <div id="kiosk-books-grid" class="books-grid">
+          <!-- Book cards injected via renderer.js -->
+        </div>
+      </section>
+
+      <!-- TAB 2: ACTIVE LOANS -->
+      <section id="tab-loans" class="tab-pane">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Mis Préstamos y Devoluciones</h1>
+            <p class="section-subtitle">Monitorea los libros que tienes en préstamo y sus fechas de vencimiento</p>
+          </div>
+          <button class="btn-refresh" id="btn-refresh-loans">🔄 Refrescar Préstamos</button>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Préstamo</th>
+                <th>Libro / Recurso</th>
+                <th>Fecha Préstamo</th>
+                <th>Fecha Devolución</th>
+                <th>Estado UCE</th>
+              </tr>
+            </thead>
+            <tbody id="loans-table-body">
+              <!-- Loans rows injected via renderer.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: FINES & ALERTS -->
+      <section id="tab-fines" class="tab-pane">
+        <div class="section-header">
+          <div>
+            <h1 class="section-title">Multas y Alertas Bibliotecarias</h1>
+            <p class="section-subtitle">Consulta de recargos por retrasos o alertas de sala de lectura</p>
+          </div>
+          <button class="btn-refresh" id="btn-refresh-fines">🔄 Refrescar Multas</button>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Multa</th>
+                <th>Motivo / Libro</th>
+                <th>Monto ($)</th>
+                <th>Fecha Emisión</th>
+                <th>Estado Pago</th>
+              </tr>
+            </thead>
+            <tbody id="fines-table-body">
+              <!-- Fines rows injected via renderer.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

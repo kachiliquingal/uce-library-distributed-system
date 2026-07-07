@@ -130,6 +130,63 @@ services:
     networks:
       - microservices-network
 
+  inventory-service:
+    image: kachiliquingal/uce-inventory-service:${IMAGE_TAG}
+    container_name: inventory-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "4009:4009"
+    environment:
+      - PORT=4009
+      - COUCHDB_URL=${COUCHDB_URL}
+      - CATALOG_GRPC_HOST=${CATALOG_GRPC_HOST}
+    networks:
+      - microservices-network
+
+  report-service:
+    image: kachiliquingal/uce-report-service:${IMAGE_TAG}
+    container_name: report-service
+    restart: always
+    command: sh -c "sleep 30 && node dist/index.js"
+    ports:
+      - "4007:4007"
+    environment:
+      - PORT=4007
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - LOAN_SERVICE_INTERNAL_URL=${LOAN_SERVICE_INTERNAL_URL:-loan-service:3004}
+      - FINE_SERVICE_INTERNAL_URL=${FINE_SERVICE_INTERNAL_URL:-fine-service:3006}
+      - CATALOG_SERVICE_INTERNAL_URL=${CATALOG_SERVICE_INTERNAL_URL:-catalog-service:3002}
+      - USER_SERVICE_URL=${USER_SERVICE_URL:-user-service:3003}
+    networks:
+      - microservices-network
+
+  reservation-service:
+    image: kachiliquingal/uce-reservation-service:${IMAGE_TAG}
+    container_name: reservation-service
+    restart: always
+    command: sh -c "sleep 20 && node dist/index.js"
+    ports:
+      - "4008:4008"
+    environment:
+      - PORT=4008
+      - NODE_ENV=production
+      - DYNAMODB_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - DYNAMODB_TABLE_NAME=Reservations
+      - DYNAMODB_ENDPOINT=${DYNAMODB_ENDPOINT:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-test}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-test}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - BROKERS_IP=${BROKERS_IP}
+      - MQTT_BROKER_URL=mqtt://${BROKERS_IP}:1883
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+    networks:
+      - microservices-network
+
   frontend:
     image: kachiliquingal/uce-frontend:${IMAGE_TAG}
     container_name: frontend
@@ -151,6 +208,9 @@ services:
       - NOTIFICATION_SERVICE_URL=notification-service:3005
       - FINE_SERVICE_URL=fine-service:3006
       - SEARCH_SERVICE_URL=search-service:3007
+      - INVENTORY_SERVICE_URL=inventory-service:4009
+      - REPORT_SERVICE_URL=report-service:4007
+      - RESERVATION_SERVICE_URL=reservation-service:4008
       - FRONTEND_SERVICE_URL=frontend:80
       - BROKERS_IP=${BROKERS_IP}
     networks:

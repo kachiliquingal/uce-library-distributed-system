@@ -1,25 +1,27 @@
-name: Continuous Integration
+name: Continuous Integration & Quality Gates
 
 on:
   pull_request:
     branches: ["qa", "main"]
+  push:
+    branches: ["qa", "main"]
 
 jobs:
-  build-and-test:
+  build-and-unit-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
       - name: Fix Cross-Platform Tailwind Bindings & Install
         run: |
-          rm package-lock.json
+          rm -f package-lock.json
           npm install
 
       - name: Turborepo Build
@@ -31,14 +33,49 @@ jobs:
       - name: Lint Check
         run: npm run lint
 
-  validate-dockerfiles:
+  functional-e2e-tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway, frontend, fine-service, search-service]
+    needs: build-and-unit-test
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run Functional E2E Integration Tests (Supertest)
+        run: npx jest --config tests/functional/jest.config.cjs
+
+  load-and-stress-tests:
+    runs-on: ubuntu-latest
+    needs: functional-e2e-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Grafana k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run Grafana k6 Load Test Suite & Validate SLAs
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/load/k6-load-test.js
+
+  validate-dockerfiles:
+    runs-on: ubuntu-latest
+    needs: build-and-unit-test
+    strategy:
+      matrix:
+        app: [auth-service, catalog-service, user-service, loan-service, notification-service, api-gateway, frontend, fine-service, search-service, inventory-service, report-service, reservation-service]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Validate Dockerfile (${{ matrix.app }})
         run: |

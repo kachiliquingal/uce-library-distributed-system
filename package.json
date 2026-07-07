@@ -5,7 +5,18 @@
   "packageManager": "npm@10.9.3",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/api-gateway",
+    "apps/auth-service",
+    "apps/catalog-service",
+    "apps/fine-service",
+    "apps/frontend",
+    "apps/inventory-service",
+    "apps/loan-service",
+    "apps/notification-service",
+    "apps/report-service",
+    "apps/reservation-service",
+    "apps/search-service",
+    "apps/user-service",
     "packages/*"
   ],
   "scripts": {
@@ -16,7 +27,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^7.2.0",
     "eslint": "^10.6.0",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
     "turbo": "latest",
     "typescript-eslint": "^8.62.0"
   },

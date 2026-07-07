@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../../store/authStore';
 
 const AdminFines = () => {
   const [fines, setFines] = useState([]);
   const { token } = useAuthStore();
 
-  useEffect(() => {
-    fetchFines();
-  }, []);
-
-  const fetchFines = async () => {
+  const fetchFines = useCallback(async () => {
     try {
       const FINE_API_URL = import.meta.env.VITE_FINE_API_URL || '/api/fines';
       const url = `${FINE_API_URL}/`;
@@ -23,7 +19,11 @@ const AdminFines = () => {
     } catch (error) {
       console.error('Error fetching fines:', error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchFines();
+  }, [fetchFines]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

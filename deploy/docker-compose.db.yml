@@ -83,6 +83,37 @@ services:
     networks:
       - microservices-network
 
+  couchdb:
+    image: couchdb:3.3
+    restart: always
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5984:5984"
+    volumes:
+      - /data/couchdb:/opt/couchdb/data
+    networks:
+      - microservices-network
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    restart: always
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${DB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: uce_library
+      DOCKER_INFLUXDB_INIT_BUCKET: reports
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: uce_library_admin_token_secret_123
+    ports:
+      - "8086:8086"
+    volumes:
+      - /data/influxdb:/var/lib/influxdb2
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     external: true
+

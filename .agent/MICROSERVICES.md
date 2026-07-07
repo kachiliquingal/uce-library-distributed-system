@@ -51,7 +51,7 @@
 - **Account / Instance:** QA-B / ec2-notification
 - **Purpose:** Sends email and push notifications triggered by domain events
 - **Tech:** Node.js / Express / TypeScript
-- **DB:** Cassandra (notification history — high write throughput)
+- **DB:** PostgreSQL (notification history — high write throughput and chronological queries)
 - **Protocols:** REST health endpoint · Kafka consumer · RabbitMQ consumer
 - **Consumes:** `book.borrowed`, `book.returned`, `fine.created`, `user.registered` ← Kafka/RabbitMQ
 - **Pattern:** Hexagonal (purely event-driven — no other service calls this via REST)
@@ -82,7 +82,7 @@
 
 ---
 
-## MS-07: Report Service ❌ TODO — build 7th
+## MS-07: Report Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-report
 - **Purpose:** Analytics — loans per day, top books, peak hours, fine revenue
 - **Tech:** Node.js / Express / TypeScript
@@ -90,11 +90,11 @@
 - **Protocols:** GraphQL (client-facing) · REST (health)
 - **GraphQL queries:** loansPerDay · topBorrowedBooks · activeUsersCount · fineRevenueSummary
 - **Consumes:** ALL domain events ← Kafka (read-only analytics consumer)
-- **Pattern:** Hexagonal + CQRS (only reads, never writes to other services)
+- **Pattern:** Hexagonal + CQRS (only reads, never writes to other services) ✅
 
 ---
 
-## MS-08: Reservation Service ❌ TODO — build 8th (independent)
+## MS-08: Reservation Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-reservation
 - **Purpose:** Real-time study room and equipment reservations
 - **Tech:** Node.js / Express / TypeScript
@@ -102,18 +102,20 @@
 - **Protocols:** REST · MQTT publisher (Mosquitto)
 - **Endpoints:** POST /reservations · DELETE /reservations/:id · GET /rooms/available?date=
 - **MQTT topics:** `library/rooms/<room_id>/status`
-- **Pattern:** Hexagonal
+- **Pattern:** Hexagonal ✅
 
 ---
 
-## MS-09: Inventory Service ❌ TODO — build 6th
+## MS-09: Inventory Service ✅ IMPLEMENTED
 - **Account / Instance:** QA-B / ec2-inventory
 - **Purpose:** Physical book stock — shelf location and copy count per ISBN
 - **Tech:** Node.js / Express / TypeScript
 - **DB:** CouchDB (offline-tolerant replication for barcode scanners)
 - **Protocols:** REST · gRPC client → catalog-service (validate ISBN before stock update)
-- **Endpoints:** GET /inventory/:isbn · PUT /inventory/:isbn/stock · GET /inventory/low-stock
-- **Pattern:** Hexagonal
+- **Endpoints:** GET /inventory/:isbn · PUT /inventory/:isbn/stock · GET /inventory/low-stock · POST /inventory/sync-legacy-loans
+- **Consumes:** `book.borrowed`, `book.returned` ← Kafka (real-time stock synchronization)
+- **Pattern:** Hexagonal ✅
+
 
 ---
 

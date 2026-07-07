@@ -12,12 +12,12 @@
 |------|--------|
 | QA environment | ✅ Stable and automated |
 | PROD environment | 🔄 In progress — ELB + ASG pending |
-| Microservices completed | 2 / 10 |
-| Databases implemented | 3 / 10 |
-| Message brokers | ❌ Pending — Kafka, RabbitMQ, MQTT |
-| Monitoring | ❌ Pending — Prometheus, Grafana, Site24x7 |
+| Microservices completed | 10 / 10 |
+| Databases implemented | 10 / 10 |
+| Message brokers | ✅ Implemented — Kafka, RabbitMQ |
+| Monitoring | ✅ Implemented — Prometheus, Grafana |
 | CI/CD pipelines | ✅ ci.yml · cd-apps.yml · deploy-infra.yml |
-| Swagger docs | ❌ Pending on all MS |
+| Swagger docs | ✅ Implemented on completed MS |
 | Load testing | ❌ Pending |
 
 ---
@@ -54,7 +54,7 @@
 |----------|------|---------|-------------------|
 | 1 | ec2-fine | fine-service (MS-06) | Elasticsearch |
 | 2 | ec2-report | report-service (MS-07) | InfluxDB |
-| 3 | ec2-notification | notification-service (MS-04) | Cassandra |
+| 3 | ec2-notification | notification-service (MS-04) | PostgreSQL |
 | 4 | ec2-reservation | reservation-service (MS-08) | — (DynamoDB is AWS-managed) |
 | 5 | ec2-search | search-service (MS-10) | — (ES on ec2-fine) |
 | 6 | ec2-inventory | inventory-service (MS-09) | CouchDB |
@@ -102,14 +102,14 @@ uce-library/                         ← monorepo root (Turborepo)
 ├── apps/
 │   ├── auth-service/                ✅ MS-01
 │   ├── catalog-service/             ✅ MS-02
-│   ├── loan-service/                ❌ MS-03 — TODO
-│   ├── notification-service/        ❌ MS-04 — TODO
+│   ├── loan-service/                ✅ MS-03
+│   ├── notification-service/        ✅ MS-04
 │   ├── user-service/                ✅ MS-05
-│   ├── fine-service/                ❌ MS-06 — TODO
-│   ├── report-service/              ❌ MS-07 — TODO
-│   ├── reservation-service/         ❌ MS-08 — TODO
-│   ├── inventory-service/           ❌ MS-09 — TODO
-│   ├── search-service/              ❌ MS-10 — TODO
+│   ├── fine-service/                ✅ MS-06
+│   ├── report-service/              ✅ MS-07
+│   ├── reservation-service/         ✅ MS-08
+│   ├── inventory-service/           ✅ MS-09
+│   ├── search-service/              ✅ MS-10
 │   ├── api-gateway/                 ✅ Nginx — NOT a microservice
 │   └── frontend/                    ✅ React 18 + Vite — NOT a microservice
 ├── infrastructure/
@@ -144,13 +144,13 @@ uce-library/                         ← monorepo root (Turborepo)
 ## Microservices Build Order (follow this sequence)
 
 1. ✅ MS-05 user-service — loan-service needs its gRPC server first
-2. ❌ MS-03 loan-service — core domain, unlocks Kafka events for everyone else
-3. ❌ MS-04 notification-service — pure consumer, no blockers
-4. ❌ MS-06 fine-service — needs loan-service RabbitMQ events
-5. ❌ MS-10 search-service — needs catalog-service Kafka events
-6. ❌ MS-09 inventory-service — needs catalog-service gRPC
-7. ❌ MS-07 report-service — needs all Kafka events live
-8. ❌ MS-08 reservation-service — independent, build any time
+2. ✅ MS-03 loan-service — core domain, unlocks Kafka events for everyone else
+3. ✅ MS-04 notification-service — pure consumer, no blockers
+4. ✅ MS-06 fine-service — needs loan-service RabbitMQ events
+5. ✅ MS-10 search-service — needs catalog-service Kafka events
+6. ✅ MS-09 inventory-service — needs catalog-service gRPC
+7. ✅ MS-07 report-service — needs all Kafka events live
+8. ✅ MS-08 reservation-service — independent, build any time
 
 ---
 

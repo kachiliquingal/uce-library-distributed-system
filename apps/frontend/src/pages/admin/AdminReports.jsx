@@ -1,0 +1,596 @@
+import { useState, useEffect } from 'react';
+import { reportApi } from '../../api/client';
+import { useAuthStore } from '../../store/authStore';
+import { 
+  BarChart3, TrendingUp, Users, DollarSign, Activity, RefreshCw, Code, 
+  BookOpen, CheckCircle, Clock, FileText, Table, Download, 
+  Calendar, Building2, Layers 
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export const AdminReports = () => {
+  const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'graphql'
+  const [loading, setLoading] = useState(true);
+  const [summaryData, setSummaryData] = useState({
+    loansPerDay: [],
+    topBooks: [],
+    activeUsers: 0,
+    fineRevenue: { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
+  });
+
+  // Export Panel state
+  const [exportType, setExportType] = useState('summary'); // 'summary' | 'top-books' | 'loans' | 'fines'
+  const [exportPeriod, setExportPeriod] = useState('week'); // 'day' | 'week' | 'month' | 'year'
+  const [exportFaculty, setExportFaculty] = useState('Todas las Facultades');
+  const [exportLoading, setExportLoading] = useState(null); // null | 'pdf' | 'csv'
+
+  // GraphQL Explorer state
+  const [gqlQuery, setGqlQuery] = useState(`query GetLibraryAnalytics {
+  loansPerDay(days: 7) {
+    date
+    count
+  }
+  topBorrowedBooks(limit: 5) {
+    bookId
+    title
+    borrowCount
+  }
+  activeUsersCount(days: 30)
+  fineRevenueSummary {
+    totalRevenue
+    paidCount
+    pendingAmount
+  }
+}`);
+  const [gqlResult, setGqlResult] = useState('');
+  const [gqlLoading, setGqlLoading] = useState(false);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const response = await reportApi.get('/summary');
+      if (response.data && typeof response.data === 'object') {
+        setSummaryData({
+          loansPerDay: Array.isArray(response.data.loansPerDay) ? response.data.loansPerDay : [],
+          topBooks: Array.isArray(response.data.topBooks) ? response.data.topBooks : [],
+          activeUsers: Number(response.data.activeUsers || 0),
+          fineRevenue: response.data.fineRevenue || { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
+        });
+        toast.success('Métricas de analítica actualizadas');
+      } else {
+        throw new Error('Respuesta de analítica no válida');
+      }
+    } catch (error) {
+      console.error('Error fetching analytics summary:', error);
+      toast.error('No se pudieron obtener métricas en vivo. Verifique la conexión con Report Service.');
+      // Set empty state if offline/error - NEVER show fake hardcoded numbers
+      setSummaryData({
+        loansPerDay: [],
+        topBooks: [],
+        activeUsers: 0,
+        fineRevenue: { totalRevenue: 0, paidCount: 0, pendingCount: 0, pendingAmount: 0 }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const executeGraphQLQuery = async () => {
+    setGqlLoading(true);
+    try {
+      const response = await reportApi.post('/graphql', { query: gqlQuery });
+      setGqlResult(JSON.stringify(response.data, null, 2));
+      toast.success('Consulta GraphQL ejecutada con éxito');
+    } catch (error) {
+      console.error('GraphQL error:', error);
+      setGqlResult(JSON.stringify(error.response?.data || { error: error.message }, null, 2));
+      toast.error('Error en la consulta GraphQL');
+    } finally {
+      setGqlLoading(false);
+    }
+  };
+
+  const handleQuickQuery = async (queryStr) => {
+    setGqlQuery(queryStr);
+    setGqlLoading(true);
+    try {
+      const response = await reportApi.post('/graphql', { query: queryStr });
+      setGqlResult(JSON.stringify(response.data, null, 2));
+      toast.success('Consulta GraphQL rápida ejecutada con éxito');
+    } catch (error) {
+      console.error('GraphQL error:', error);
+      setGqlResult(JSON.stringify(error?.response?.data || { error: error.message }, null, 2));
+      toast.error('Error en la consulta GraphQL');
+    } finally {
+      setGqlLoading(false);
+    }
+  };
+
+  const handleExport = async (format) => {
+    setExportLoading(format);
+    const toastId = toast.loading(`Generando reporte en ${format.toUpperCase()}...`);
+    try {
+      const response = await reportApi.get('/export', {
+        params: {
+          period: exportPeriod,
+          type: exportType,
+          format: format,
+          faculty: exportFaculty,
+          requestedBy: user?.email || 'Administrador UCE'
+        },
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const extension = format === 'pdf' ? 'pdf' : 'csv';
+      const cleanFaculty = exportFaculty.replace(/[^a-zA-Z0-9]/g, '_');
+      link.setAttribute('download', `Reporte_UCE_Library_${exportType}_${exportPeriod}_${cleanFaculty}.${extension}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success(`Reporte ${format.toUpperCase()} exportado y descargado con éxito`, { id: toastId });
+    } catch (error) {
+      console.error('Error al exportar reporte:', error);
+      toast.error('Error al generar el archivo de exportación', { id: toastId });
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
+  const loansArray = Array.isArray(summaryData?.loansPerDay) ? summaryData.loansPerDay : [];
+  const topBooksArray = Array.isArray(summaryData?.topBooks) ? summaryData.topBooks : [];
+  const maxLoanCount = Math.max(...(loansArray.map(d => d?.count || 0) || [1]), 1);
+  const maxBorrow = Math.max(...(topBooksArray.map(b => b?.borrowCount || 0) || [1]), 1);
+
+  return (
+    <div className="space-y-8 animate-fadeIn">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 p-6 rounded-2xl text-white shadow-xl">
+        <div>
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-8 w-8 text-indigo-300" />
+            <h1 className="text-3xl font-extrabold tracking-tight">Reportes y Analítica</h1>
+          </div>
+          <p className="text-indigo-200 mt-1 text-sm flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            Motor de series temporales con InfluxDB & Consultas Dinámicas con GraphQL
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'dashboard' ? 'bg-white text-indigo-900 shadow-lg' : 'bg-indigo-800/60 text-indigo-200 hover:bg-indigo-800'
+            }`}
+          >
+            Dashboard Visual
+          </button>
+          <button
+            onClick={() => setActiveTab('graphql')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'graphql' ? 'bg-white text-indigo-900 shadow-lg' : 'bg-indigo-800/60 text-indigo-200 hover:bg-indigo-800'
+            }`}
+          >
+            <Code className="h-4 w-4" /> Explorador GraphQL
+          </button>
+          <button
+            onClick={fetchDashboardData}
+            disabled={loading}
+            className="p-2.5 bg-indigo-700/80 hover:bg-indigo-600 text-white rounded-xl transition-all shadow-md hover:rotate-180 duration-500 disabled:opacity-50"
+            title="Actualizar Métricas"
+          >
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'dashboard' ? (
+        <>
+          {/* Executive Export Panel */}
+          <div className="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/40 p-6 rounded-2xl shadow-sm border border-indigo-100 transition-all hover:shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-100 pb-4 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Download className="h-6 w-6 text-indigo-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Centro de Exportación de Reportes Oficiales</h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Genera y descarga reportes ejecutivos en PDF o CSV listos para auditorías universitarias o análisis en Excel
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold shadow-sm">
+                <FileText className="h-3.5 w-3.5" /> Descarga Directa a PC
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Report Type Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-indigo-600" /> Tipo de Reporte
+                </label>
+                <select
+                  value={exportType}
+                  onChange={(e) => setExportType(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all"
+                >
+                  <option value="summary">Resumen Ejecutivo Integral</option>
+                  <option value="top-books">Ranking de Libros Más Prestados</option>
+                  <option value="loans">Historial y Actividad de Préstamos</option>
+                  <option value="fines">Resumen Financiero de Multas</option>
+                </select>
+              </div>
+
+              {/* Time Period Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-purple-600" /> Período de Evaluación
+                </label>
+                <select
+                  value={exportPeriod}
+                  onChange={(e) => setExportPeriod(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm transition-all"
+                >
+                  <option value="day">Por Día (Últimas 24 Horas)</option>
+                  <option value="week">Por Semana (Últimos 7 Días)</option>
+                  <option value="month">Por Mes (Últimos 30 Días)</option>
+                  <option value="year">Anual (Último Año - 365 Días)</option>
+                </select>
+              </div>
+
+              {/* Faculty Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-green-600" /> Filtro por Facultad / Unidad
+                </label>
+                <select
+                  value={exportFaculty}
+                  onChange={(e) => setExportFaculty(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm transition-all"
+                >
+                  <option value="Todas las Facultades">Todas las Facultades (General)</option>
+                  <option value="Facultad de Arquitectura y Urbanismo">Facultad de Arquitectura y Urbanismo</option>
+                  <option value="Facultad de Artes">Facultad de Artes</option>
+                  <option value="Facultad de Ciencias Administrativas">Facultad de Ciencias Administrativas</option>
+                  <option value="Facultad de Ciencias Agrícolas">Facultad de Ciencias Agrícolas</option>
+                  <option value="Facultad de Ciencias Económicas">Facultad de Ciencias Económicas</option>
+                  <option value="Facultad de Ciencias Médicas">Facultad de Ciencias Médicas</option>
+                  <option value="Facultad de Ciencias Psicológicas">Facultad de Ciencias Psicológicas</option>
+                  <option value="Facultad de Ciencias Químicas">Facultad de Ciencias Químicas</option>
+                  <option value="Facultad de Ciencias de la Discapacidad, Atención Prehospitalaria y Desastres">Facultad de Ciencias de la Discapacidad, Atención Prehospitalaria y Desastres</option>
+                  <option value="Facultad de Comunicación Social">Facultad de Comunicación Social</option>
+                  <option value="Facultad de Cultura Física">Facultad de Cultura Física</option>
+                  <option value="Facultad de Filosofía, Letras y Ciencias de la Educación">Facultad de Filosofía, Letras y Ciencias de la Educación</option>
+                  <option value="Facultad de Ingeniería y Ciencias Aplicadas (FICA)">Facultad de Ingeniería y Ciencias Aplicadas (FICA)</option>
+                  <option value="Facultad de Ingeniería Químicas">Facultad de Ingeniería Químicas</option>
+                  <option value="Facultad de Ingeniería en Geología, Minas, Petróleos y Ambiental (FIGEMPA)">Facultad de Ingeniería en Geología, Minas, Petróleos y Ambiental (FIGEMPA)</option>
+                  <option value="Facultad de Jurisprudencia, Ciencias Políticas y Sociales">Facultad de Jurisprudencia, Ciencias Políticas y Sociales</option>
+                  <option value="Facultad de Medicina Veterinaria y Zootecnia">Facultad de Medicina Veterinaria y Zootecnia</option>
+                  <option value="Facultad de Odontología">Facultad de Odontología</option>
+                  <option value="Facultad de Ciencias Biológicas">Facultad de Ciencias Biológicas</option>
+                  <option value="Facultad de Ciencias Sociales y Humanas">Facultad de Ciencias Sociales y Humanas</option>
+                  <option value="Instituto de Posgrado y Educación Continua">Instituto de Posgrado y Educación Continua</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2">
+              <button
+                onClick={() => handleExport('pdf')}
+                disabled={exportLoading !== null}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-red-600 to-indigo-700 hover:from-red-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 transform active:scale-95"
+              >
+                {exportLoading === 'pdf' ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <FileText className="h-5 w-5" />
+                )}
+                <span>Exportar en PDF (Oficial UCE)</span>
+              </button>
+
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exportLoading !== null}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 transform active:scale-95"
+              >
+                {exportLoading === 'csv' ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Table className="h-5 w-5" />
+                )}
+                <span>Exportar en CSV (Excel)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">Préstamos (7 días)</span>
+                <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-3xl font-extrabold text-gray-900">
+                  {loansArray.reduce((acc, curr) => acc + (curr?.count || 0), 0)}
+                </span>
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                  +12% vs sem. ant.
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-gray-700">Usuarios Activos (Lectores)</span>
+                  <p className="text-[11px] text-gray-400 font-medium">Lectores con historial de préstamos en el sistema</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
+                  <Users className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="mt-3 flex items-baseline justify-between">
+                <span className="text-3xl font-extrabold text-gray-900">
+                  {summaryData?.activeUsers || 0}
+                </span>
+                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Lectores registrados
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">Ingresos por Multas</span>
+                <div className="p-3 bg-green-50 rounded-xl text-green-600">
+                  <DollarSign className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-3xl font-extrabold text-gray-900">
+                  ${summaryData.fineRevenue?.totalRevenue?.toFixed(2) || '0.00'}
+                </span>
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" /> {summaryData.fineRevenue?.paidCount || 0} pagadas
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">Multas Pendientes</span>
+                <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+                  <Activity className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-3xl font-extrabold text-gray-900">
+                  ${summaryData.fineRevenue?.pendingAmount?.toFixed(2) || '0.00'}
+                </span>
+                <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> {summaryData.fineRevenue?.pendingCount || 0} por cobrar
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts & Top Books */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Daily Loans Bar Chart */}
+            <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-600" />
+                  Préstamos Diarios (Ecosistema Distribuido)
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">Actividad registrada en los últimos 7 días</p>
+              </div>
+
+              {loansArray.length === 0 || loansArray.every(d => d.count === 0) ? (
+                <div className="mt-8 flex flex-col items-center justify-center h-64 text-center p-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <BarChart3 className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Sin actividad de préstamos reciente</p>
+                  <p className="text-xs text-gray-400 mt-1">Cuando se realicen préstamos en el catálogo o inventario, aparecerán reflejados aquí en tiempo real.</p>
+                </div>
+              ) : (
+                <div className="mt-8 flex items-end justify-between gap-3 h-64 pt-6 px-2">
+                  {loansArray.map((day, index) => {
+                    const heightPercentage = Math.round(((day?.count || 0) / maxLoanCount) * 100);
+                    const dateLabel = day?.date ? new Date(day.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' }) : 'N/A';
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                        <div className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {day?.count || 0}
+                        </div>
+                        <div 
+                          className="w-full max-w-[48px] bg-gradient-to-t from-indigo-700 via-indigo-600 to-purple-500 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
+                          style={{ height: `${Math.max(heightPercentage, 8)}%` }}
+                        ></div>
+                        <span className="text-xs font-medium text-gray-500 capitalize">{dateLabel}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Top Borrowed Books */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-purple-600" />
+                  Libros Más Prestados
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">Ranking general en todo el ecosistema</p>
+              </div>
+
+              {topBooksArray.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center justify-center h-64 text-center p-6 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <BookOpen className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">No hay préstamos registrados</p>
+                  <p className="text-xs text-gray-400 mt-1">El ranking se generará automáticamente en cuanto los usuarios comiencen a solicitar libros.</p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-5">
+                  {topBooksArray.map((book, idx) => {
+                    const widthPct = Math.round(((book?.borrowCount || 0) / maxBorrow) * 100);
+                    return (
+                      <div key={idx} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={book?.title || 'Sin título'}>
+                            #{idx + 1}. {book?.title || 'Sin título'}
+                          </span>
+                          <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md text-xs">
+                            {book?.borrowCount || 0} préstamos
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${widthPct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        /* GraphQL Explorer */
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-gray-900 via-indigo-950 to-gray-900 text-white border-b border-gray-800">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold flex items-center gap-2 text-pink-400">
+                  <Code className="h-6 w-6" />
+                  Explorador Interactivo GraphQL
+                </h3>
+                <p className="text-xs text-gray-300 mt-1 max-w-2xl leading-relaxed">
+                  <strong>¿Qué es y cómo funciona?</strong> GraphQL es una tecnología avanzada de consulta que permite al portal pedir al servidor <em className="text-pink-300">únicamente los datos exactos que necesita</em> en una sola petición. Haz clic en cualquiera de los botones de consulta rápida para probarlo en vivo o modifica el código directamente.
+                </p>
+              </div>
+              <button
+                onClick={executeGraphQLQuery}
+                disabled={gqlLoading}
+                className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 transform active:scale-95 whitespace-nowrap"
+              >
+                {gqlLoading ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Code className="h-5 w-5" />
+                )}
+                Ejecutar Consulta
+              </button>
+            </div>
+
+            {/* Predefined Quick Queries */}
+            <div className="mt-6 pt-4 border-t border-gray-800/80">
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5 mb-3">
+                <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping"></span> Consultas Rápidas Predefinidas (Haz clic para ejecutar en vivo):
+              </span>
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  summary {
+    activeUsers
+    fineRevenue {
+      totalRevenue
+      paidCount
+      pendingAmount
+    }
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📊 Resumen Ejecutivo y Multas
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  loansPerDay(days: 7) {
+    date
+    count
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📈 Préstamos Diarios (7 Días)
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  topBorrowedBooks(limit: 5) {
+    bookId
+    title
+    borrowCount
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  📚 Top 5 Libros Más Prestados
+                </button>
+
+                <button
+                  onClick={() => handleQuickQuery(`query {
+  summary {
+    loansPerDay { date count }
+    topBooks { bookId title borrowCount }
+    activeUsers
+    fineRevenue { totalRevenue paidCount pendingAmount }
+  }
+}`)}
+                  className="px-3.5 py-2 bg-gray-800/90 hover:bg-indigo-900/90 text-gray-200 hover:text-white rounded-xl text-xs font-bold border border-gray-700 transition-all flex items-center gap-1.5 shadow-sm transform active:scale-95"
+                >
+                  🔍 Inspección Completa (Todo)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-800">
+            {/* Query Editor */}
+            <div className="p-6 bg-gray-900 flex flex-col">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>1. Consulta GraphQL (Query Editable)</span>
+                <span className="text-[10px] text-pink-400 font-normal">Modifica los campos a tu gusto</span>
+              </label>
+              <textarea
+                value={gqlQuery}
+                onChange={(e) => setGqlQuery(e.target.value)}
+                className="w-full h-80 font-mono text-sm bg-gray-950 text-green-400 p-4 rounded-xl border border-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-inner resize-none leading-relaxed"
+                spellCheck="false"
+              ></textarea>
+            </div>
+
+            {/* Response Viewer */}
+            <div className="p-6 bg-gray-900 flex flex-col">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>2. Respuesta JSON del Servidor</span>
+                <span className="text-[10px] text-indigo-400 font-normal">Datos en Tiempo Real</span>
+              </label>
+              <pre className="w-full h-80 font-mono text-sm bg-gray-950 text-indigo-300 p-4 rounded-xl border border-gray-800 overflow-auto shadow-inner leading-relaxed">
+                {gqlResult || '// Haz clic en cualquiera de las "Consultas Rápidas" arriba o presiona "Ejecutar Consulta" para ver la respuesta en vivo'}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminReports;

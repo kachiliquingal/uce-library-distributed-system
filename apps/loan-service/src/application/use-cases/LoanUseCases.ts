@@ -103,3 +103,23 @@ export class GetLoansUseCase {
     return this.loanRepository.findAllActive(page, limit);
   }
 }
+
+export class MarkLoanAsReturnedUseCase {
+  constructor(private readonly loanRepository: ILoanRepository) {}
+
+  async execute(loanId: string): Promise<void> {
+    const loan = await this.loanRepository.findById(loanId);
+    if (!loan) {
+      logger.warn(`[MarkLoanAsReturnedUseCase] Loan ${loanId} not found`);
+      return;
+    }
+
+    if (loan.status === 'OVERDUE') {
+      loan.status = 'RETURNED' as any; // The entity enum uses LoanStatus.RETURNED
+      await this.loanRepository.save(loan);
+      logger.info(`[MarkLoanAsReturnedUseCase] Loan ${loanId} status updated to RETURNED after fine payment`);
+    } else {
+      logger.info(`[MarkLoanAsReturnedUseCase] Loan ${loanId} status is ${loan.status}, no update needed`);
+    }
+  }
+}

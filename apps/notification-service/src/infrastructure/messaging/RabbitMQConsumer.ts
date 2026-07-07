@@ -17,7 +17,10 @@ export class RabbitMQConsumer {
       const connection = await amqp.connect(rabbitUrl);
       const channel = await connection.createChannel();
       
-      await channel.assertQueue(queue, { durable: true });
+      await channel.assertQueue(queue, { 
+        durable: true, 
+        arguments: { 'x-dead-letter-exchange': 'library.dlx', 'x-dead-letter-routing-key': 'notifications.email.dlq' } 
+      });
       logger.info(`[RabbitMQ] Connected to ${rabbitUrl}, listening on queue: ${queue}`);
 
       channel.consume(queue, async (msg) => {

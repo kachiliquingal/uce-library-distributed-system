@@ -4,6 +4,25 @@
       "name": "/"
     }
   ],
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "im9TTCEK0gd45bCZ/a/qDxwPnKXoyRUeb+LNnBStVl71+429",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
   "exchanges": [
     {
       "name": "library.dlx",

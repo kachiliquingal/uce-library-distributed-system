@@ -1,0 +1,16 @@
+{
+  "name": "uce-desktop-app",
+  "version": "1.0.0",
+  "description": "UCE Library - Estación Digital de Consulta y Gestión de Escritorio (Electron)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "jest --config jest.config.cjs --passWithNoTests"
+  },
+  "author": "Alejandro & Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "private": true
+}
