@@ -1,8 +1,6 @@
-import assert from 'assert';
 import { Fine } from '../src/domain/Fine';
 import { CreateFineUseCase } from '../src/application/use-cases/CreateFineUseCase';
 
-// Mock Repository
 class MockFineRepository {
   public fines: Fine[] = [];
   
@@ -24,25 +22,17 @@ class MockFineRepository {
   }
 }
 
-async function runTests() {
-  console.log('Running unit tests for fine-service...');
+describe("Fine Service Unit Tests", () => {
+  test("CreateFineUseCase Tests", async () => {
+    const repo = new MockFineRepository();
+    const createFineUseCase = new CreateFineUseCase(repo as any);
 
-  const repo = new MockFineRepository();
-  const createFineUseCase = new CreateFineUseCase(repo as any);
+    const fine = await createFineUseCase.execute('user-1', 'loan-1', 5.00, 'Late return');
+    expect(fine.userId).toBe('user-1');
+    expect(fine.amount).toBe(5.00);
+    expect(fine.status).toBe('UNPAID');
 
-  // Test: Create Fine
-  const fine = await createFineUseCase.execute('user-1', 'loan-1', 5.00, 'Late return');
-  assert.strictEqual(fine.userId, 'user-1', 'User ID should match');
-  assert.strictEqual(fine.amount, 5.00, 'Amount should match');
-  assert.strictEqual(fine.status, 'UNPAID', 'Initial status should be UNPAID');
-  
-  const savedFine = await repo.findById(fine.id);
-  assert.ok(savedFine, 'Fine should be saved in repository');
-
-  console.log('All tests passed successfully! ✅');
-}
-
-runTests().catch(err => {
-  console.error('Test failed:', err);
-  process.exit(1);
+    const savedFine = await repo.findById(fine.id);
+    expect(savedFine).toBeDefined();
+  });
 });

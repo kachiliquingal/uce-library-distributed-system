@@ -1,4 +1,3 @@
-import assert from 'assert';
 import { CreateReservationWithOutboxUseCase } from '../src/application/use-cases/CreateReservationWithOutboxUseCase';
 import { GetReservationsUseCase } from '../src/application/use-cases/GetReservationsUseCase';
 import { CancelReservationUseCase } from '../src/application/use-cases/CancelReservationUseCase';
@@ -40,11 +39,9 @@ class MockReservationRepository implements IReservationRepository {
   async getRooms(): Promise<StudyRoom[]> {
     return this.rooms;
   }
-
   async getRoomById(roomId: string): Promise<StudyRoom | null> {
     return this.rooms.find(r => r.id === roomId) || null;
   }
-
   async createWithOutbox(
     reservation: Reservation,
     roomUpdate: Partial<StudyRoom>,
@@ -58,31 +55,24 @@ class MockReservationRepository implements IReservationRepository {
     }
     this.outbox.push(outboxEvent);
   }
-
   async findById(reservationId: string): Promise<Reservation | null> {
     return this.reservations.find(r => r.id === reservationId) || null;
   }
-
   async findByUser(userId: string): Promise<Reservation[]> {
     return this.reservations.filter(r => r.userId === userId);
   }
-
   async findActiveByUser(userId: string): Promise<Reservation[]> {
     return this.reservations.filter(r => r.userId === userId && r.status === 'ACTIVE');
   }
-
   async findByRoomAndDate(roomId: string, date: string): Promise<Reservation[]> {
     return this.reservations.filter(r => r.roomId === roomId && r.date === date);
   }
-
   async findAll(): Promise<Reservation[]> {
     return this.reservations;
   }
-
   async findActiveExpired(currentEpochSeconds: number): Promise<Reservation[]> {
     return this.reservations.filter(r => r.status === 'ACTIVE' && r.expiresAt !== undefined && r.expiresAt <= currentEpochSeconds);
   }
-
   async updateStatusWithOutbox(
     reservationId: string,
     status: ReservationStatus,
@@ -99,7 +89,6 @@ class MockReservationRepository implements IReservationRepository {
     }
     this.outbox.push(outboxEvent);
   }
-
   async updateRoomStatus(roomId: string, status: StudyRoom['currentStatus'], activeReservationId?: string): Promise<void> {
     const room = this.rooms.find(r => r.id === roomId);
     if (room) {
@@ -107,11 +96,9 @@ class MockReservationRepository implements IReservationRepository {
       room.activeReservationId = activeReservationId;
     }
   }
-
   async getPendingOutboxEvents(): Promise<OutboxEvent[]> {
     return this.outbox.filter(e => e.status === 'PENDING');
   }
-
   async markOutboxPublished(eventId: string): Promise<void> {
     const evt = this.outbox.find(e => e.id === eventId);
     if (evt) {
@@ -128,36 +115,29 @@ class MockMessageBroker implements IMessageBroker {
   async publishKafka(topic: string, message: any): Promise<void> {
     this.publishedKafka.push({ topic, message });
   }
-
   async publishMqtt(topic: string, payload: any): Promise<void> {
     this.publishedMqtt.push({ topic, payload });
   }
-
   async close(): Promise<void> {}
 }
 
-async function runTests() {
-  console.log('🧪 Iniciando pruebas unitarias para reservation-service...');
+describe("Reservation Service Unit Tests", () => {
+  test("Reservation ACID 3-operation and Outbox Use Cases", async () => {
+    const repo = new MockReservationRepository();
+    const broker = new MockMessageBroker();
 
-  const repo = new MockReservationRepository();
-  const broker = new MockMessageBroker();
+    const createUseCase = new CreateReservationWithOutboxUseCase(repo, broker);
+    const getReservationsUseCase = new GetReservationsUseCase(repo);
+    const cancelUseCase = new CancelReservationUseCase(repo, broker);
+    const getRoomsUseCase = new GetRoomsAvailabilityUseCase(repo);
 
-  const createUseCase = new CreateReservationWithOutboxUseCase(repo, broker);
-  const getReservationsUseCase = new GetReservationsUseCase(repo);
-  const cancelUseCase = new CancelReservationUseCase(repo, broker);
-  const getRoomsUseCase = new GetRoomsAvailabilityUseCase(repo);
-
-  try {
-    // 1. Test Get Rooms
     const rooms = await getRoomsUseCase.execute();
-    assert.strictEqual(rooms.length, 2, 'Debe retornar el catálogo de salas');
-    assert.strictEqual(rooms[0].currentStatus, 'AVAILABLE', 'Sala debe iniciar DISPONIBLE');
+    expect(rooms.length).toBe(2);
+    expect(rooms[0].currentStatus).toBe('AVAILABLE');
 
-    // 2. Calculate Today in America/Guayaquil YYYY-MM-DD
     const nowEcuador = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
     const todayStr = nowEcuador.toISOString().split('T')[0];
 
-    // 3. Test Create Reservation with ACID 3-operation & 5-minute duration
     const reservation = await createUseCase.execute({
       userId: 'user-001',
       userEmail: 'estudiante@uce.edu.ec',
@@ -169,61 +149,37 @@ async function runTests() {
       attendees: 1
     });
 
-    assert.strictEqual(reservation.durationMinutes, 5, 'Duración asignada debe ser exactamente 5 minutos');
-    assert.strictEqual(reservation.endTime, '10:05', 'Hora de fin debe calcularse sumando 5 minutos');
-    assert.strictEqual(repo.reservations.length, 1, 'Reserva debe guardarse en el repositorio');
-    assert.strictEqual(repo.rooms[0].currentStatus, 'RESERVED', 'Estado de la sala debe actualizarse en la transacción ACID');
-    assert.strictEqual(repo.outbox.length, 1, 'Evento Outbox debe registrarse de forma atómica en la misma transacción');
-    assert.strictEqual(repo.outbox[0].eventType, 'reservation.created');
+    expect(reservation.durationMinutes).toBe(5);
+    expect(reservation.endTime).toBe('10:05');
+    expect(repo.reservations.length).toBe(1);
+    expect(repo.rooms[0].currentStatus).toBe('RESERVED');
+    expect(repo.outbox.length).toBe(1);
+    expect(repo.outbox[0].eventType).toBe('reservation.created');
 
-    // 4. Test Enforcing One Active Reservation Per User
-    let activeError = null;
-    try {
-      await createUseCase.execute({
-        userId: 'user-001',
-        userEmail: 'estudiante@uce.edu.ec',
-        userName: 'Alejandro Estudiante',
-        roomId: 'room-adm-2',
-        date: todayStr,
-        startTime: '11:00'
-      });
-    } catch (err: any) {
-      activeError = err.message;
-    }
-    assert.ok(activeError && activeError.includes('reserva activa'), 'Debe impedir reservas múltiples simultáneas');
+    await expect(createUseCase.execute({
+      userId: 'user-001',
+      userEmail: 'estudiante@uce.edu.ec',
+      userName: 'Alejandro Estudiante',
+      roomId: 'room-adm-2',
+      date: todayStr,
+      startTime: '11:00'
+    })).rejects.toThrow(/reserva activa/);
 
-    // 5. Test Enforcing Today/Tomorrow Rule (Reject date > 24 hours ahead)
-    let dateError = null;
-    try {
-      await createUseCase.execute({
-        userId: 'user-002',
-        userEmail: 'otro@uce.edu.ec',
-        userName: 'Otro Estudiante',
-        roomId: 'room-adm-2',
-        date: '2028-01-01',
-        startTime: '14:00'
-      });
-    } catch (err: any) {
-      dateError = err.message;
-    }
-    assert.ok(dateError && dateError.includes('solo están permitidas para el día de hoy'), 'Debe impedir reservas con más de 24 horas de anticipación');
+    await expect(createUseCase.execute({
+      userId: 'user-002',
+      userEmail: 'otro@uce.edu.ec',
+      userName: 'Otro Estudiante',
+      roomId: 'room-adm-2',
+      date: '2028-01-01',
+      startTime: '14:00'
+    })).rejects.toThrow(/solo están permitidas para el día de hoy/);
 
-    // 6. Test Get Reservations
     const list = await getReservationsUseCase.execute({ userId: 'user-001' });
-    assert.strictEqual(list.length, 1, 'Debe retornar las reservas del usuario');
+    expect(list.length).toBe(1);
 
-    // 7. Test Cancel Reservation and Release Room via MQTT
     await cancelUseCase.execute(reservation.id, 'user-001', false);
-    assert.strictEqual(repo.reservations[0].status, 'CANCELLED', 'Estado de reserva debe cambiar a CANCELADO');
-    assert.strictEqual(repo.rooms[0].currentStatus, 'AVAILABLE', 'La sala debe quedar liberada a estado DISPONIBLE');
-    assert.strictEqual(repo.outbox.length, 2, 'Debe registrarse evento Outbox de cancelación');
-
-    console.log('✅ ¡Todas las pruebas unitarias de reservation-service superadas con éxito!');
-    process.exit(0);
-  } catch (err: any) {
-    console.error('❌ Fallo en las pruebas unitarias:', err);
-    process.exit(1);
-  }
-}
-
-runTests();
+    expect(repo.reservations[0].status).toBe('CANCELLED');
+    expect(repo.rooms[0].currentStatus).toBe('AVAILABLE');
+    expect(repo.outbox.length).toBe(2);
+  });
+});
