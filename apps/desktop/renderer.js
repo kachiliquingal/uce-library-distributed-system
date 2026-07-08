@@ -1,6 +1,6 @@
 // UCE Library Desktop App - Renderer Logic (Vanilla JS + Electron)
 let currentUser = null;
-let apiUrl = 'https://kleberchiliquingaqa1.distribuidauce.org';
+let apiUrl = 'https://kleberchiliquingaprod1.distribuidauce.org';
 
 // DOM ELEMENTS
 const loginView = document.getElementById('login-view');
