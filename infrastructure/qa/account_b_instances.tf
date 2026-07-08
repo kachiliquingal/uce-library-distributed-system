@@ -237,6 +237,7 @@ APPCOMPOSE
 cat << 'ENVFILE' > /home/ubuntu/.env
 IMAGE_TAG=${var.docker_image_tag}
 COUCHDB_URL=http://admin:${var.db_password}@${aws_instance.database_server.private_ip}:5984
+KAFKA_BROKERS=${aws_instance.brokers_server.private_ip}:9092
 CATALOG_GRPC_HOST=${aws_instance.catalog_server.private_ip}:50052
 ENVFILE
 

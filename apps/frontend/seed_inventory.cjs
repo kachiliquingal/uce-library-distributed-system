@@ -1,7 +1,8 @@
 const axios = require('axios');
 
-const CATALOG_URL = 'http://32.199.97.153/api/catalog/books';
-const INVENTORY_URL = 'http://32.199.97.153/api/inventory/';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost';
+const CATALOG_URL = `${API_GATEWAY_URL}/api/catalog/books`;
+const INVENTORY_URL = `${API_GATEWAY_URL}/api/inventory/`;
 
 async function seed() {
   try {

@@ -141,6 +141,7 @@ services:
       - PORT=4009
       - COUCHDB_URL=${COUCHDB_URL}
       - CATALOG_GRPC_HOST=${CATALOG_GRPC_HOST}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
     networks:
       - microservices-network
 
