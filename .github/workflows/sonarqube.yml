@@ -3,12 +3,7 @@ name: SonarQube Analysis
 on:
   push:
     branches:
-      - qa
-      - main
-  pull_request:
-    branches:
-      - qa
-      - main
+      - feature/sonarqube-integration
 
 jobs:
   sonarqube:
