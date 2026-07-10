@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true  # Evita que el pipeline se caiga si un microservicio no tiene tests
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           # Lee los secretos configurados en GitHub Actions
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
