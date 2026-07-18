@@ -1,0 +1,16 @@
+{
+  "name": "qa-e2e-tests",
+  "version": "1.0.0",
+  "description": "Pruebas funcionales E2E para UCE Library",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber-js"
+  },
+  "keywords": [],
+  "author": "Alejandro",
+  "license": "ISC",
+  "dependencies": {
+    "@cucumber/cucumber": "^10.0.0",
+    "selenium-webdriver": "^4.15.0"
+  }
+}
