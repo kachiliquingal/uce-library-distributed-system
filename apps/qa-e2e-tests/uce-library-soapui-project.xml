@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="00000000-0000-0000-0000-000000000000" activeEnvironment="Default" name="UCE_Library_QA_Project" resourceRoot="" soapui-version="5.10.0" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config">
+  <con:settings/>
+  <con:interface xsi:type="con:RestService" id="11111111-1111-1111-1111-111111111111" wadlVersion="http://wadl.dev.java.net/2009/02" name="QA_API" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache type="TEXT" rootPart=""/>
+    <con:endpoints>
+      <con:endpoint>http://32.199.97.153/api</con:endpoint>
+    </con:endpoints>
+    <con:resource name="Login" path="/auth/login" id="22222222-2222-2222-2222-222222222222">
+      <con:settings/>
+      <con:parameters/>
+      <con:method name="Login Method" id="33333333-3333-3333-3333-333333333333" method="POST">
+        <con:settings/>
+        <con:parameters/>
+        <con:representation type="REQUEST">
+          <con:mediaType>application/json</con:mediaType>
+          <con:params/>
+        </con:representation>
+        <con:representation type="RESPONSE">
+          <con:mediaType>application/json</con:mediaType>
+          <con:status>200</con:status>
+          <con:params/>
+        </con:representation>
+        <con:request name="Request 1" id="44444444-4444-4444-4444-444444444444" mediaType="application/json" postQueryString="false">
+          <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+          </con:settings>
+          <con:endpoint>http://32.199.97.153/api</con:endpoint>
+          <con:request>{
+  "email": "qa.tester@uce.edu.ec",
+  "password": "TestSeguro2026"
+}</con:request>
+          <con:credentials>
+            <con:authType>No Authorization</con:authType>
+          </con:credentials>
+          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          <con:jmsPropertyConfig/>
+          <con:parameters/>
+        </con:request>
+      </con:method>
+    </con:resource>
+    <con:resource name="Loans" path="/loans" id="55555555-5555-5555-5555-555555555555">
+      <con:settings/>
+      <con:parameters/>
+      <con:method name="Create Loan" id="66666666-6666-6666-6666-666666666666" method="POST">
+        <con:settings/>
+        <con:parameters/>
+        <con:representation type="REQUEST">
+          <con:mediaType>application/json</con:mediaType>
+          <con:params/>
+        </con:representation>
+        <con:representation type="RESPONSE">
+          <con:mediaType>application/json</con:mediaType>
+          <con:status>201</con:status>
+          <con:params/>
+        </con:representation>
+        <con:request name="Request 1" id="77777777-7777-7777-7777-777777777777" mediaType="application/json" postQueryString="false">
+          <con:settings/>
+          <con:endpoint>http://32.199.97.153/api</con:endpoint>
+          <con:request>{
+  "userId": "123",
+  "isbn": "9780132350884",
+  "bookTitle": "Clean Code",
+  "faculty": "Ingeniería"
+}</con:request>
+          <con:credentials>
+            <con:authType>No Authorization</con:authType>
+          </con:credentials>
+          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          <con:jmsPropertyConfig/>
+          <con:parameters/>
+        </con:request>
+      </con:method>
+    </con:resource>
+  </con:interface>
+  <con:testSuite id="88888888-8888-8888-8888-888888888888" name="Functional Test Suite">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+    <con:testCase id="99999999-9999-9999-9999-999999999999" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Login Test Case" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Login Request" id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa">
+        <con:settings/>
+        <con:config service="QA_API" resourcePath="/auth/login" methodName="Login Method" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Login Request" id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" mediaType="application/json" postQueryString="false">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:request>{
+  "email": "test@uce.edu.ec",
+  "password": "Password123!"
+}</con:request>
+            <con:originalUri>http://32.199.97.153/api/auth/login</con:originalUri><con:assertion type="Valid HTTP Status Codes" id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters/>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:testCase id="dddddddd-dddd-dddd-dddd-dddddddddddd" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Loan Test Case" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Create Loan Request" id="eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee">
+        <con:settings/>
+        <con:config service="QA_API" resourcePath="/loans" methodName="Create Loan" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Create Loan Request" id="ffffffff-ffff-ffff-ffff-ffffffffffff" mediaType="application/json" postQueryString="false">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:request>{
+  "userId": "123",
+  "isbn": "9780132350884",
+  "bookTitle": "Clean Code",
+  "faculty": "Ingeniería"
+}</con:request>
+            <con:assertion type="Valid HTTP Status Codes" id="1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>201,200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters/>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:properties/>
+  </con:testSuite>
+  <con:properties/>
+  <con:wssContainer/>
+  <con:oAuth2ProfileContainer/>
+  <con:oAuth1ProfileContainer/>
+</con:soapui-project>
