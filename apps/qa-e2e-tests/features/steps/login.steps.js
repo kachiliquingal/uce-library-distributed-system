@@ -38,3 +38,16 @@ Then('el sistema lo redirige a la página principal de la biblioteca', async fun
   const url = await driver.getCurrentUrl();
   assert.ok(!url.includes('/login'), 'El test falló porque el usuario sigue en la página de login.');
 });
+
+Then('el sistema muestra un mensaje de error de login y no permite el ingreso', async function () {
+  const driver = getDriver();
+  
+  // Validar que se muestre un mensaje de error en pantalla
+  const errorMsg = await driver.wait(until.elementLocated(By.xpath("//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'incorrect') or contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'error') or contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'invalid') or contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'inválid')]")), 5000);
+  const texto = await errorMsg.getText();
+  assert.ok(texto.length > 0, 'No se encontró mensaje de error.');
+
+  // Validar que sigamos en la página de login
+  const url = await driver.getCurrentUrl();
+  assert.ok(url.includes('/login'), 'El sistema redirigió, pero debía quedarse en el login.');
+});

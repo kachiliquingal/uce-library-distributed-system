@@ -22,7 +22,7 @@
           <con:status>200</con:status>
           <con:params/>
         </con:representation>
-        <con:request name="Request 1" id="44444444-4444-4444-4444-444444444444" mediaType="application/json" postQueryString="false">
+        <con:representation type="RESPONSE"><con:mediaType>application/json; charset=utf-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:log="http://32.199.97.153/api/auth/login">log:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>application/json; charset=utf-8</con:mediaType><con:status>401</con:status><con:params/><con:element xmlns:log="http://32.199.97.153/api/auth/login">log:Fault</con:element></con:representation><con:request name="Request 1" id="44444444-4444-4444-4444-444444444444" mediaType="application/json" postQueryString="false">
           <con:settings>
             <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
           </con:settings>
@@ -55,14 +55,12 @@
           <con:status>201</con:status>
           <con:params/>
         </con:representation>
-        <con:request name="Request 1" id="77777777-7777-7777-7777-777777777777" mediaType="application/json" postQueryString="false">
+        <con:representation type="FAULT"><con:mediaType>application/json; charset=utf-8</con:mediaType><con:status>400</con:status><con:params/><con:element xmlns:loan="http://32.199.97.153/api/loans/">loan:Fault</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json; charset=utf-8</con:mediaType><con:status>201</con:status><con:params/><con:element xmlns:loan="http://32.199.97.153/api/loans/">loan:Response</con:element></con:representation><con:request name="Request 1" id="77777777-7777-7777-7777-777777777777" mediaType="application/json" postQueryString="false">
           <con:settings/>
           <con:endpoint>http://32.199.97.153/api</con:endpoint>
           <con:request>{
-  "userId": "123",
-  "isbn": "9780132350884",
-  "bookTitle": "Clean Code",
-  "faculty": "Ingeniería"
+  "bookId": "12345",
+  "userId": "98765"
 }</con:request>
           <con:credentials>
             <con:authType>No Authorization</con:authType>
@@ -70,6 +68,43 @@
           <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
           <con:jmsPropertyConfig/>
           <con:parameters/>
+        </con:request>
+      </con:method>
+      </con:method>
+    </con:resource>
+    <con:resource name="Books" path="/books" id="efefef-efefef-efefef-efefef">
+      <con:settings/>
+      <con:parameters/>
+      <con:method name="Search Books" id="f0f0f0-f0f0f0-f0f0f0-f0f0f0" method="GET">
+        <con:settings/>
+        <con:parameters>
+          <con:parameter required="true">
+            <con:name>search</con:name>
+            <con:value/>
+            <con:style>QUERY</con:style>
+            <con:default/>
+          </con:parameter>
+        </con:parameters>
+        <con:representation type="RESPONSE">
+          <con:mediaType>application/json</con:mediaType>
+          <con:status>200</con:status>
+          <con:params/>
+        </con:representation>
+        <con:request name="Request 1" id="g1g1g1-g1g1g1-g1g1g1-g1g1g1" mediaType="application/json">
+          <con:settings/>
+          <con:endpoint>http://32.199.97.153/api</con:endpoint>
+          <con:request/>
+          <con:credentials>
+            <con:authType>No Authorization</con:authType>
+          </con:credentials>
+          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          <con:jmsPropertyConfig/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>search</con:name>
+              <con:value>test</con:value>
+            </con:parameter>
+          </con:parameters>
         </con:request>
       </con:method>
     </con:resource>
@@ -88,8 +123,8 @@
             </con:settings>
             <con:endpoint>http://32.199.97.153/api</con:endpoint>
             <con:request>{
-  "email": "test@uce.edu.ec",
-  "password": "Password123!"
+  "email": "qa.tester@uce.edu.ec",
+  "password": "TestSeguro2025"
 }</con:request>
             <con:originalUri>http://32.199.97.153/api/auth/login</con:originalUri><con:assertion type="Valid HTTP Status Codes" id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="Valid HTTP Status Codes">
               <con:configuration>
@@ -118,12 +153,12 @@
             </con:settings>
             <con:endpoint>http://32.199.97.153/api</con:endpoint>
             <con:request>{
-  "userId": "123",
-  "isbn": "9780132350884",
-  "bookTitle": "Clean Code",
-  "faculty": "Ingeniería"
+  "userId": 1,
+  "isbn": "978-1010-40-365",
+  "bookTitle": "Fundamentos a Ciencias Vol. 365",
+  "faculty": "Ciencias"
 }</con:request>
-            <con:assertion type="Valid HTTP Status Codes" id="1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a" name="Valid HTTP Status Codes">
+            <con:originalUri>http://32.199.97.153/api/loans/</con:originalUri><con:assertion type="Valid HTTP Status Codes" id="1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a" name="Valid HTTP Status Codes">
               <con:configuration>
                 <codes>201,200</codes>
               </con:configuration>
@@ -139,10 +174,109 @@
       </con:testStep>
       <con:properties/>
     </con:testCase>
+    <con:testCase id="2a2a2a2a-2a2a-2a2a-2a2a-2a2a2a2a2a2a" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Invalid Login Test Case" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Invalid Login Request" id="3a3a3a3a-3a3a-3a3a-3a3a-3a3a3a3a3a3a">
+        <con:settings/>
+        <con:config service="QA_API" resourcePath="/auth/login" methodName="Login Method" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Invalid Login Request" id="4a4a4a4a-4a4a-4a4a-4a4a-4a4a4a4a4a4a" mediaType="application/json" postQueryString="false">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:request>{
+  "email": "qa.tester@uce.edu.ec",
+  "password": "ClaveIncorrecta123"
+}</con:request>
+            <con:originalUri>http://32.199.97.153/api/auth/login</con:originalUri>
+            <con:assertion type="Valid HTTP Status Codes" id="5a5a5a5a-5a5a-5a5a-5a5a-5a5a5a5a5a5a" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>401</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters/>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:testCase id="6a6a6a6a-6a6a-6a6a-6a6a-6a6a6a6a6a6a" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unavailable Book Loan Test Case" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Create Loan Invalid Request" id="7a7a7a7a-7a7a-7a7a-7a7a-7a7a7a7a7a7a">
+        <con:settings/>
+        <con:config service="QA_API" resourcePath="/loans" methodName="Create Loan" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Create Loan Invalid Request" id="8a8a8a8a-8a8a-8a8a-8a8a-8a8a8a8a8a8a" mediaType="application/json" postQueryString="false">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:request>{
+  "userId": 1,
+  "isbn": "000-0000-00-000",
+  "bookTitle": "Libro Inexistente 999",
+  "faculty": "Ciencias"
+}</con:request>
+            <con:originalUri>http://32.199.97.153/api/loans/</con:originalUri>
+            <con:assertion type="Valid HTTP Status Codes" id="9a9a9a9a-9a9a-9a9a-9a9a-9a9a9a9a9a9a" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>400,404</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters/>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:testCase id="ababa-ababa-ababa-ababa-ababa" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Search Book Test Case" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Search Book Request" id="bcbcbc-bcbcbc-bcbcbc-bcbcbc">
+        <con:settings/>
+        <con:config service="QA_API" resourcePath="/books" methodName="Search Books" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Search Book Request" id="cdcdcd-cdcdcd-cdcdcd-cdcdcd" mediaType="application/json" postQueryString="false">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:request/>
+            <con:originalUri>http://32.199.97.153/api/books/</con:originalUri>
+            <con:assertion type="Valid HTTP Status Codes" id="dedede-dedede-dedede-dedede" name="Valid HTTP Status Codes">
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters>
+              <con:parameter>
+                <con:name>search</con:name>
+                <con:value>Fundamentos a Ciencias</con:value>
+                <con:style>QUERY</con:style>
+                <con:default>Fundamentos a Ciencias</con:default>
+              </con:parameter>
+            </con:parameters>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
     <con:properties/>
   </con:testSuite>
   <con:properties/>
   <con:wssContainer/>
   <con:oAuth2ProfileContainer/>
   <con:oAuth1ProfileContainer/>
-</con:soapui-project>
+<con:sensitiveInformation/></con:soapui-project>
