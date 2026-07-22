@@ -1,0 +1,11 @@
+{
+  "name": "qa-security-tests",
+  "version": "1.0.0",
+  "description": "OWASP Dependency Check for UCE Library",
+  "scripts": {
+    "owasp:scan": "owasp-dependency-check --project \"UCE Library\" --out ./report --scan \"../../apps/**/package-lock.json\""
+  },
+  "devDependencies": {
+    "owasp-dependency-check": "^0.0.21"
+  }
+}
