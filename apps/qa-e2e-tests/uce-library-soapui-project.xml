@@ -70,7 +70,6 @@
           <con:parameters/>
         </con:request>
       </con:method>
-      </con:method>
     </con:resource>
     <con:resource name="Books" path="/books" id="efefef-efefef-efefef-efefef">
       <con:settings/>
