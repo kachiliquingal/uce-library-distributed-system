@@ -89,7 +89,7 @@
           <con:status>200</con:status>
           <con:params/>
         </con:representation>
-        <con:request name="Request 1" id="g1g1g1-g1g1g1-g1g1g1-g1g1g1" mediaType="application/json">
+        <con:representation type="RESPONSE"><con:mediaType>text/html</con:mediaType><con:status>200</con:status><con:params/><con:element>html</con:element></con:representation><con:request name="Request 1" id="g1g1g1-g1g1g1-g1g1g1-g1g1g1" mediaType="application/json">
           <con:settings/>
           <con:endpoint>http://32.199.97.153/api</con:endpoint>
           <con:request/>
@@ -123,7 +123,7 @@
             <con:endpoint>http://32.199.97.153/api</con:endpoint>
             <con:request>{
   "email": "qa.tester@uce.edu.ec",
-  "password": "TestSeguro2025"
+  "password": "TestSeguro2026"
 }</con:request>
             <con:originalUri>http://32.199.97.153/api/auth/login</con:originalUri><con:assertion type="Valid HTTP Status Codes" id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="Valid HTTP Status Codes">
               <con:configuration>
@@ -217,7 +217,7 @@
             <con:request>{
   "userId": 1,
   "isbn": "000-0000-00-000",
-  "bookTitle": "Libro Inexistente 999",
+  "bookTitle": "Libro Inexistente 999ds",
   "faculty": "Ciencias"
 }</con:request>
             <con:originalUri>http://32.199.97.153/api/loans/</con:originalUri>
@@ -246,7 +246,7 @@
             <con:settings>
               <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
             </con:settings>
-            <con:endpoint>http://32.199.97.153/api</con:endpoint>
+            <con:encoding/><con:endpoint>http://32.199.97.153/api</con:endpoint>
             <con:request/>
             <con:originalUri>http://32.199.97.153/api/books/</con:originalUri>
             <con:assertion type="Valid HTTP Status Codes" id="dedede-dedede-dedede-dedede" name="Valid HTTP Status Codes">
